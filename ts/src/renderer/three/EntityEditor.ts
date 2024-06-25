@@ -4,13 +4,16 @@ namespace Renderer {
 			activeEntityPlacement: boolean;
 			preview: Renderer.Three.AnimatedSprite | Renderer.Three.Model;
 			gizmo: EntityGizmo;
-
+			gizmoGroup: THREE.Group;
 			activeEntity: { id: string; player: string; entityType: string, action?: ActionData, is3DObject?: boolean };
-			selectedEntity: InitEntity | Region;
+			selectedEntities: (InitEntity | Region)[];
 			copiedEntity: InitEntity;
 			constructor() {
 				this.preview = undefined;
+				this.gizmoGroup = new THREE.Group();
+				this.selectedEntities = [];
 				const renderer = Renderer.Three.instance();
+				renderer.initEntityLayer.add(this.gizmoGroup);
 				this.activatePlacement(false);
 
 				this.gizmo = new EntityGizmo();
@@ -77,9 +80,9 @@ namespace Renderer {
 					if (event.key === 'Delete' || event.key === 'Backspace') {
 						this.deleteEntity();
 					}
-					if (event.key === 'c' && event.ctrlKey && this.selectedEntity && this.selectedEntity instanceof InitEntity) {
-						const action = this.selectedEntity.action;
-						const is3DObject = this.selectedEntity.isObject3D;
+					if (event.key === 'c' && event.ctrlKey && this.selectedEntities && this.selectedEntities instanceof InitEntity) {
+						const action = this.selectedEntities.action;
+						const is3DObject = this.selectedEntities.isObject3D;
 
 						this.selectEntity(null);
 						this.activatePlacement(true);
@@ -210,28 +213,64 @@ namespace Renderer {
 				}
 			}
 
-			selectEntity(entity: InitEntity | Region): void {
+			getLastSelectedEntity() {
+				return this.selectedEntities[
+					this.selectedEntities.length - 1
+				]
+			}
+
+			selectEntity(entity: InitEntity | Region, mode: 'addOrRemove' | 'select' = 'select'): void {
 				if (entity === null) {
-					this.selectedEntity = null;
+					this.selectedEntities = [];
 					this.gizmo.control.detach();
+					this.gizmoGroup.children.forEach((e) => renderer.initEntityLayer.add(e))
+					this.gizmoGroup.clear();
 					taro.client.emit('show-transform-modes', false);
 					return;
 				}
-				this.selectedEntity = entity;
-				this.gizmo.attach(entity);
-				taro.client.emit('show-transform-modes', true);
+				const renderer = Renderer.Three.instance();
+				switch (mode) {
+					case 'select':
+						{
+							this.gizmoGroup.children.forEach((e) => renderer.initEntityLayer.add(e))
+							this.gizmoGroup.clear();
+							this.selectedEntities = [entity];
+							this.gizmoGroup.add(entity);
+							// this.gizmoGroup.position.set(entity.position.x, entity.position.y, entity.position.z);
+							this.gizmo.attach(this.gizmoGroup);
+							taro.client.emit('show-transform-modes', true);
+							break;
+						}
+					case 'addOrRemove': {
+						if (this.selectedEntities.find((e) => e.uuid === entity.uuid) === undefined) {
+							this.selectedEntities.push(entity);
+							this.gizmoGroup.add(entity);
+							// this.gizmoGroup.position.set(entity.position.x, entity.position.y, entity.position.z);
+							this.gizmo.attach(this.gizmoGroup);
+						} else {
+							this.selectedEntities = this.selectedEntities.filter((e) => e.uuid !== entity.uuid)
+							this.gizmoGroup.remove(entity);
+							let lastEntity = this.selectedEntities[this.selectedEntities.length - 1];
+							// this.gizmoGroup.position.set(lastEntity.position.x, lastEntity.position.y, lastEntity.position.z);
+							this.gizmo.attach(this.gizmoGroup);
+						}
+
+						break;
+					}
+				}
+
 			}
 
 			deleteEntity(): void {
-				if (this.selectedEntity && this.selectedEntity instanceof InitEntity) {
-					this.selectedEntity.delete();
-				} else if (this.selectedEntity && this.selectedEntity instanceof Region) {
+				if (this.selectedEntities && this.selectedEntities instanceof InitEntity) {
+					this.selectedEntities.delete();
+				} else if (this.selectedEntities && this.selectedEntities instanceof Region) {
 					const data = {
-						name: this.selectedEntity.taroEntity._stats.id,
+						name: this.selectedEntities.taroEntity._stats.id,
 						delete: true,
 					};
 					const nowData = JSON.stringify(data)
-					const nowTransformData = JSON.stringify(this.selectedEntity.stats)
+					const nowTransformData = JSON.stringify(this.selectedEntities.stats)
 					const renderer = Renderer.Three.instance();
 
 					renderer.voxelEditor.commandController.addCommand({

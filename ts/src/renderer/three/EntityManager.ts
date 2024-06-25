@@ -66,8 +66,8 @@ namespace Renderer {
 			destroyInitEntity(initEntity: InitEntity) {
 				const renderer = Three.instance();
 				if (
-					renderer.entityEditor.selectedEntity instanceof InitEntity &&
-					renderer.entityEditor.selectedEntity.action.actionId === initEntity.action.actionId
+					renderer.entityEditor.selectedEntities instanceof InitEntity &&
+					renderer.entityEditor.selectedEntities.action.actionId === initEntity.action.actionId
 				) {
 					renderer.entityEditor.selectEntity(null);
 				}

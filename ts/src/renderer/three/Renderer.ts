@@ -167,11 +167,11 @@ namespace Renderer {
 											}
 											if (
 												initEntity &&
-												(this.entityEditor.selectedEntity === null ||
-													this.entityEditor.selectedEntity === undefined ||
-													this.entityEditor.selectedEntity.uuid !== initEntity.uuid)
+												(
+													this.entityEditor.getLastSelectedEntity()?.uuid !== initEntity.uuid)
 											) {
-												this.entityEditor.selectEntity(initEntity);
+												console.log(event.shiftKey)
+												this.entityEditor.selectEntity(initEntity, event.shiftKey ? 'addOrRemove' : 'select');
 												taro.client.emit('block-rotation', !!initEntity.isBillboard);
 											} else if (clickDelay < 350) {
 												console.log('showing script for entity', initEntity.action.actionId);
@@ -223,7 +223,7 @@ namespace Renderer {
 													}
 												}
 											} else if (clickDelay < 350) {
-												const region = this.entityEditor.selectedEntity as Region;
+												const region = this.entityEditor.getLastSelectedEntity() as Region;
 												const regionData = {
 													name: region.taroEntity._stats.id,
 													x: region.stats.x,
@@ -303,8 +303,8 @@ namespace Renderer {
 												actionId: taro.newIdHex(),
 												wasCreated: true,
 											};
-											if(entityData.action ) {
-												if(entityData.action.rotation) {
+											if (entityData.action) {
+												if (entityData.action.rotation) {
 													action.rotation = entityData.action.rotation
 												}
 												if (entityData.action.scale) {
@@ -649,7 +649,7 @@ namespace Renderer {
 				this.voxelEditor.voxels.updateLayer(new Map(), this.voxelEditor.currentLayerIndex);
 				this.voxelEditor.showAllLayers();
 
-				if (this.entityEditor.selectedEntity) {
+				if (this.entityEditor.selectedEntities) {
 					this.entityEditor.selectEntity(null);
 				}
 
@@ -658,9 +658,9 @@ namespace Renderer {
 				});
 			}
 
-			private onEnterEntitiesMode() {}
+			private onEnterEntitiesMode() { }
 
-			private onExitEntitiesMode() {}
+			private onExitEntitiesMode() { }
 
 			private showEntities() {
 				this.setEntitiesVisible(true);

@@ -85,7 +85,7 @@ namespace Renderer {
 						}
 						break;
 				}
-				if (editedAction && renderer.entityEditor.selectedEntity instanceof Region) {
+				if (editedAction && renderer.entityEditor.selectedEntities instanceof Region) {
 					editedAction['position'] = {
 						x: Renderer.Three.Utils.worldToPixel(control.object.position.x),
 						y: Renderer.Three.Utils.worldToPixel(control.object.position.z),
@@ -118,9 +118,9 @@ namespace Renderer {
 						if (!event.value) {
 							// drag ended
 							const editedAction = this.generateEditedAction();
-							if (editedAction && renderer.entityEditor.selectedEntity instanceof InitEntity) {
+							if (editedAction && renderer.entityEditor.selectedEntities instanceof InitEntity) {
 								const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction));
-								const nowEntity = renderer.entityEditor.selectedEntity;
+								const nowEntity = renderer.entityEditor.selectedEntities;
 								Renderer.Three.instance().voxelEditor.commandController.addCommand(
 									{
 										func: () => {
@@ -134,7 +134,7 @@ namespace Renderer {
 									true
 								);
 								this.undoAction = {};
-							} else if (editedAction && renderer.entityEditor.selectedEntity instanceof Region) {
+							} else if (editedAction && renderer.entityEditor.selectedEntities instanceof Region) {
 								const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction));
 								Renderer.Three.instance().voxelEditor.commandController.addCommand(
 									{
@@ -186,7 +186,7 @@ namespace Renderer {
 				});
 			}
 
-			attach(entity: Node) {
+			attach(entity: THREE.Object3D) {
 				if (entity instanceof AnimatedSprite) {
 					this.dimension = '2d';
 					this.updateForDimension();
