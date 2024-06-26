@@ -21,6 +21,9 @@ namespace Renderer {
 					alphaTest: 0.3,
 				});
 				this.sprite = new THREE.Mesh(geometry, material);
+				const line = new THREE.LineSegments(new THREE.EdgesGeometry(geometry), new THREE.LineBasicMaterial({ linewidth: 2, color: 0xffffff }))
+				line.visible = false;
+				this.sprite.add(line)
 				this.add(this.sprite);
 			}
 
@@ -102,6 +105,7 @@ namespace Renderer {
 					this.faceCamera(Three.instance().camera);
 					this.correctZOffsetBasedOnCameraAngle();
 				}
+
 
 				const parent = this.parent as Unit | Item;
 				const isOwnedItem = parent && parent instanceof Item && parent.ownerUnit;

@@ -235,6 +235,7 @@ namespace Renderer {
 				positions.center.set((positions.min.x + positions.max.x) / 2, (positions.min.y + positions.max.y) / 2, (positions.min.z + positions.max.z) / 2)
 				const offsetPos = prevCenterPos.sub(positions.center)
 				this.selectedEntities.forEach((e) => {
+					this.showOrHideOutline(e)
 					if ((e.parent as any).tag === Three.EntityEditor.TAG) {
 						e.position.add(offsetPos)
 					} else {
@@ -279,11 +280,25 @@ namespace Renderer {
 				]
 			}
 
+			showOrHideOutline(e: any, show: boolean) {
+				if ((e as any).tag === Three.EntityEditor.TAG) {
+					e.children.forEach((e_child) => {
+						this.showOrHideOutline(e_child, show)
+					})
+				} else {
+					if (e.body?.sprite !== undefined) {
+						e.body.sprite.children[0].visible = show;
+					}
+				}
+			}
 			selectEntity(entity: InitEntity | Region, mode: 'addOrRemove' | 'select' = 'select'): void {
 				const renderer = Renderer.Three.instance();
 				if (entity === null) {
 					this.selectedEntities = [];
 					this.gizmo.control.detach();
+					renderer.initEntityLayer.children.forEach((e) => {
+						this.showOrHideOutline(e, false)
+					})
 					taro.client.emit('show-transform-modes', false);
 					return;
 				}
@@ -293,11 +308,15 @@ namespace Renderer {
 							if ((entity.parent as any).tag !== Three.EntityEditor.TAG) {
 								this.selectedEntities = [entity];
 								this.gizmo.attach(entity);
+								this.showOrHideOutline(entity, true)
 								taro.client.emit('show-transform-modes', true);
 							} else {
 								this.selectedEntities = entity.parent.children as any;
 								this.selectedGroup = entity.parent as any;
-								this.gizmo.attach(entity.parent)
+								this.selectedEntities.forEach((e) => {
+									this.showOrHideOutline(e, true);
+								})
+								this.gizmo.attach(entity.parent);
 							}
 							break;
 						}
@@ -313,7 +332,7 @@ namespace Renderer {
 						}
 						const minMaxPos = this.calcMinMaxPosition()
 						if (remove) {
-							console.log('remove')
+							this.showOrHideOutline(entity, false);
 							entity.position.add(this.selectedGroup.position);
 						}
 						if (this.selectedEntities.length === 0) {
