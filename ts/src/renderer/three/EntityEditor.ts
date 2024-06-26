@@ -8,7 +8,7 @@ namespace Renderer {
 			activeEntity: { id: string; player: string; entityType: string, action?: ActionData, is3DObject?: boolean };
 			selectedEntities: (InitEntity | Region | THREE.Group)[];
 			selectedGroup: THREE.Group;
-			selectedEntitiesMinMaxCenterPos: { min: THREE.Vector2, max: THREE.Vector2, center: THREE.Vector2 } = { min: new THREE.Vector2(9999, 9999), max: new THREE.Vector2(-9999, -9999), center: new THREE.Vector2(0, 0) }
+			selectedEntitiesMinMaxCenterPos: { min: THREE.Vector3, max: THREE.Vector3, center: THREE.Vector3 } = { min: new THREE.Vector3(Infinity, Infinity, Infinity), max: new THREE.Vector3(-Infinity, -Infinity, -Infinity), center: new THREE.Vector3(0, 0, 0) }
 			copiedEntity: InitEntity;
 			static TAG = "selectedGroup"
 			constructor() {
@@ -81,7 +81,7 @@ namespace Renderer {
 				});
 
 				window.addEventListener('keydown', (event) => {
-
+					const renderer = Renderer.Three.instance();
 					if (event.key === 'Delete' || event.key === 'Backspace') {
 						this.deleteEntity();
 					}
@@ -104,6 +104,17 @@ namespace Renderer {
 							this.updatePreview();
 						}, 0)
 
+					}
+					if (event.key === 'a' && event.ctrlKey) {
+						this.selectedEntities = []
+						renderer.initEntityLayer.children.slice().forEach((e) => {
+							this.selectEntity(e as any, 'addOrRemove');
+						})
+					}
+					if (event.key === 'G' && event.shiftKey) {
+						this.selectedEntities.slice().forEach((e) => {
+							this.selectEntity(e as any, 'addOrRemove');
+						})
 					}
 				});
 			}
@@ -204,33 +215,30 @@ namespace Renderer {
 			}
 
 			resetMinMax() {
-				this.selectedEntitiesMinMaxCenterPos.max.set(-9999, -9999)
-				this.selectedEntitiesMinMaxCenterPos.min.set(9999, 9999)
+				this.selectedEntitiesMinMaxCenterPos.max.set(-Infinity, -Infinity, -Infinity)
+				this.selectedEntitiesMinMaxCenterPos.min.set(Infinity, Infinity, Infinity)
 			}
 
 			calcMinMaxPosition() {
 				this.resetMinMax();
+				this.selectedEntitiesMinMaxCenterPos.center.copy(this.selectedGroup.position);
 				this.selectedEntities.forEach((e) => {
-					console.log(e)
-					let nowPos = new THREE.Vector2(e.position.x, e.position.z);
+					let nowPos = e.position.clone();
 					if ((e.parent as any).tag === Three.EntityEditor.TAG) {
-						nowPos.setX(e.position.x + e.parent.position.x);
-						nowPos.setY(e.position.z + e.parent.position.z);
+						nowPos.add(e.parent.position);
 					}
-					this.selectedEntitiesMinMaxCenterPos.min.min(nowPos)
-					this.selectedEntitiesMinMaxCenterPos.max.max(nowPos)
+					this.selectedEntitiesMinMaxCenterPos.min.min(nowPos);
+					this.selectedEntitiesMinMaxCenterPos.max.max(nowPos);
 				})
 				const positions = this.selectedEntitiesMinMaxCenterPos;
 				const prevCenterPos = positions.center.clone();
-				positions.center.set((positions.min.x + positions.max.x) / 2, (positions.min.y + positions.max.y) / 2)
+				positions.center.set((positions.min.x + positions.max.x) / 2, (positions.min.y + positions.max.y) / 2, (positions.min.z + positions.max.z) / 2)
 				const offsetPos = prevCenterPos.sub(positions.center)
 				this.selectedEntities.forEach((e) => {
 					if ((e.parent as any).tag === Three.EntityEditor.TAG) {
-						e.position.setX(e.position.x + offsetPos.x)
-						e.position.setZ(e.position.z + offsetPos.y)
+						e.position.add(offsetPos)
 					} else {
-						e.position.setX(e.position.x - positions.center.x)
-						e.position.setZ(e.position.z - positions.center.y)
+						e.position.sub(positions.center)
 						this.selectedGroup.add(e)
 					}
 				})
@@ -294,21 +302,27 @@ namespace Renderer {
 							break;
 						}
 					case 'addOrRemove': {
+						let remove = false;
 						if (this.selectedEntities.find((e) => e.uuid === entity.uuid) === undefined) {
 							this.selectedEntities.push(entity);
-							const minMaxPos = this.calcMinMaxPosition()
-							this.selectedGroup.position.set(minMaxPos.center.x, 0, minMaxPos.center.y);
-							this.gizmo.attach(this.selectedGroup);
 						} else {
+							remove = true;
 							this.selectedEntities = this.selectedEntities.filter((e) => e.uuid !== entity.uuid)
 							this.selectedGroup.remove(entity);
 							renderer.initEntityLayer.add(entity);
-							const minMaxPos = this.calcMinMaxPosition();
-							entity.position.set(entity.position.x + this.selectedGroup.position.x, entity.position.y, entity.position.z + this.selectedGroup.position.z);
-							this.selectedGroup.position.set(minMaxPos.center.x, 0, minMaxPos.center.y);
+						}
+						const minMaxPos = this.calcMinMaxPosition()
+						if (remove) {
+							console.log('remove')
+							entity.position.add(this.selectedGroup.position);
+						}
+						if (this.selectedEntities.length === 0) {
+							this.gizmo.control.detach();
+							taro.client.emit('show-transform-modes', false);
+						} else {
+							this.selectedGroup.position.copy(minMaxPos.center);
 							this.gizmo.attach(this.selectedGroup);
 						}
-
 						break;
 					}
 				}
