@@ -131,7 +131,13 @@ namespace Renderer {
 				}
 			}
 
-			update(action: ActionData): void {
+			update() {
+				if (this.isBillboard) {
+					this.body.update(0)
+				}
+			}
+
+			updateAction(action: ActionData): void {
 				//update action in editor
 				if (inGameEditor && inGameEditor.updateAction && !window.isStandalone) {
 					inGameEditor.updateAction(action);

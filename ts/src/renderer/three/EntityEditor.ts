@@ -4,16 +4,21 @@ namespace Renderer {
 			activeEntityPlacement: boolean;
 			preview: Renderer.Three.AnimatedSprite | Renderer.Three.Model;
 			gizmo: EntityGizmo;
-			gizmoGroup: THREE.Group;
+			entityGroup: THREE.Group[];
 			activeEntity: { id: string; player: string; entityType: string, action?: ActionData, is3DObject?: boolean };
-			selectedEntities: (InitEntity | Region)[];
+			selectedEntities: (InitEntity | Region | THREE.Group)[];
+			selectedGroup: THREE.Group;
+			selectedEntitiesMinMaxCenterPos: { min: THREE.Vector2, max: THREE.Vector2, center: THREE.Vector2 } = { min: new THREE.Vector2(9999, 9999), max: new THREE.Vector2(-9999, -9999), center: new THREE.Vector2(0, 0) }
 			copiedEntity: InitEntity;
+			static TAG = "selectedGroup"
 			constructor() {
 				this.preview = undefined;
-				this.gizmoGroup = new THREE.Group();
+				this.entityGroup = [];
 				this.selectedEntities = [];
+				this.selectedGroup = new THREE.Group();
+				(this.selectedGroup as any).tag = Three.EntityEditor.TAG;
 				const renderer = Renderer.Three.instance();
-				renderer.initEntityLayer.add(this.gizmoGroup);
+				renderer.initEntityLayer.add(this.selectedGroup);
 				this.activatePlacement(false);
 
 				this.gizmo = new EntityGizmo();
@@ -53,7 +58,7 @@ namespace Renderer {
 					initEntities.forEach((initEntity) => {
 						if (initEntity.action.actionId === data.actionId) {
 							found = true;
-							initEntity.update(data);
+							initEntity.updateAction(data);
 						}
 					});
 					if (!found) {
@@ -66,7 +71,7 @@ namespace Renderer {
 						initEntities.forEach((initEntity) => {
 							if (initEntity.action.actionId === action.actionId) {
 								found = true;
-								initEntity.update(action);
+								initEntity.updateAction(action);
 							}
 						});
 						if (!found) {
@@ -198,9 +203,42 @@ namespace Renderer {
 				}
 			}
 
+			resetMinMax() {
+				this.selectedEntitiesMinMaxCenterPos.max.set(-9999, -9999)
+				this.selectedEntitiesMinMaxCenterPos.min.set(9999, 9999)
+			}
+
+			calcMinMaxPosition() {
+				this.resetMinMax();
+				this.selectedEntities.forEach((e) => {
+					console.log(e)
+					let nowPos = new THREE.Vector2(e.position.x, e.position.z);
+					if ((e.parent as any).tag === Three.EntityEditor.TAG) {
+						nowPos.add(this.selectedEntitiesMinMaxCenterPos.center);
+					}
+					this.selectedEntitiesMinMaxCenterPos.min.min(nowPos)
+					this.selectedEntitiesMinMaxCenterPos.max.max(nowPos)
+				})
+				const positions = this.selectedEntitiesMinMaxCenterPos;
+				const prevCenterPos = positions.center.clone();
+				positions.center.set((positions.min.x + positions.max.x) / 2, (positions.min.y + positions.max.y) / 2)
+				const offsetPos = prevCenterPos.sub(positions.center)
+				this.selectedEntities.forEach((e) => {
+					if ((e.parent as any).tag === Three.EntityEditor.TAG) {
+						e.position.setX(e.position.x + offsetPos.x)
+						e.position.setZ(e.position.z + offsetPos.y)
+					} else {
+						e.position.setX(e.position.x - positions.center.x)
+						e.position.setZ(e.position.z - positions.center.y)
+						this.selectedGroup.add(e)
+					}
+				})
+				return positions
+			}
+
 			update(): void {
+				const renderer = Renderer.Three.instance();
 				if (this.activeEntityPlacement && this.preview) {
-					const renderer = Renderer.Three.instance();
 					const worldPoint = renderer.raycastFloor(0);
 					if (worldPoint) {
 						this.preview.position.setX(worldPoint.x);
@@ -211,6 +249,10 @@ namespace Renderer {
 						this.preview.setBillboard(this.preview.billboard, renderer.camera);
 					}
 				}
+				renderer.initEntityLayer.children.forEach((e: any) => {
+					console.log(e);
+					e.update?.();
+				})
 			}
 
 			getLastSelectedEntity() {
@@ -220,39 +262,41 @@ namespace Renderer {
 			}
 
 			selectEntity(entity: InitEntity | Region, mode: 'addOrRemove' | 'select' = 'select'): void {
+				const renderer = Renderer.Three.instance();
 				if (entity === null) {
 					this.selectedEntities = [];
 					this.gizmo.control.detach();
-					this.gizmoGroup.children.forEach((e) => renderer.initEntityLayer.add(e))
-					this.gizmoGroup.clear();
 					taro.client.emit('show-transform-modes', false);
 					return;
 				}
-				const renderer = Renderer.Three.instance();
 				switch (mode) {
 					case 'select':
 						{
-							this.gizmoGroup.children.forEach((e) => renderer.initEntityLayer.add(e))
-							this.gizmoGroup.clear();
-							this.selectedEntities = [entity];
-							this.gizmoGroup.add(entity);
-							// this.gizmoGroup.position.set(entity.position.x, entity.position.y, entity.position.z);
-							this.gizmo.attach(this.gizmoGroup);
-							taro.client.emit('show-transform-modes', true);
+							if ((entity.parent as any).tag !== Three.EntityEditor.TAG) {
+								this.selectedEntities = [entity];
+								this.gizmo.attach(entity);
+								taro.client.emit('show-transform-modes', true);
+							} else {
+								this.selectedEntities = entity.parent.children as any;
+								this.selectedGroup = entity.parent as any;
+								this.gizmo.attach(entity.parent)
+							}
 							break;
 						}
 					case 'addOrRemove': {
 						if (this.selectedEntities.find((e) => e.uuid === entity.uuid) === undefined) {
 							this.selectedEntities.push(entity);
-							this.gizmoGroup.add(entity);
-							// this.gizmoGroup.position.set(entity.position.x, entity.position.y, entity.position.z);
-							this.gizmo.attach(this.gizmoGroup);
+							const minMaxPos = this.calcMinMaxPosition()
+							this.selectedGroup.position.set(minMaxPos.center.x, 0.51, minMaxPos.center.y);
+							this.gizmo.attach(this.selectedGroup);
 						} else {
 							this.selectedEntities = this.selectedEntities.filter((e) => e.uuid !== entity.uuid)
-							this.gizmoGroup.remove(entity);
-							let lastEntity = this.selectedEntities[this.selectedEntities.length - 1];
-							// this.gizmoGroup.position.set(lastEntity.position.x, lastEntity.position.y, lastEntity.position.z);
-							this.gizmo.attach(this.gizmoGroup);
+							this.selectedGroup.remove(entity);
+							renderer.initEntityLayer.add(entity);
+							const minMaxPos = this.calcMinMaxPosition();
+							entity.position.set(entity.position.x + this.selectedGroup.position.x, entity.position.y, entity.position.z + this.selectedGroup.position.z);
+							this.selectedGroup.position.set(minMaxPos.center.x, 0.51, minMaxPos.center.y);
+							this.gizmo.attach(this.selectedGroup);
 						}
 
 						break;

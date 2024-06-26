@@ -165,12 +165,7 @@ namespace Renderer {
 												}
 												initEntity = (parent as Renderer.Three.Model & { entity: InitEntity }).entity;
 											}
-											if (
-												initEntity &&
-												(
-													this.entityEditor.getLastSelectedEntity()?.uuid !== initEntity.uuid)
-											) {
-												console.log(event.shiftKey)
+											if (initEntity) {
 												this.entityEditor.selectEntity(initEntity, event.shiftKey ? 'addOrRemove' : 'select');
 												taro.client.emit('block-rotation', !!initEntity.isBillboard);
 											} else if (clickDelay < 350) {
