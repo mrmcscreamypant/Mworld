@@ -214,7 +214,8 @@ namespace Renderer {
 					console.log(e)
 					let nowPos = new THREE.Vector2(e.position.x, e.position.z);
 					if ((e.parent as any).tag === Three.EntityEditor.TAG) {
-						nowPos.add(this.selectedEntitiesMinMaxCenterPos.center);
+						nowPos.setX(e.position.x + e.parent.position.x);
+						nowPos.setY(e.position.z + e.parent.position.z);
 					}
 					this.selectedEntitiesMinMaxCenterPos.min.min(nowPos)
 					this.selectedEntitiesMinMaxCenterPos.max.max(nowPos)
@@ -296,7 +297,7 @@ namespace Renderer {
 						if (this.selectedEntities.find((e) => e.uuid === entity.uuid) === undefined) {
 							this.selectedEntities.push(entity);
 							const minMaxPos = this.calcMinMaxPosition()
-							this.selectedGroup.position.set(minMaxPos.center.x, 0.51, minMaxPos.center.y);
+							this.selectedGroup.position.set(minMaxPos.center.x, 0, minMaxPos.center.y);
 							this.gizmo.attach(this.selectedGroup);
 						} else {
 							this.selectedEntities = this.selectedEntities.filter((e) => e.uuid !== entity.uuid)
@@ -304,7 +305,7 @@ namespace Renderer {
 							renderer.initEntityLayer.add(entity);
 							const minMaxPos = this.calcMinMaxPosition();
 							entity.position.set(entity.position.x + this.selectedGroup.position.x, entity.position.y, entity.position.z + this.selectedGroup.position.z);
-							this.selectedGroup.position.set(minMaxPos.center.x, 0.51, minMaxPos.center.y);
+							this.selectedGroup.position.set(minMaxPos.center.x, 0, minMaxPos.center.y);
 							this.gizmo.attach(this.selectedGroup);
 						}
 
