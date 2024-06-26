@@ -250,9 +250,18 @@ namespace Renderer {
 					}
 				}
 				renderer.initEntityLayer.children.forEach((e: any) => {
-					console.log(e);
-					e.update?.();
+					this.updateGroupOrEntity(e)
 				})
+			}
+
+			updateGroupOrEntity(e: THREE.Group | THREE.Object3D) {
+				if ((e as any).tag === Three.EntityEditor.TAG) {
+					e.children.forEach((e_child) => {
+						this.updateGroupOrEntity(e_child)
+					})
+				} else {
+					(e as any).update?.();
+				}
 			}
 
 			getLastSelectedEntity() {
