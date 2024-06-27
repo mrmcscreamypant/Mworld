@@ -249,7 +249,7 @@ var MobileControlsComponent = TaroEntity.extend({
 		let joystickZone = document.createElement('div');
 		joystickZone.id = type + '_joystick';
 		joystickZone.style.width = '50vw';
-		joystickZone.style.height = '50vw';
+		joystickZone.style.height = '100vh';
 		joystickZone.style.position = 'fixed';
 
 		// placing joystick in the correct zone
