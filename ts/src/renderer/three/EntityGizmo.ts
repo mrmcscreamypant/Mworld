@@ -119,15 +119,34 @@ namespace Renderer {
 							// drag ended
 							const editedAction = this.generateEditedAction();
 							if (editedAction && renderer.entityEditor.selectedEntity instanceof InitEntity) {
-								const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction));
+								const nowAction = JSON.stringify(editedAction);
+								const nowUndoAction = JSON.stringify(this.undoAction);
 								const nowEntity = renderer.entityEditor.selectedEntity;
-								Renderer.Three.instance().voxelEditor.commandController.addCommand(
+								renderer.voxelEditor.commandController.addCommand(
 									{
 										func: () => {
-											(nowEntity as InitEntity).edit(editedAction);
+											const action = JSON.parse(nowAction);
+											let nowId = action.actionId;
+											for (let i = 0; i <= renderer.voxelEditor.commandController.nowInsertIndex + 1; i++) {
+												let command = renderer.voxelEditor.commandController.commands[i];
+												if (command && command.cache?.oldId === nowId) {
+													nowId = command.cache?.newId;
+												}
+											}
+											action.actionId = nowId;
+											(nowEntity as InitEntity).edit(action);
 										},
 										undo: () => {
-											(nowEntity as InitEntity).edit(nowUndoAction);
+											const action = JSON.parse(nowUndoAction);
+											let nowId = action.actionId;
+											for (let i = 0; i <= renderer.voxelEditor.commandController.nowInsertIndex + 1; i++) {
+												let command = renderer.voxelEditor.commandController.commands[i];
+												if (command && command.cache?.oldId === nowId) {
+													nowId = command.cache?.newId;
+												}
+											}
+											action.actionId = nowId;
+											(nowEntity as InitEntity).edit(action);
 										},
 									},
 									true,
@@ -136,7 +155,7 @@ namespace Renderer {
 								this.undoAction = {};
 							} else if (editedAction && renderer.entityEditor.selectedEntity instanceof Region) {
 								const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction));
-								Renderer.Three.instance().voxelEditor.commandController.addCommand(
+								renderer.voxelEditor.commandController.addCommand(
 									{
 										func: () => {
 											inGameEditor.updateRegionInReact && !window.isStandalone;

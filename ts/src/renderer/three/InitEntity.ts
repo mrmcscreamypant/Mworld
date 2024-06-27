@@ -271,7 +271,7 @@ namespace Renderer {
 								action.actionId =
 									renderer.voxelEditor.commandController.commands[
 										nowCommandCount - renderer.voxelEditor.commandController.offset
-									].cache;
+									].cache.newId;
 							}
 							this.edit(action);
 						},
@@ -279,13 +279,14 @@ namespace Renderer {
 							const newId = taro.newIdHex();
 							const nowCommandCount = renderer.voxelEditor.commandController.nowInsertIndex;
 							const nowActionObj = JSON.parse(nowAction);
+							const oldId = nowActionObj.actionId;
 							nowActionObj.actionId = newId;
 							renderer.createInitEntity(nowActionObj);
 							taro.network.send<any>('editInitEntity', nowActionObj);
 							setTimeout(() => {
 								renderer.voxelEditor.commandController.commands[
 									nowCommandCount - renderer.voxelEditor.commandController.offset
-								].cache = newId;
+								].cache = { newId, oldId };
 							}, 0);
 						},
 					},
