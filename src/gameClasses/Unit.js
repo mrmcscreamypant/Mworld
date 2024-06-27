@@ -152,6 +152,10 @@ var Unit = TaroEntityPhysics.extend({
 		self.playEffect('create');
 		self.addBehaviour('unitBehaviour', self._behaviour);
 		self.scaleDimensions(self._stats.width, self._stats.height);
+
+		if (taro.isClient) {
+			this.script.trigger('entityCreated');
+		}
 	},
 
 	shouldRenderAttribute: function (attribute) {
