@@ -55,23 +55,7 @@ namespace Renderer {
 				private viewportHeight: number,
 				private canvas: HTMLCanvasElement
 			) {
-				// Public API
-
-				// DONE
-				// camera.setProjection(string)
-				// camera.setElevationAngle(number)
-				// camera.getElevationAngle()
-				// camera.setAzimuthAngle(number)
-				// camera.setOffset(x, y, z)
-				// camera.setElevationRange(min, max)
-				// camera.setZoom(number)
-				// camera.setPointerLock(bool)
-
-				// TODO
-				// camera.setTarget(object3d | null, moveInstantOrLerp)
-				// camera.setFollowSpeed(number)
-				// camera.update(dt <-- add dt to func)
-
+				// Used by OrbitControls
 				const persCamera = new THREE.PerspectiveCamera(75, viewportWidth / viewportHeight, 0.1, 15000);
 				this.perspectiveCamera = persCamera;
 				this.fovInitial = Math.tan(((Math.PI / 180) * this.perspectiveCamera.fov) / 2);
@@ -92,6 +76,7 @@ namespace Renderer {
 				this.perspectiveCamera.position.add(this.offset);
 				this.orthographicCamera.position.add(this.offset);
 
+				// Used by the scene, copies position from the cameras above
 				this.cameraO = orthoCamera.clone();
 				this.cameraP = persCamera.clone();
 
@@ -290,6 +275,10 @@ namespace Renderer {
 					this.orthographicCamera.zoom = this.zoom;
 					this.orthographicCamera.lookAt(this.controls.target);
 					this.orthographicCamera.updateProjectionMatrix();
+
+					this.cameraO.zoom = this.zoom;
+					this.cameraO.lookAt(this.controls.target);
+					this.cameraO.updateProjectionMatrix();
 				}
 
 				this.controls.update();
