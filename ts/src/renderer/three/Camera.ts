@@ -48,8 +48,6 @@ namespace Renderer {
 			private cameraO: THREE.OrthographicCamera;
 			private cameraP: THREE.PerspectiveCamera;
 
-			private rayHelpers = [];
-
 			constructor(
 				private viewportWidth: number,
 				private viewportHeight: number,
@@ -179,12 +177,6 @@ namespace Renderer {
 					canvas.ownerDocument.addEventListener('pointerlockchange', this.onPointerlockChange.bind(this));
 					canvas.ownerDocument.addEventListener('pointerlockerror', this.onPointerlockError.bind(this));
 				}
-
-				this.rayHelpers.push(new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(), 1, 0xff0000));
-				this.rayHelpers.push(new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, 0x00ff00));
-				this.rayHelpers.push(new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 1, 0x0000ff));
-				this.rayHelpers.push(new THREE.ArrowHelper(new THREE.Vector3(0, -1, 0), new THREE.Vector3(), 1, 0xff0000));
-				this.rayHelpers.forEach((helper) => Three.instance().scene.add(helper));
 			}
 
 			setBounds(x: number, y: number, width: number, height: number) {
@@ -361,35 +353,6 @@ namespace Renderer {
 					const halfExtends = new THREE.Vector3();
 					halfExtends.y = this.cameraP.near * Math.tan(0.5 * (Math.PI / 180) * this.cameraP.fov);
 					halfExtends.x = halfExtends.y * this.cameraP.aspect;
-
-					window.addEventListener('keydown', (evt) => {
-						if (evt.key === '5') {
-							const castRay = (idx: number, x: number, y: number) => {
-								const helper = this.rayHelpers[idx];
-								Three.instance().scene.remove(helper);
-								const whalfExtends = this.cameraP.localToWorld(new THREE.Vector3(x, y, 0));
-								const dir = new THREE.Vector3()
-									.subVectors(whalfExtends, this.cameraP.localToWorld(new THREE.Vector3(x, y, -1)))
-									.normalize();
-								const origin = this.cameraP.localToWorld(
-									this.cameraP
-										.worldToLocal(
-											new THREE.Vector3(this.controls.target.x, this.controls.target.y, this.controls.target.z)
-										)
-										.add(new THREE.Vector3(x, y, 0))
-								);
-
-								const length = this.controls.getDistance() - this.controls.object.near;
-								this.rayHelpers[idx] = new THREE.ArrowHelper(dir, origin, length, 0xff0000);
-								Three.instance().scene.add(this.rayHelpers[idx]);
-							};
-
-							castRay(0, -halfExtends.x, -halfExtends.y);
-							castRay(1, halfExtends.x, -halfExtends.y);
-							castRay(2, halfExtends.x, halfExtends.y);
-							castRay(3, -halfExtends.x, halfExtends.y);
-						}
-					});
 
 					const castRay = (x: number, y: number) => {
 						const whalfExtends = this.cameraP.localToWorld(new THREE.Vector3(x, y, 0));
