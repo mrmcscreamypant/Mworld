@@ -26,7 +26,6 @@ namespace Renderer {
 			camera: Camera;
 			scene: THREE.Scene;
 			mode = Mode.Play;
-			voxels: Voxels;
 
 			private clock = new THREE.Clock();
 			private pointer = new THREE.Vector2();
@@ -38,6 +37,7 @@ namespace Renderer {
 			public initEntityLayer = new THREE.Group();
 
 			private sky: Skybox;
+			private voxels: Voxels;
 			private particleSystem: ParticleSystem;
 
 			private raycastIntervalSeconds = 0.1;
@@ -70,14 +70,14 @@ namespace Renderer {
 				document.querySelector('#game-div')?.appendChild(renderer.domElement);
 				this.renderer = renderer;
 
-				this.scene = new THREE.Scene();
-				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
-
 				this.camera = new Camera(window.innerWidth, window.innerHeight, this.renderer.domElement);
 				this.camera.setElevationAngle(taro.game.data.settings.camera.defaultPitch);
 				if (taro.game.data.settings.camera.projectionMode !== 'orthographic') {
 					this.camera.setProjection(taro.game.data.settings.camera.projectionMode);
 				}
+
+				this.scene = new THREE.Scene();
+				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
 
 				window.addEventListener('resize', () => {
 					this.camera.resize(window.innerWidth, window.innerHeight);
