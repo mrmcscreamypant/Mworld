@@ -357,15 +357,15 @@ namespace Renderer {
 					halfExtends.y = this.cameraP.near * Math.tan(0.5 * (Math.PI / 180) * this.cameraP.fov);
 					halfExtends.x = halfExtends.y * this.cameraP.aspect;
 
+					const target = this.target ? this.target.position : this.controls.target;
+
 					const castRay = (x: number, y: number) => {
 						const whalfExtends = this.cameraP.localToWorld(new THREE.Vector3(x, y, 0));
 						const dir = new THREE.Vector3()
 							.subVectors(whalfExtends, this.cameraP.localToWorld(new THREE.Vector3(x, y, -1)))
 							.normalize();
 						const origin = this.cameraP.localToWorld(
-							this.cameraP
-								.worldToLocal(new THREE.Vector3(this.controls.target.x, this.controls.target.y, this.controls.target.z))
-								.add(new THREE.Vector3(x, y, 0))
+							this.cameraP.worldToLocal(new THREE.Vector3(target.x, target.y, target.z)).add(new THREE.Vector3(x, y, 0))
 						);
 						const length = this.controls.getDistance() - this.controls.object.near;
 						const ray = new THREE.Raycaster(origin, dir, 0, length);
@@ -389,10 +389,10 @@ namespace Renderer {
 					if (intersects.length > 0) {
 						const closest = intersects.reduce((prev, curr) => (prev.distance < curr.distance ? prev : curr));
 						const newPos = new THREE.Vector3()
-							.subVectors(this.controls.object.position, this.controls.target)
+							.subVectors(this.controls.object.position, target)
 							.normalize()
 							.multiplyScalar(closest.distance + this.controls.object.near)
-							.add(this.controls.target);
+							.add(target);
 						this.cameraO.position.set(newPos.x, newPos.y, newPos.z);
 						this.cameraP.position.set(newPos.x, newPos.y, newPos.z);
 					}
