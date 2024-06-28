@@ -72,8 +72,8 @@ namespace Renderer {
 						} else if (body instanceof Model) {
 							this.setSize(
 								Utils.pixelToWorld(this.defaultWidth * action.scale.x),
-								Utils.pixelToWorld(this.defaultHeight * action.scale.y),
-								Utils.pixelToWorld(this.defaultDepth * action.scale.z)
+								Utils.pixelToWorld(this.defaultDepth * action.scale.z),
+								Utils.pixelToWorld(this.defaultHeight * action.scale.y)
 							);
 						}
 					} else if (!isNaN(action.width) && !isNaN(action.height)) {
@@ -122,6 +122,7 @@ namespace Renderer {
 			}
 
 			setSize(x: number, y: number, z: number) {
+				//console.log('setSize', x, y, z, this.body);
 				if (this.body instanceof AnimatedSprite) {
 					this.scale.set(x, 1, z);
 				} else if (this.body instanceof Model) {
@@ -153,6 +154,7 @@ namespace Renderer {
 					}
 				}
 				if (taro.is3D()) {
+					console.log('action', action);
 					if (
 						!isNaN(action.rotation?.x) &&
 						!isNaN(action.rotation?.y) &&
@@ -175,22 +177,24 @@ namespace Renderer {
 							THREE.MathUtils.degToRad(this.action.rotation.z)
 						);
 					}
+					console.log('action.scale', action.scale, this.action.scale, this.action.width, this.action.height);
+					//debugger;
 					if (
 						!isNaN(action.scale?.x) &&
 						!isNaN(action.scale?.y) &&
 						!isNaN(action.scale?.z) &&
 						(this.action.scale === undefined ||
 							(!isNaN(this.action.scale?.x) && !isNaN(this.action.scale?.y) && !isNaN(this.action.scale?.z)) ||
-							(!isNaN(this.action.width) && !isNaN(action.width)) ||
-							(!isNaN(this.action.height) && !isNaN(action.height)))
+							!isNaN(this.action.width) ||
+							!isNaN(this.action.height))
 					) {
 						if (!isNaN(action.width)) {
 							this.action.width = action.width;
-							this.action.scale.x = action.width;
+							this.action.scale.x = action.width / this.defaultWidth;
 						}
 						if (!isNaN(action.height)) {
 							this.action.height = action.height;
-							this.action.scale.z = action.height;
+							this.action.scale.z = action.height / this.defaultHeight;
 						}
 						if (action.scale) {
 							this.action.scale = action.scale;
@@ -204,17 +208,26 @@ namespace Renderer {
 						if (isNaN(this.action.scale.z)) {
 							this.action.scale.z = 0;
 						}
+						console.log(
+							'set size',
+							this.defaultWidth * action.scale.x,
+							this.defaultDepth * action.scale.z,
+							this.defaultHeight * action.scale.y,
+							'prev size',
+							this.action.width,
+							this.action.height
+						);
 						this.setSize(
 							Utils.pixelToWorld(this.defaultWidth * action.scale.x),
-							Utils.pixelToWorld(this.defaultHeight * action.scale.y),
-							Utils.pixelToWorld(this.defaultDepth * action.scale.z)
+							Utils.pixelToWorld(this.defaultDepth * action.scale.z),
+							Utils.pixelToWorld(this.defaultHeight * action.scale.y)
 						);
 					}
 					if (!isNaN(this.action.width) && !isNaN(action.width)) {
 						this.action.width = action.width;
 						this.setSize(
 							Utils.pixelToWorld(action.width),
-							Utils.pixelToWorld(this.defaultDepth),
+							Utils.pixelToWorld(this.defaultDepth * action.scale.z),
 							Utils.pixelToWorld(this.action.height)
 						);
 					}
@@ -222,7 +235,7 @@ namespace Renderer {
 						this.action.height = action.height;
 						this.setSize(
 							Utils.pixelToWorld(this.action.width),
-							Utils.pixelToWorld(this.defaultDepth),
+							Utils.pixelToWorld(this.defaultDepth * action.scale.z),
 							Utils.pixelToWorld(action.height)
 						);
 					}
