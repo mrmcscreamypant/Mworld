@@ -349,7 +349,7 @@ namespace Renderer {
 					this.setPosition(x, this.controls.target.y, z);
 				}
 
-				if (this.isPerspective) {
+				if (this.isPerspective && !this.isEditorMode) {
 					const halfExtends = new THREE.Vector3();
 					halfExtends.y = this.cameraP.near * Math.tan(0.5 * (Math.PI / 180) * this.cameraP.fov);
 					halfExtends.x = halfExtends.y * this.cameraP.aspect;
