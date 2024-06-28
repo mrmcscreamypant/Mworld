@@ -122,7 +122,6 @@ namespace Renderer {
 			}
 
 			setSize(x: number, y: number, z: number) {
-				//console.log('setSize', x, y, z, this.body);
 				if (this.body instanceof AnimatedSprite) {
 					this.scale.set(x, 1, z);
 				} else if (this.body instanceof Model) {
@@ -154,7 +153,6 @@ namespace Renderer {
 					}
 				}
 				if (taro.is3D()) {
-					console.log('action', action);
 					if (
 						!isNaN(action.rotation?.x) &&
 						!isNaN(action.rotation?.y) &&
@@ -177,8 +175,6 @@ namespace Renderer {
 							THREE.MathUtils.degToRad(this.action.rotation.z)
 						);
 					}
-					console.log('action.scale', action.scale, this.action.scale, this.action.width, this.action.height);
-					//debugger;
 					if (
 						!isNaN(action.scale?.x) &&
 						!isNaN(action.scale?.y) &&
@@ -208,15 +204,6 @@ namespace Renderer {
 						if (isNaN(this.action.scale.z)) {
 							this.action.scale.z = 0;
 						}
-						console.log(
-							'set size',
-							this.defaultWidth * action.scale.x,
-							this.defaultDepth * action.scale.z,
-							this.defaultHeight * action.scale.y,
-							'prev size',
-							this.action.width,
-							this.action.height
-						);
 						this.setSize(
 							Utils.pixelToWorld(this.defaultWidth * action.scale.x),
 							Utils.pixelToWorld(this.defaultDepth * action.scale.z),

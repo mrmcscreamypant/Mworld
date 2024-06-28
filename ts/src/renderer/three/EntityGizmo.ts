@@ -66,8 +66,8 @@ namespace Renderer {
 						if (taro.is3D()) {
 							if (control.object.body instanceof AnimatedSprite) {
 								editedAction['scale'] = {
-									x: control.object.scale.x,
-									y: control.object.scale.z,
+									x: Utils.worldToPixel(control.object.scale.x) / control.object.defaultWidth,
+									y: Utils.worldToPixel(control.object.scale.z) / control.object.defaultHeight,
 									z: 0,
 									function: 'vector3',
 								};
