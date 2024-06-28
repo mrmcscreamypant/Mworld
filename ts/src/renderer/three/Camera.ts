@@ -45,15 +45,10 @@ namespace Renderer {
 
 			private bounds = { x: 0, y: 0, width: 0, height: 0 };
 
-			private distanceBeforeCollision = 0;
-			private isColliding = false;
-			private distance = 0;
-
 			private cameraO: THREE.OrthographicCamera;
 			private cameraP: THREE.PerspectiveCamera;
 
 			private rayHelpers = [];
-			private cameraHelper: THREE.CameraHelper;
 
 			constructor(
 				private viewportWidth: number,
@@ -402,85 +397,42 @@ namespace Renderer {
 					}
 				});
 
-				const ray = new THREE.Raycaster(
-					new THREE.Vector3(
-						this.controls.target.x - halfExtends.x,
-						this.controls.target.y - halfExtends.y,
-						this.controls.target.z
-					),
-					new THREE.Vector3()
-						.subVectors(
-							new THREE.Vector3(
-								this.controls.object.position.x - halfExtends.x,
-								this.controls.object.position.y - halfExtends.y,
-								this.controls.object.position.z
-							),
-							this.controls.target
-						)
-						.normalize(),
-					this.controls.object.near,
-					this.controls.getDistance() - this.controls.object.near
-				);
+				const castRay = (x: number, y: number) => {
+					const whalfExtends = this.cameraP.localToWorld(new THREE.Vector3(x, y, 0));
+					const dir = new THREE.Vector3()
+						.subVectors(whalfExtends, this.cameraP.localToWorld(new THREE.Vector3(x, y, -1)))
+						.normalize();
+					const origin = this.cameraP.localToWorld(
+						this.cameraP
+							.worldToLocal(new THREE.Vector3(this.controls.target.x, this.controls.target.y, this.controls.target.z))
+							.add(new THREE.Vector3(x, y, 0))
+					);
+					const length = this.controls.getDistance() - this.controls.object.near;
+					const ray = new THREE.Raycaster(origin, dir, 0, length);
+					const intersects = ray.intersectObjects(Three.instance().voxels.children, false);
+					return intersects.length > 0 ? intersects[0] : undefined;
+				};
 
-				// const ray = new THREE.Raycaster();
-				// ray.setFromCamera(new THREE.Vector2(0, 0), this.controls.object);
-				// ray.near = this.controls.object.near;
-				// // ray.far = this.controls.getDistance() - this.controls.object.near;
-				// ray.far = this.controls.getDistance();
-
-				const intersects = ray.intersectObjects(Three.instance().voxels.children, true);
+				const intersects = [];
+				for (const dir of [
+					{ x: -1, y: -1 },
+					{ x: 1, y: -1 },
+					{ x: 1, y: 1 },
+					{ x: -1, y: 1 },
+					{ x: 0, y: 0 },
+				]) {
+					const intersect = castRay(dir.x * halfExtends.x, dir.y * halfExtends.y);
+					if (intersect) intersects.push(intersect);
+				}
 				if (intersects.length > 0) {
-					const point = intersects[0].point;
-					this.debugInfo.innerHTML += `point: ${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)}</br>`;
-
-					// const distance = this.instance.position.distanceTo(this.controls.target) - this.instance.near;
-
-					// console.log(this.controls.distance);
-					// this.setDistance(distance);
-
-					// const newPos = new THREE.Vector3()
-					// 	.subVectors(this.controls.object.position, this.controls.target)
-					// 	.normalize()
-					// 	.multiplyScalar(distance)
-					// 	.add(this.controls.target);
-					// this.perspectiveCamera.position.copy(newPos).add(this.offset);
-					// this.orthographicCamera.position.copy(newPos).add(this.offset);
-
-					if (!this.isColliding) {
-						// this.distance = this.instance.position.distanceTo(this.controls.target) - this.instance.near;
-						// this.instance.position.set(point.x, point.y, point.z);
-						// this.cameraO.position.set(point.x, point.y, point.z);
-						// this.cameraP.position.set(point.x, point.y, point.z);
-						// this.controls.update();
-
-						console.log('colliding');
-						// this.setDistance(distance);
-					}
-
-					this.cameraO.position.set(point.x, point.y, point.z);
-					this.cameraP.position.set(point.x, point.y, point.z);
-
-					this.isColliding = true;
-				} else {
-					if (this.isColliding) {
-						console.log('not colliding');
-						// this.distanceBeforeCollision = distance;
-						// this.setDistance(this.distanceBeforeCollision);
-
-						// const newPos = new THREE.Vector3()
-						// 	.subVectors(this.controls.object.position, this.controls.target)
-						// 	.normalize()
-						// 	.multiplyScalar(this.distance)
-						// 	.add(this.controls.target);
-						// this.perspectiveCamera.position.copy(newPos).add(this.offset);
-						// this.orthographicCamera.position.copy(newPos).add(this.offset);
-
-						// this.cameraO.position.set(point.x, point.y, point.z);
-						// this.cameraP.position.set(point.x, point.y, point.z);
-					}
-
-					this.isColliding = false;
-					// this.setDistance(this.distanceBeforeCollision);
+					const closest = intersects.reduce((prev, curr) => (prev.distance < curr.distance ? prev : curr));
+					const newPos = new THREE.Vector3()
+						.subVectors(this.controls.object.position, this.controls.target)
+						.normalize()
+						.multiplyScalar(closest.distance + this.controls.object.near)
+						.add(this.controls.target);
+					this.cameraO.position.set(newPos.x, newPos.y, newPos.z);
+					this.cameraP.position.set(newPos.x, newPos.y, newPos.z);
 				}
 			}
 
