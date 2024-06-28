@@ -403,6 +403,8 @@ namespace Renderer {
 						);
 						const length = this.controls.getDistance() - this.controls.object.near;
 						const ray = new THREE.Raycaster(origin, dir, 0, length);
+						//@ts-ignore
+						ray.firstHitOnly = true;
 						const intersects = ray.intersectObjects(Three.instance().voxels.children, false);
 						return intersects.length > 0 ? intersects[0] : undefined;
 					};
