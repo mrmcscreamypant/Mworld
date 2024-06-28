@@ -45,6 +45,13 @@ namespace Renderer {
 
 			private bounds = { x: 0, y: 0, width: 0, height: 0 };
 
+			private distanceBeforeCollision = 0;
+			private isColliding = false;
+			private distance = 0;
+
+			private cameraO: THREE.OrthographicCamera;
+			private cameraP: THREE.PerspectiveCamera;
+
 			constructor(
 				private viewportWidth: number,
 				private viewportHeight: number,
@@ -87,9 +94,12 @@ namespace Renderer {
 				this.perspectiveCamera.position.add(this.offset);
 				this.orthographicCamera.position.add(this.offset);
 
-				this.instance = orthoCamera;
+				this.cameraO = orthoCamera.clone();
+				this.cameraP = persCamera.clone();
 
-				this.controls = new OrbitControls(this.instance, canvas);
+				this.instance = this.cameraO;
+
+				this.controls = new OrbitControls(this.orthographicCamera, canvas);
 				this.controls.enableRotate = false;
 				this.controls.enableZoom = false;
 				this.controls.mouseButtons = { LEFT: '', MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
@@ -135,7 +145,7 @@ namespace Renderer {
 						this.isLocked ? this.unlock() : this.lock();
 					} else if (evt.key === ',') {
 						this.isPerspective = false;
-						this.instance = this.orthographicCamera;
+						this.instance = this.cameraO;
 						this.controls.object = this.orthographicCamera;
 						this.zoom = this.lastAuthoritativeZoom;
 
@@ -296,6 +306,11 @@ namespace Renderer {
 			}
 
 			update() {
+				this.cameraO.position.copy(this.controls.object.position);
+				this.cameraP.position.copy(this.controls.object.position);
+				this.cameraO.lookAt(this.controls.target);
+				this.cameraP.lookAt(this.controls.target);
+
 				if (this.isEditorMode) {
 					const azimuthAngle = this.controls.getAzimuthalAngle() * (180 / Math.PI);
 					const elevationAngle = this.getElevationAngle() * (180 / Math.PI);
@@ -342,6 +357,68 @@ namespace Renderer {
 					else if (z > bottom) z = bottom;
 
 					this.setPosition(x, this.controls.target.y, z);
+				}
+
+				const ray = new THREE.Raycaster(
+					this.controls.target,
+					new THREE.Vector3().subVectors(this.controls.object.position, this.controls.target).normalize(),
+					this.controls.object.near,
+					this.controls.getDistance() - this.controls.object.near
+				);
+
+				const intersects = ray.intersectObjects(Three.instance().voxels.children, true);
+				if (intersects.length > 0) {
+					const point = intersects[0].point;
+					this.debugInfo.innerHTML += `point: ${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)}</br>`;
+
+					// const distance = this.instance.position.distanceTo(this.controls.target) - this.instance.near;
+
+					// console.log(this.controls.distance);
+					// this.setDistance(distance);
+
+					// const newPos = new THREE.Vector3()
+					// 	.subVectors(this.controls.object.position, this.controls.target)
+					// 	.normalize()
+					// 	.multiplyScalar(distance)
+					// 	.add(this.controls.target);
+					// this.perspectiveCamera.position.copy(newPos).add(this.offset);
+					// this.orthographicCamera.position.copy(newPos).add(this.offset);
+
+					if (!this.isColliding) {
+						// this.distance = this.instance.position.distanceTo(this.controls.target) - this.instance.near;
+						// this.instance.position.set(point.x, point.y, point.z);
+						// this.cameraO.position.set(point.x, point.y, point.z);
+						// this.cameraP.position.set(point.x, point.y, point.z);
+						// this.controls.update();
+
+						console.log('colliding');
+						// this.setDistance(distance);
+					}
+
+					this.cameraO.position.set(point.x, point.y, point.z);
+					this.cameraP.position.set(point.x, point.y, point.z);
+
+					this.isColliding = true;
+				} else {
+					if (this.isColliding) {
+						console.log('not colliding');
+						// this.distanceBeforeCollision = distance;
+						// this.setDistance(this.distanceBeforeCollision);
+
+						// const newPos = new THREE.Vector3()
+						// 	.subVectors(this.controls.object.position, this.controls.target)
+						// 	.normalize()
+						// 	.multiplyScalar(this.distance)
+						// 	.add(this.controls.target);
+						// this.perspectiveCamera.position.copy(newPos).add(this.offset);
+						// this.orthographicCamera.position.copy(newPos).add(this.offset);
+
+						// this.cameraO.position.set(point.x, point.y, point.z);
+						// this.cameraP.position.set(point.x, point.y, point.z);
+					}
+
+					this.isColliding = false;
+					// this.setDistance(this.distanceBeforeCollision);
 				}
 			}
 
@@ -495,9 +572,17 @@ namespace Renderer {
 				this.orthographicCamera.zoom = this.zoom;
 				this.orthographicCamera.lookAt(this.controls.target);
 				this.orthographicCamera.updateProjectionMatrix();
-				this.instance = this.orthographicCamera;
 				this.controls.object = this.orthographicCamera;
-				this.instance.lookAt(this.controls.target);
+				this.orthographicCamera.lookAt(this.controls.target);
+
+				this.cameraO.position.copy(this.perspectiveCamera.position).add(this.offset);
+				this.cameraO.quaternion.copy(this.perspectiveCamera.quaternion);
+				this.cameraO.zoom = this.zoom;
+				this.cameraO.lookAt(this.controls.target);
+				this.cameraO.updateProjectionMatrix();
+				this.cameraO.lookAt(this.controls.target);
+				this.instance = this.cameraO;
+
 				this.controls.update();
 			}
 
@@ -516,9 +601,16 @@ namespace Renderer {
 
 				this.perspectiveCamera.position.copy(newPos);
 				this.perspectiveCamera.updateProjectionMatrix();
-				this.instance = this.perspectiveCamera;
 				this.controls.object = this.perspectiveCamera;
-				this.instance.lookAt(this.controls.target);
+				this.perspectiveCamera.lookAt(this.controls.target);
+
+				this.cameraP.position.copy(this.orthographicCamera.position).add(this.offset);
+				this.cameraP.quaternion.copy(this.orthographicCamera.quaternion);
+				this.cameraP.position.copy(newPos);
+				this.cameraP.updateProjectionMatrix();
+				this.cameraP.lookAt(this.controls.target);
+				this.instance = this.cameraP;
+
 				this.controls.update();
 			}
 

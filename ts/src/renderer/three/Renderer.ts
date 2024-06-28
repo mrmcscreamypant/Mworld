@@ -26,6 +26,7 @@ namespace Renderer {
 			camera: Camera;
 			scene: THREE.Scene;
 			mode = Mode.Play;
+			voxels: Voxels;
 
 			private clock = new THREE.Clock();
 			private pointer = new THREE.Vector2();
@@ -37,7 +38,6 @@ namespace Renderer {
 			public initEntityLayer = new THREE.Group();
 
 			private sky: Skybox;
-			private voxels: Voxels;
 			private particleSystem: ParticleSystem;
 
 			private raycastIntervalSeconds = 0.1;
