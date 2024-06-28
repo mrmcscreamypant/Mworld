@@ -835,7 +835,7 @@ NetIo.Server = NetIo.EventingClass.extend({
 				userId: decodedToken.userId,
 				sessionId: decodedToken.sessionId,
 				distinctId: searchParams.get('distinctId'),
-				posthogDistinctId: searchParams.get('posthogDistinctId'),
+				// posthogDistinctId: searchParams.get('posthogDistinctId'),
 				token,
 				tokenCreatedAt: decodedToken.createdAt,
 			};
