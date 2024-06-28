@@ -12,6 +12,10 @@ namespace Renderer {
 			return Renderer.instance();
 		}
 
+		export function resetInstance() {
+			return Renderer.resetInstance();
+		}
+
 		export function getPointer() {
 			return Renderer.getPointer();
 		}
@@ -462,7 +466,9 @@ namespace Renderer {
 					this.init();
 					taro.input.setupListeners(this.renderer.domElement);
 					taro.client.rendererLoaded.resolve();
-					requestAnimationFrame(this.render.bind(this));
+					
+					window.requestAnimationFrameIds = window.requestAnimationFrameIds || [];
+					window.requestAnimationFrameIds.push(requestAnimationFrame(this.render.bind(this)));
 				};
 
 				const isPixelArt = taro.game.data.defaultData.renderingFilter === 'pixelArt';
@@ -512,6 +518,10 @@ namespace Renderer {
 				}
 
 				return this._instance;
+			}
+
+			static resetInstance() {
+				this._instance = null;
 			}
 
 			static getPointer() {
@@ -857,7 +867,9 @@ namespace Renderer {
 			}
 
 			private render() {
-				requestAnimationFrame(this.render.bind(this));
+				window.requestAnimationFrameIds = window.requestAnimationFrameIds || [];
+				window.requestAnimationFrameIds.push(requestAnimationFrame(this.render.bind(this)));
+
 				taro.client.emit('tick');
 				if (this.entityEditor) this.entityEditor.update();
 				if (this.camera.target && !taro.isMobile) {
