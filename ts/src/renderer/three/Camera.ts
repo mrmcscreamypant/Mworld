@@ -329,7 +329,7 @@ namespace Renderer {
 					this.controls.update();
 				}
 
-				if (this.useBounds) {
+				if (this.useBounds && !this.isEditorMode) {
 					const viewHalfWidth = this.orthographicCamera.right / this.lastAuthoritativeZoom;
 					const viewHalfHeight = this.orthographicCamera.top / this.lastAuthoritativeZoom;
 
