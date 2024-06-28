@@ -445,6 +445,10 @@ namespace Renderer {
 					(360 / Math.PI) * Math.atan(this.fovInitial * (height / this.viewportHeightInitial));
 				this.perspectiveCamera.updateProjectionMatrix();
 
+				this.cameraP.aspect = this.perspectiveCamera.aspect;
+				this.cameraP.fov = this.perspectiveCamera.fov;
+				this.cameraP.updateProjectionMatrix();
+
 				const halfWidth = Utils.pixelToWorld(width / 2);
 				const halfHeight = Utils.pixelToWorld(height / 2);
 				this.originalHalfWidth = halfWidth;
@@ -453,6 +457,12 @@ namespace Renderer {
 				this.orthographicCamera.top = halfHeight;
 				this.orthographicCamera.bottom = -halfHeight;
 				this.orthographicCamera.updateProjectionMatrix();
+
+				this.cameraO.left = this.orthographicCamera.left;
+				this.cameraO.right = this.orthographicCamera.right;
+				this.cameraO.top = this.orthographicCamera.top;
+				this.cameraO.bottom = this.orthographicCamera.bottom;
+				this.cameraO.updateProjectionMatrix();
 
 				this.setZoom(Math.max(this.viewportWidth, this.viewportHeight) / this.zoomHeight);
 			}
