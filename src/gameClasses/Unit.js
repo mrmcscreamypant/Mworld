@@ -1616,15 +1616,18 @@ var Unit = TaroEntityPhysics.extend({
 				taro.game.lastAttackingItemId = damageData.sourceItemId;
 				this.lastAttackedBy = damageData.sourceUnitId;
 
-				if (taro.isClient) {
-					return true;
-				}
-				this.playEffect('attacked', { attackerId: damageData.sourceUnitId });
-
 				var triggeredBy = {
 					unitId: taro.game.lastAttackingUnitId,
 					itemId: taro.game.lastAttackingItemId,
 				};
+
+				if (taro.isClient) {
+					this.playEffect('attacked', { attackerId: damageData.sourceUnitId });
+					taro.script.trigger('unitAttacksUnit', triggeredBy);
+					this.script.trigger('entityGetsAttacked', triggeredBy);
+					return true;
+				}
+				this.playEffect('attacked', { attackerId: damageData.sourceUnitId });
 
 				taro.script.trigger('unitAttacksUnit', triggeredBy);
 				this.script.trigger('entityGetsAttacked', triggeredBy);
