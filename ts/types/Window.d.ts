@@ -1,4 +1,4 @@
 declare interface Window {
 	MeshBVHLib: any;
-	requestAnimationFrameIds: number[];
+	lastRequestAnimationFrameId: number;
 }

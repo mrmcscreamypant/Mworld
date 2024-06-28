@@ -12,8 +12,8 @@ namespace Renderer {
 			return Renderer.instance();
 		}
 
-		export function resetInstance() {
-			return Renderer.resetInstance();
+		export function reset() {
+			return Renderer.reset();
 		}
 
 		export function getPointer() {
@@ -467,8 +467,7 @@ namespace Renderer {
 					taro.input.setupListeners(this.renderer.domElement);
 					taro.client.rendererLoaded.resolve();
 					
-					window.requestAnimationFrameIds = window.requestAnimationFrameIds || [];
-					window.requestAnimationFrameIds.push(requestAnimationFrame(this.render.bind(this)));
+					window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
 				};
 
 				const isPixelArt = taro.game.data.defaultData.renderingFilter === 'pixelArt';
@@ -520,8 +519,11 @@ namespace Renderer {
 				return this._instance;
 			}
 
-			static resetInstance() {
-				this._instance = null;
+			static reset() {
+				cancelAnimationFrame(window.lastRequestAnimationFrameId);
+				window.lastRequestAnimationFrameId = null;
+
+				this._instance = new Renderer();
 			}
 
 			static getPointer() {
@@ -867,8 +869,7 @@ namespace Renderer {
 			}
 
 			private render() {
-				window.requestAnimationFrameIds = window.requestAnimationFrameIds || [];
-				window.requestAnimationFrameIds.push(requestAnimationFrame(this.render.bind(this)));
+				window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
 
 				taro.client.emit('tick');
 				if (this.entityEditor) this.entityEditor.update();
