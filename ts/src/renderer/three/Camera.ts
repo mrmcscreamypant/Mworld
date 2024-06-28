@@ -76,7 +76,12 @@ namespace Renderer {
 				this.perspectiveCamera.position.add(this.offset);
 				this.orthographicCamera.position.add(this.offset);
 
-				// Used by the scene, copies position from the cameras above
+				// Used by the scene, copies position from the cameras above.
+				// This is so that we can change the position of the camera
+				// without affecting the original position directed by
+				// OrbitControls. Ideally we want to rewrite this class and no
+				// longer use OrbitControls but move much of that logic here.
+				// For now we use this solution.
 				this.cameraO = orthoCamera.clone();
 				this.cameraP = persCamera.clone();
 
