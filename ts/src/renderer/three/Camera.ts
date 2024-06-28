@@ -227,6 +227,9 @@ namespace Renderer {
 				this.orthographicCamera.position.setFromSpherical(spherical).add(this.controls.target).add(this.offset);
 
 				this.controls.update();
+
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 			}
 
 			getElevationAngle() {
@@ -251,6 +254,9 @@ namespace Renderer {
 				this.orthographicCamera.position.setFromSpherical(spherical).add(this.controls.target).add(this.offset);
 
 				this.controls.update();
+
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 			}
 
 			setDistance(distance: number) {
@@ -272,11 +278,10 @@ namespace Renderer {
 					this.orthographicCamera.zoom = this.zoom;
 					this.orthographicCamera.lookAt(this.controls.target);
 					this.orthographicCamera.updateProjectionMatrix();
-
-					this.cameraO.zoom = this.zoom;
-					this.cameraO.lookAt(this.controls.target);
-					this.cameraO.updateProjectionMatrix();
 				}
+
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 
 				this.controls.update();
 			}
@@ -296,10 +301,8 @@ namespace Renderer {
 			}
 
 			update() {
-				this.cameraO.position.copy(this.controls.object.position);
-				this.cameraP.position.copy(this.controls.object.position);
-				this.cameraO.lookAt(this.controls.target);
-				this.cameraP.lookAt(this.controls.target);
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 
 				if (this.isEditorMode) {
 					const azimuthAngle = this.controls.getAzimuthalAngle() * (180 / Math.PI);
@@ -314,7 +317,7 @@ namespace Renderer {
 					const distance = this.controls.getDistance();
 					this.zoom = this.isPerspective
 						? this.originalDistance / distance
-						: Math.abs(this.originalHalfWidth / this.orthographicCamera.left) * this.orthographicCamera.zoom;
+						: Math.abs(this.originalHalfWidth / this.cameraO.left) * this.cameraO.zoom;
 					const editorZoom = Utils.round(Math.max(window.innerWidth, window.innerHeight) / this.zoom / 2.15, 2);
 					this.debugInfo.innerHTML += `zoom: ${editorZoom}</br>`;
 				}
@@ -330,8 +333,8 @@ namespace Renderer {
 				}
 
 				if (this.useBounds && !this.isEditorMode) {
-					const viewHalfWidth = this.orthographicCamera.right / this.lastAuthoritativeZoom;
-					const viewHalfHeight = this.orthographicCamera.top / this.lastAuthoritativeZoom;
+					const viewHalfWidth = this.cameraO.right / this.lastAuthoritativeZoom;
+					const viewHalfHeight = this.cameraO.top / this.lastAuthoritativeZoom;
 
 					const left = this.bounds.x + viewHalfWidth;
 					const right = this.bounds.x + this.bounds.width - viewHalfWidth;
@@ -405,10 +408,6 @@ namespace Renderer {
 					(360 / Math.PI) * Math.atan(this.fovInitial * (height / this.viewportHeightInitial));
 				this.perspectiveCamera.updateProjectionMatrix();
 
-				this.cameraP.aspect = this.perspectiveCamera.aspect;
-				this.cameraP.fov = this.perspectiveCamera.fov;
-				this.cameraP.updateProjectionMatrix();
-
 				const halfWidth = Utils.pixelToWorld(width / 2);
 				const halfHeight = Utils.pixelToWorld(height / 2);
 				this.originalHalfWidth = halfWidth;
@@ -418,13 +417,10 @@ namespace Renderer {
 				this.orthographicCamera.bottom = -halfHeight;
 				this.orthographicCamera.updateProjectionMatrix();
 
-				this.cameraO.left = this.orthographicCamera.left;
-				this.cameraO.right = this.orthographicCamera.right;
-				this.cameraO.top = this.orthographicCamera.top;
-				this.cameraO.bottom = this.orthographicCamera.bottom;
-				this.cameraO.updateProjectionMatrix();
-
 				this.setZoom(Math.max(this.viewportWidth, this.viewportHeight) / this.zoomHeight);
+
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 			}
 
 			setZoom(ratio: number) {
@@ -466,21 +462,18 @@ namespace Renderer {
 					const pointer = new THREE.Vector3(p.x, p.y, 0.5);
 					pointer.unproject(this.instance);
 					pointer.sub(this.instance.position).normalize();
-					const dist =
-						target.clone().sub(this.perspectiveCamera.position).dot(this.perspectiveCamera.up) /
-						pointer.dot(this.perspectiveCamera.up);
+					const dist = target.clone().sub(this.cameraP.position).dot(this.cameraP.up) / pointer.dot(this.cameraP.up);
 					return this.instance.position.clone().add(pointer.multiplyScalar(dist));
 				} else {
 					const pointer = new THREE.Vector3(
 						p.x,
 						p.y,
-						(this.orthographicCamera.near + this.orthographicCamera.far) /
-							(this.orthographicCamera.near - this.orthographicCamera.far)
+						(this.cameraO.near + this.cameraO.far) / (this.cameraO.near - this.cameraO.far)
 					);
-					pointer.unproject(this.orthographicCamera);
+					pointer.unproject(this.cameraO);
 					pointer.y -= target.y;
-					const v = new THREE.Vector3(0, 0, -1).applyQuaternion(this.orthographicCamera.quaternion);
-					const dist = -pointer.dot(this.orthographicCamera.up) / v.dot(this.orthographicCamera.up);
+					const v = new THREE.Vector3(0, 0, -1).applyQuaternion(this.cameraO.quaternion);
+					const dist = -pointer.dot(this.cameraO.up) / v.dot(this.cameraO.up);
 					const result = pointer.clone().add(v.multiplyScalar(dist));
 					return result;
 				}
@@ -493,6 +486,8 @@ namespace Renderer {
 				this.controls.target.lerp(this.controls.target.clone().add(this.offset).add(diff), t);
 				this.orthographicCamera.position.lerp(this.orthographicCamera.position.clone().add(this.offset).add(diff), t);
 				this.perspectiveCamera.position.lerp(this.perspectiveCamera.position.clone().add(this.offset).add(diff), t);
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 			}
 
 			setPosition2D(x: number, z: number, lerp = false) {
@@ -502,6 +497,8 @@ namespace Renderer {
 				this.controls.target.lerp(this.controls.target.clone().add(this.offset).add(diff), t);
 				this.orthographicCamera.position.lerp(this.orthographicCamera.position.clone().add(this.offset).add(diff), t);
 				this.perspectiveCamera.position.lerp(this.perspectiveCamera.position.clone().add(this.offset).add(diff), t);
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 			}
 
 			onChange(cb: () => void) {
@@ -559,12 +556,7 @@ namespace Renderer {
 				this.controls.object = this.orthographicCamera;
 				this.orthographicCamera.lookAt(this.controls.target);
 
-				this.cameraO.position.copy(this.perspectiveCamera.position).add(this.offset);
-				this.cameraO.quaternion.copy(this.perspectiveCamera.quaternion);
-				this.cameraO.zoom = this.zoom;
-				this.cameraO.lookAt(this.controls.target);
-				this.cameraO.updateProjectionMatrix();
-				this.cameraO.lookAt(this.controls.target);
+				this.cameraO.copy(this.orthographicCamera);
 				this.instance = this.cameraO;
 
 				this.controls.update();
@@ -588,11 +580,7 @@ namespace Renderer {
 				this.controls.object = this.perspectiveCamera;
 				this.perspectiveCamera.lookAt(this.controls.target);
 
-				this.cameraP.position.copy(this.orthographicCamera.position).add(this.offset);
-				this.cameraP.quaternion.copy(this.orthographicCamera.quaternion);
-				this.cameraP.position.copy(newPos);
-				this.cameraP.updateProjectionMatrix();
-				this.cameraP.lookAt(this.controls.target);
+				this.cameraP.copy(this.perspectiveCamera);
 				this.instance = this.cameraP;
 
 				this.controls.update();
