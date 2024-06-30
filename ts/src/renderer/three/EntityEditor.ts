@@ -302,6 +302,7 @@ namespace Renderer {
 					taro.client.emit('show-transform-modes', false);
 					return;
 				}
+				taro.client.emit('show-transform-modes', true);
 				switch (mode) {
 					case 'select':
 						{
@@ -309,7 +310,6 @@ namespace Renderer {
 								this.selectedEntities = [entity];
 								this.gizmo.attach(entity);
 								this.showOrHideOutline(entity, true)
-								taro.client.emit('show-transform-modes', true);
 							} else {
 								this.selectedEntities = entity.parent.children as any;
 								this.selectedGroup = entity.parent as any;
