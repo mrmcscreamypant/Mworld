@@ -4353,11 +4353,6 @@ var TaroEntity = TaroObject.extend({
 											!(ownerPlayer?._stats?.clientId == taro.network.id() && variableData.streamMode == 4)
 										) {
 											this.variable.update(variableId, data.variables[variableId]);
-
-											if (variableData.dataType === 'particleEmitter' && !data.variables[variableId].function) {
-												this._stats.particleEmitters[variableId] = data.variables[variableId];
-												this.createParticleEmitter(data.variables[variableId]);
-											}
 										}
 										// update attribute if entity has such attribute
 									}
@@ -5093,7 +5088,7 @@ var TaroEntity = TaroObject.extend({
 						'profilePicture',
 						'roleIds',
 						'isHidden',
-						'isMobile'
+						'isMobile',
 					];
 					data = {
 						attributes: {},
