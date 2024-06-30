@@ -25,9 +25,9 @@ namespace Renderer {
 					case 'translate':
 						if (taro.is3D()) {
 							editedAction['position'] = {
-								x: Renderer.Three.Utils.worldToPixel(control.object.position.x + e.position.x),
-								y: Renderer.Three.Utils.worldToPixel(control.object.position.z + e.position.z),
-								z: Renderer.Three.Utils.worldToPixel(control.object.position.y + e.position.y),
+								x: Renderer.Three.Utils.worldToPixel(control.object.position.x + (e.parent.tag === Three.EntityEditor.TAG ? e.position.x : 0)),
+								y: Renderer.Three.Utils.worldToPixel(control.object.position.z + (e.parent.tag === Three.EntityEditor.TAG ? e.position.z : 0)),
+								z: Renderer.Three.Utils.worldToPixel(control.object.position.y + (e.parent.tag === Three.EntityEditor.TAG ? e.position.y : 0)),
 								function: 'vector3',
 							};
 						} else {
@@ -41,9 +41,9 @@ namespace Renderer {
 					case 'rotate':
 						control.object.rotation.order = 'YXZ';
 						if (taro.is3D()) {
-							const headingX = control.object.rotation.x + e.rotation.x;
-							const headingY = control.object.rotation.y + e.rotation.y;
-							const headingZ = control.object.rotation.z + e.rotation.z;
+							const headingX = control.object.rotation.x + (e.parent.tag === Three.EntityEditor.TAG ? e.rotation.x : 0);
+							const headingY = control.object.rotation.y + (e.parent.tag === Three.EntityEditor.TAG ? e.rotation.y : 0);
+							const headingZ = control.object.rotation.z + (e.parent.tag === Three.EntityEditor.TAG ? e.rotation.z : 0);
 							const radiansX = headingX > 0 ? headingX : 2 * Math.PI + headingX;
 							const radiansY = headingY > 0 ? headingY : 2 * Math.PI + headingY;
 							const radiansZ = headingZ > 0 ? headingZ : 2 * Math.PI + headingZ;
@@ -67,8 +67,8 @@ namespace Renderer {
 						if (taro.is3D()) {
 							if (control.object.body instanceof AnimatedSprite) {
 								editedAction['scale'] = {
-									x: control.object.scale.x * e.scale.x,
-									y: control.object.scale.z * e.scale.z,
+									x: control.object.scale.x * (e.parent.tag === Three.EntityEditor.TAG ? e.scale.x : 1),
+									y: control.object.scale.z * (e.parent.tag === Three.EntityEditor.TAG ? e.scale.z : 1),
 									z: 0,
 									function: 'vector3',
 								};
@@ -130,7 +130,7 @@ namespace Renderer {
 												(nowEntity as InitEntity).edit(editedAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
 											},
 											undo: () => {
-												(nowEntity as InitEntity).edit(nowUndoAction,  (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
+												(nowEntity as InitEntity).edit(nowUndoAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
 											},
 											mergedUuid: uuid,
 										},

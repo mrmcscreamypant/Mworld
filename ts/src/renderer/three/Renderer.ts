@@ -149,6 +149,9 @@ namespace Renderer {
 								lastTime = taro._currentTime;
 								switch (developerMode.activeButton) {
 									case 'cursor': {
+										if (this.entityEditor.gizmo.control.dragging) {
+											return;
+										}
 										const raycaster = new THREE.Raycaster();
 										raycaster.setFromCamera(this.pointer, this.camera.instance);
 

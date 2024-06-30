@@ -143,7 +143,6 @@ namespace Renderer {
 					inGameEditor.updateAction(action);
 				}
 				if (action.wasEdited) this.action.wasEdited = true;
-				console.log(action.offset)
 				if (
 					this.action.position &&
 					!isNaN(this.action.position.x) &&
@@ -153,10 +152,10 @@ namespace Renderer {
 					!isNaN(action.position.y)
 				) {
 					this.action.position = action.position;
-					this.position.x = Utils.pixelToWorld(action.position.x) + action.offset.x;
-					this.position.z = Utils.pixelToWorld(action.position.y) + action.offset.z;
+					this.position.x = Utils.pixelToWorld(action.position.x) + (action.offset?.x ?? 0);
+					this.position.z = Utils.pixelToWorld(action.position.y) + (action.offset?.z ?? 0);
 					if (!isNaN(action.position.z)) {
-						this.position.y = Utils.pixelToWorld(action.position.z) + action.offset.y;
+						this.position.y = Utils.pixelToWorld(action.position.z) + (action.offset?.y ?? 0);
 					}
 				}
 				if (taro.is3D()) {

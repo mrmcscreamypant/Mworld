@@ -351,38 +351,45 @@ namespace Renderer {
 			}
 
 			deleteEntity(): void {
-				if (this.selectedEntities && this.selectedEntities instanceof InitEntity) {
-					this.selectedEntities.delete();
-				} else if (this.selectedEntities && this.selectedEntities instanceof Region) {
-					const data = {
-						name: this.selectedEntities.taroEntity._stats.id,
-						delete: true,
-					};
-					const nowData = JSON.stringify(data)
-					const nowTransformData = JSON.stringify(this.selectedEntities.stats)
-					const renderer = Renderer.Three.instance();
+				this.selectedEntities.forEach((e) => {
+					if ((e as any).tag === Three.EntityEditor.TAG) {
+						e.children.forEach((e_child: any) => e_child.delete())
+					}
+					if (e instanceof InitEntity) {
+						e.delete();
+					} else {
+						if (e instanceof Region) {
+							const data = {
+								name: e.taroEntity._stats.id,
+								delete: true,
+							};
+							const nowData = JSON.stringify(data)
+							const nowTransformData = JSON.stringify(e.stats)
+							const renderer = Renderer.Three.instance();
 
-					renderer.voxelEditor.commandController.addCommand({
-						func: () => {
-							const data = JSON.parse(nowData)
-							inGameEditor.updateRegionInReact && !window.isStandalone && inGameEditor.updateRegionInReact(data, 'threejs');
-						},
-						undo: () => {
-							const data = JSON.parse(nowData)
-							const transformData = JSON.parse(nowTransformData);
-							// TODO: no need to show the modal here
-							inGameEditor.addNewRegion &&
-								inGameEditor.addNewRegion({
-									name: '',
-									x: transformData.x,
-									y: transformData.y,
-									width: transformData.width,
-									height: transformData.height,
-									create: true,
-								});
+							renderer.voxelEditor.commandController.addCommand({
+								func: () => {
+									const data = JSON.parse(nowData)
+									inGameEditor.updateRegionInReact && !window.isStandalone && inGameEditor.updateRegionInReact(data, 'threejs');
+								},
+								undo: () => {
+									const data = JSON.parse(nowData)
+									const transformData = JSON.parse(nowTransformData);
+									// TODO: no need to show the modal here
+									inGameEditor.addNewRegion &&
+										inGameEditor.addNewRegion({
+											name: '',
+											x: transformData.x,
+											y: transformData.y,
+											width: transformData.width,
+											height: transformData.height,
+											create: true,
+										});
+								}
+							}, true)
 						}
-					}, true)
-				}
+					}
+				})
 				this.selectEntity(null);
 			}
 		}
