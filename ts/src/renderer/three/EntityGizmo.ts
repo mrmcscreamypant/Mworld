@@ -10,10 +10,11 @@ namespace Renderer {
 				this.init();
 			}
 
-			generateEditedAction() {
+			generateEditedAction(e: any) {
 				const renderer = Three.instance();
+				const centerPos = renderer.entityEditor.selectedEntitiesMinMaxCenterPos.center;
 				const control = this.control;
-				const editedEntity = control.object;
+				const editedEntity = e;
 				let editedAction = {};
 				if (editedEntity instanceof Region) {
 					editedAction = { name: editedEntity.taroEntity._stats.id };
@@ -24,9 +25,9 @@ namespace Renderer {
 					case 'translate':
 						if (taro.is3D()) {
 							editedAction['position'] = {
-								x: Renderer.Three.Utils.worldToPixel(control.object.position.x),
-								y: Renderer.Three.Utils.worldToPixel(control.object.position.z),
-								z: Renderer.Three.Utils.worldToPixel(control.object.position.y),
+								x: Renderer.Three.Utils.worldToPixel(control.object.position.x + e.position.x),
+								y: Renderer.Three.Utils.worldToPixel(control.object.position.z + e.position.z),
+								z: Renderer.Three.Utils.worldToPixel(control.object.position.y + e.position.y),
 								function: 'vector3',
 							};
 						} else {
@@ -40,9 +41,9 @@ namespace Renderer {
 					case 'rotate':
 						control.object.rotation.order = 'YXZ';
 						if (taro.is3D()) {
-							const headingX = control.object.rotation.x;
-							const headingY = control.object.rotation.y;
-							const headingZ = control.object.rotation.z;
+							const headingX = control.object.rotation.x + e.rotation.x;
+							const headingY = control.object.rotation.y + e.rotation.y;
+							const headingZ = control.object.rotation.z + e.rotation.z;
 							const radiansX = headingX > 0 ? headingX : 2 * Math.PI + headingX;
 							const radiansY = headingY > 0 ? headingY : 2 * Math.PI + headingY;
 							const radiansZ = headingZ > 0 ? headingZ : 2 * Math.PI + headingZ;
@@ -66,8 +67,8 @@ namespace Renderer {
 						if (taro.is3D()) {
 							if (control.object.body instanceof AnimatedSprite) {
 								editedAction['scale'] = {
-									x: control.object.scale.x,
-									y: control.object.scale.z,
+									x: control.object.scale.x * e.scale.x,
+									y: control.object.scale.z * e.scale.z,
 									z: 0,
 									function: 'vector3',
 								};
@@ -85,7 +86,7 @@ namespace Renderer {
 						}
 						break;
 				}
-				if (editedAction && renderer.entityEditor.selectedEntities instanceof Region) {
+				if (editedAction && e instanceof Region) {
 					editedAction['position'] = {
 						x: Renderer.Three.Utils.worldToPixel(control.object.position.x),
 						y: Renderer.Three.Utils.worldToPixel(control.object.position.z),
@@ -117,49 +118,58 @@ namespace Renderer {
 						orbit.enabled = !event.value;
 						if (!event.value) {
 							// drag ended
-							const editedAction = this.generateEditedAction();
-							if (editedAction && renderer.entityEditor.selectedEntities instanceof InitEntity) {
-								const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction));
-								const nowEntity = renderer.entityEditor.selectedEntities;
-								Renderer.Three.instance().voxelEditor.commandController.addCommand(
-									{
-										func: () => {
-											(nowEntity as InitEntity).edit(editedAction);
+							const uuid = taro.newIdHex();
+							renderer.entityEditor.selectedEntities.forEach((e, idx) => {
+								const editedAction = this.generateEditedAction(e);
+								if (editedAction && e instanceof InitEntity) {
+									const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction[idx]));
+									const nowEntity = e;
+									renderer.voxelEditor.commandController.addCommand(
+										{
+											func: () => {
+												(nowEntity as InitEntity).edit(editedAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
+											},
+											undo: () => {
+												(nowEntity as InitEntity).edit(nowUndoAction,  (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
+											},
+											mergedUuid: uuid,
 										},
-										undo: () => {
-											(nowEntity as InitEntity).edit(nowUndoAction);
+										true,
+										true
+									);
+									this.undoAction[idx] = undefined;
+								} else if (editedAction && e instanceof Region) {
+									const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction[idx]));
+									renderer.voxelEditor.commandController.addCommand(
+										{
+											func: () => {
+												inGameEditor.updateRegionInReact && !window.isStandalone;
+												inGameEditor.updateRegionInReact(editedAction as RegionData, 'threejs');
+											},
+											undo: () => {
+												inGameEditor.updateRegionInReact && !window.isStandalone;
+												inGameEditor.updateRegionInReact(nowUndoAction as RegionData, 'threejs');
+											},
+											mergedUuid: uuid,
 										},
-									},
-									true,
-									true
-								);
-								this.undoAction = {};
-							} else if (editedAction && renderer.entityEditor.selectedEntities instanceof Region) {
-								const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction));
-								Renderer.Three.instance().voxelEditor.commandController.addCommand(
-									{
-										func: () => {
-											inGameEditor.updateRegionInReact && !window.isStandalone;
-											inGameEditor.updateRegionInReact(editedAction as RegionData, 'threejs');
-										},
-										undo: () => {
-											inGameEditor.updateRegionInReact && !window.isStandalone;
-											inGameEditor.updateRegionInReact(nowUndoAction as RegionData, 'threejs');
-										},
-									},
-									true,
-									true
-								);
+										true,
+										true
+									);
 
-								this.undoAction = {};
-							}
+									this.undoAction = {};
+								}
+							})
+
 						} else {
 							if (this.undoAction === undefined) {
-								this.undoAction = {};
+								this.undoAction = [];
 							}
-							if (this.undoAction.name === undefined && this.undoAction.actionId === undefined) {
-								this.undoAction = this.generateEditedAction();
-							}
+							renderer.entityEditor.selectedEntities.forEach((e, idx) => {
+								if (this.undoAction[idx] === undefined) {
+									this.undoAction[idx] = this.generateEditedAction(e);
+								}
+							})
+
 						}
 					}.bind(this)
 				);

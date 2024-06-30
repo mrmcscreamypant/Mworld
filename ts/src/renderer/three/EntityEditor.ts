@@ -235,7 +235,7 @@ namespace Renderer {
 				positions.center.set((positions.min.x + positions.max.x) / 2, (positions.min.y + positions.max.y) / 2, (positions.min.z + positions.max.z) / 2)
 				const offsetPos = prevCenterPos.sub(positions.center)
 				this.selectedEntities.forEach((e) => {
-					this.showOrHideOutline(e)
+					this.showOrHideOutline(e, true)
 					if ((e.parent as any).tag === Three.EntityEditor.TAG) {
 						e.position.add(offsetPos)
 					} else {
@@ -334,6 +334,8 @@ namespace Renderer {
 						if (remove) {
 							this.showOrHideOutline(entity, false);
 							entity.position.add(this.selectedGroup.position);
+							entity.scale.multiply(this.selectedGroup.scale);
+							entity.rotation.set(this.selectedGroup.rotation.x + entity.rotation.x, this.selectedGroup.rotation.y + entity.rotation.y, this.selectedGroup.rotation.z + entity.rotation.z,)
 						}
 						if (this.selectedEntities.length === 0) {
 							this.gizmo.control.detach();

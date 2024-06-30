@@ -113,12 +113,12 @@ namespace Renderer {
 				renderer.entityManager.initEntities.push(this);
 			}
 
-			edit(action: ActionData): void {
+			edit(action: ActionData, offset?: THREE.Vector3): void {
 				if (!this.action.wasEdited || !action.wasEdited) {
 					this.action.wasEdited = true;
 					action.wasEdited = true;
 				}
-				taro.network.send<any>('editInitEntity', action);
+				taro.network.send<any>('editInitEntity', { ...action, offset });
 			}
 
 			setSize(x: number, y: number, z: number) {
@@ -143,6 +143,7 @@ namespace Renderer {
 					inGameEditor.updateAction(action);
 				}
 				if (action.wasEdited) this.action.wasEdited = true;
+				console.log(action.offset)
 				if (
 					this.action.position &&
 					!isNaN(this.action.position.x) &&
@@ -152,10 +153,10 @@ namespace Renderer {
 					!isNaN(action.position.y)
 				) {
 					this.action.position = action.position;
-					this.position.x = Utils.pixelToWorld(action.position.x);
-					this.position.z = Utils.pixelToWorld(action.position.y);
+					this.position.x = Utils.pixelToWorld(action.position.x) + action.offset.x;
+					this.position.z = Utils.pixelToWorld(action.position.y) + action.offset.z;
 					if (!isNaN(action.position.z)) {
-						this.position.y = Utils.pixelToWorld(action.position.z);
+						this.position.y = Utils.pixelToWorld(action.position.z) + action.offset.y;
 					}
 				}
 				if (taro.is3D()) {
