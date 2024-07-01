@@ -36,7 +36,7 @@ const statsPanels = {}; // will we need this?
 const Client = TaroEventingClass.extend({
 	classId: 'Client',
 
-	init: function () {
+	init: function (options) {
 		var self = this;
 		this.data = [];
 		this.host = window.isStandalone ? 'https://www.modd.io' : '';
@@ -212,14 +212,18 @@ const Client = TaroEventingClass.extend({
 				}
 
 				this.initializeConfigurationFields();
-
+				
 				await this.configureEngine();
 				taro.addComponent(TaroInputComponent);
 
 				taro.entitiesToRender = new EntitiesToRender();
 
 				if (taro.game.data.defaultData.defaultRenderer === '3d') {
-					taro.renderer = Renderer.Three.instance();
+					if (options?.resetRenderer) {
+						taro.renderer = Renderer.Three.reset(); // reset renderer
+					} else {
+						taro.renderer = Renderer.Three.instance();
+					}
 				} else {
 					taro.renderer = new PhaserRenderer();
 				}
