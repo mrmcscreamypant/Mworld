@@ -214,7 +214,7 @@ namespace Renderer {
 						this.action.width = action.width;
 						this.setSize(
 							Utils.pixelToWorld(action.width),
-							Utils.pixelToWorld(this.defaultDepth * action.scale.z),
+							Utils.pixelToWorld(this.defaultDepth * action.scale?.z ? action.scale.z : 1),
 							Utils.pixelToWorld(this.action.height)
 						);
 					}
@@ -222,7 +222,7 @@ namespace Renderer {
 						this.action.height = action.height;
 						this.setSize(
 							Utils.pixelToWorld(this.action.width),
-							Utils.pixelToWorld(this.defaultDepth * action.scale.z),
+							Utils.pixelToWorld(this.defaultDepth * action.scale?.z ? action.scale.z : 1),
 							Utils.pixelToWorld(action.height)
 						);
 					}
