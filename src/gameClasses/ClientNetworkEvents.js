@@ -803,12 +803,11 @@ var ClientNetworkEvents = {
 	},
 
 	_handlePokiSwitch: function (data) {
-		window.sessionStorage.setItem('redirectToGameData', JSON.stringify(data));
-		if (window.STATIC_EXPORT_ENABLED) {
-			window.PokiSDK?.gameplayStop();
+		window.PokiSDK?.gameplayStop();
+		if (window.switchGameWrapper) {
+			window.switchGameWrapper(data);
 		}
-		window.location.reload();
-	},	
+	},
 
 	_onSendPlayerToMap: function (data) {
 		if (data && data.type == 'sendPlayerToMap') {
