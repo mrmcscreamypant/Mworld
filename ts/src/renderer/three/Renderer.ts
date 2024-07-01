@@ -526,7 +526,10 @@ namespace Renderer {
 				cancelAnimationFrame(window.lastRequestAnimationFrameId);
 				window.lastRequestAnimationFrameId = null;
 
+				this._instance = null; // renderer only reinitialize if instance not available.
 				this._instance = new Renderer();
+
+				return this._instance;
 			}
 
 			static getPointer() {
