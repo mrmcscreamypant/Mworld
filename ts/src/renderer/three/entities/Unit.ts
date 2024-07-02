@@ -132,7 +132,7 @@ namespace Renderer {
 					const key = taroEntity._stats.cellSheet.url;
 					const cols = taroEntity._stats.cellSheet.columnCount || 1;
 					const rows = taroEntity._stats.cellSheet.rowCount || 1;
-					const tex = gAssetManager.getTexture(key);
+					const tex = gAssetManager.getTextureWithoutPlaceholder(key);
 
 					const replaceTexture = (spriteSheet: TextureSheet) => {
 						(entity.body as AnimatedSprite).setTextureSheet(spriteSheet);
