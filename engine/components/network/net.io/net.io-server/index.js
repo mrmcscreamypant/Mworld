@@ -912,11 +912,12 @@ NetIo.Server = NetIo.EventingClass.extend({
 				}
 			}
 
+			let guestUserToken = searchParams.get('guestUserToken');
 			let guestUserId = null;
 
 			try {
 				const cookies = self.parseCookie(request.headers?.cookie);
-				const guestUserToken = cookies?.modd_guest_token;
+				guestUserToken = cookies?.modd_guest_token || guestUserToken;
 				const decodedGuestUserToken = taro.workerComponent && guestUserToken ? await taro.workerComponent.verifyToken(guestUserToken, 'guestUserToken') : {};
 				guestUserId = decodedGuestUserToken?.guestUserId;
 				console.log('decodedGuestUserToken', guestUserToken, decodedGuestUserToken);
