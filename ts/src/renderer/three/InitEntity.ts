@@ -72,8 +72,8 @@ namespace Renderer {
 						} else if (body instanceof Model) {
 							this.setSize(
 								Utils.pixelToWorld(this.defaultWidth * action.scale.x),
-								Utils.pixelToWorld(this.defaultHeight * action.scale.y),
-								Utils.pixelToWorld(this.defaultDepth * action.scale.z)
+								Utils.pixelToWorld(this.defaultDepth * action.scale.z),
+								Utils.pixelToWorld(this.defaultHeight * action.scale.y)
 							);
 						}
 					} else if (!isNaN(action.width) && !isNaN(action.height)) {
@@ -181,16 +181,16 @@ namespace Renderer {
 						!isNaN(action.scale?.z) &&
 						(this.action.scale === undefined ||
 							(!isNaN(this.action.scale?.x) && !isNaN(this.action.scale?.y) && !isNaN(this.action.scale?.z)) ||
-							(!isNaN(this.action.width) && !isNaN(action.width)) ||
-							(!isNaN(this.action.height) && !isNaN(action.height)))
+							!isNaN(this.action.width) ||
+							!isNaN(this.action.height))
 					) {
 						if (!isNaN(action.width)) {
 							this.action.width = action.width;
-							this.action.scale.x = action.width;
+							this.action.scale.x = action.width / this.defaultWidth;
 						}
 						if (!isNaN(action.height)) {
 							this.action.height = action.height;
-							this.action.scale.z = action.height;
+							this.action.scale.z = action.height / this.defaultHeight;
 						}
 						if (action.scale) {
 							this.action.scale = action.scale;
@@ -206,15 +206,15 @@ namespace Renderer {
 						}
 						this.setSize(
 							Utils.pixelToWorld(this.defaultWidth * action.scale.x),
-							Utils.pixelToWorld(this.defaultHeight * action.scale.y),
-							Utils.pixelToWorld(this.defaultDepth * action.scale.z)
+							Utils.pixelToWorld(this.defaultDepth * action.scale.z),
+							Utils.pixelToWorld(this.defaultHeight * action.scale.y)
 						);
 					}
 					if (!isNaN(this.action.width) && !isNaN(action.width)) {
 						this.action.width = action.width;
 						this.setSize(
 							Utils.pixelToWorld(action.width),
-							Utils.pixelToWorld(this.defaultDepth),
+							Utils.pixelToWorld(this.defaultDepth * action.scale?.z ? action.scale.z : 1),
 							Utils.pixelToWorld(this.action.height)
 						);
 					}
@@ -222,7 +222,7 @@ namespace Renderer {
 						this.action.height = action.height;
 						this.setSize(
 							Utils.pixelToWorld(this.action.width),
-							Utils.pixelToWorld(this.defaultDepth),
+							Utils.pixelToWorld(this.defaultDepth * action.scale?.z ? action.scale.z : 1),
 							Utils.pixelToWorld(action.height)
 						);
 					}
