@@ -140,7 +140,13 @@ namespace Renderer {
 			updateAction(action: ActionData): void {
 				//update action in editor
 				if (inGameEditor && inGameEditor.updateAction && !window.isStandalone) {
-					inGameEditor.updateAction(action);
+					const actionWithoutOffset = {};
+					Object.keys(action).forEach((k) => {
+						if (k !== 'offset') {
+							actionWithoutOffset[k] = action[k]
+						}
+					})
+					inGameEditor.updateAction(actionWithoutOffset);
 				}
 				if (action.wasEdited) this.action.wasEdited = true;
 				if (

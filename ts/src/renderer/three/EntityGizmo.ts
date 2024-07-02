@@ -124,22 +124,26 @@ namespace Renderer {
 								if (editedAction && e instanceof InitEntity) {
 									const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction[idx]));
 									const nowEntity = e;
-									renderer.voxelEditor.commandController.addCommand(
-										{
-											func: () => {
-												(nowEntity as InitEntity).edit(editedAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
+									setTimeout(() => {
+										renderer.voxelEditor.commandController.addCommand(
+											{
+												func: () => {
+													(nowEntity as InitEntity).edit(editedAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
+												},
+												undo: () => {
+													(nowEntity as InitEntity).edit(nowUndoAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
+												},
+												mergedUuid: uuid,
 											},
-											undo: () => {
-												(nowEntity as InitEntity).edit(nowUndoAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
-											},
-											mergedUuid: uuid,
-										},
-										true,
-										true
-									);
+											true,
+											true
+										);
+									}, idx * 100);
+
 									this.undoAction[idx] = undefined;
 								} else if (editedAction && e instanceof Region) {
 									const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction[idx]));
+
 									renderer.voxelEditor.commandController.addCommand(
 										{
 											func: () => {

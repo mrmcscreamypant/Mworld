@@ -20,7 +20,9 @@ namespace Renderer {
 				const renderer = Renderer.Three.instance();
 				renderer.initEntityLayer.add(this.selectedGroup);
 				this.activatePlacement(false);
-
+				setInterval(() => {
+					console.log(this.selectedEntities)
+				}, 1000)
 				this.gizmo = new EntityGizmo();
 				taro.client.on('add-entities', () => {
 					this.selectEntity(null);
@@ -306,7 +308,7 @@ namespace Renderer {
 				switch (mode) {
 					case 'select':
 						{
-							if ((entity.parent as any).tag !== Three.EntityEditor.TAG) {
+							if ((entity.parent as any)?.tag !== Three.EntityEditor.TAG) {
 								this.selectedEntities = [entity];
 								this.gizmo.attach(entity);
 								this.showOrHideOutline(entity, true)
