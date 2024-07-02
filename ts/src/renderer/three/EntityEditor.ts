@@ -375,7 +375,6 @@ namespace Renderer {
 									inGameEditor.updateRegionInReact && !window.isStandalone && inGameEditor.updateRegionInReact(data, 'threejs');
 								},
 								undo: () => {
-									const data = JSON.parse(nowData)
 									const transformData = JSON.parse(nowTransformData);
 									// TODO: no need to show the modal here
 									inGameEditor.addNewRegion &&

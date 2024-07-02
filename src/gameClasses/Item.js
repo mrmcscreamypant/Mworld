@@ -114,6 +114,10 @@ var Item = TaroEntityPhysics.extend({
 		// behaviour handles:
 		this.addBehaviour('itemBehaviour', this._behaviour);
 		this.scaleDimensions(this._stats.width, this._stats.height);
+
+		if (taro.isClient) {
+			this.script.trigger('entityCreated');
+		}
 	},
 
 	updateBody: function (initTransform) {

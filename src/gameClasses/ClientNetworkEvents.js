@@ -344,7 +344,6 @@ var ClientNetworkEvents = {
 
 	// when client receives a ping response back from the server
 	_onPing: function (data) {
-		const self = this;
 		const now = taro._currentTime;
 		const latency = now - data.sentAt;
 
@@ -804,17 +803,16 @@ var ClientNetworkEvents = {
 	},
 
 	_handlePokiSwitch: function (data) {
-		window.sessionStorage.setItem('redirectToGameData', JSON.stringify(data));
-		if (window.STATIC_EXPORT_ENABLED) {
-			window.PokiSDK?.gameplayStop();
+		window.PokiSDK?.gameplayStop();
+		if (window.switchGameWrapper) {
+			window.switchGameWrapper(data);
 		}
-		window.location.reload();
-	},	
+	},
 
 	_onSendPlayerToMap: function (data) {
 		if (data && data.type == 'sendPlayerToMap') {
 			if (window.STATIC_EXPORT_ENABLED) {
-				this._handlePokiSwitch(data);
+				taro.client._handlePokiSwitch(data);
 			} else {
 				const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
 				window.location.href = mapUrl;
@@ -825,7 +823,7 @@ var ClientNetworkEvents = {
 	_onSendPlayerToGame: function (data) {
 		if (data && data.type == 'sendPlayerToGame') {
 			if (window.STATIC_EXPORT_ENABLED) {
-				this._handlePokiSwitch(data);
+				taro.client._handlePokiSwitch(data);
 			} else {
 				const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&${data.serverId ? '&serverId=' + data.serverId : ''}`;
 				window.location.href = mapUrl;

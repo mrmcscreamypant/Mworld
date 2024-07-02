@@ -12,6 +12,10 @@ namespace Renderer {
 			return Renderer.instance();
 		}
 
+		export function reset() {
+			return Renderer.reset();
+		}
+
 		export function getPointer() {
 			return Renderer.getPointer();
 		}
@@ -460,7 +464,8 @@ namespace Renderer {
 					this.init();
 					taro.input.setupListeners(this.renderer.domElement);
 					taro.client.rendererLoaded.resolve();
-					requestAnimationFrame(this.render.bind(this));
+					
+					window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
 				};
 
 				const isPixelArt = taro.game.data.defaultData.renderingFilter === 'pixelArt';
@@ -508,6 +513,19 @@ namespace Renderer {
 				if (!this._instance) {
 					this._instance = new Renderer();
 				}
+
+				return this._instance;
+			}
+
+			static reset() {
+				// event listeners are being removed in be-next while switching the game
+				// https://github.com/moddio/be-next/blob/master/src/pages/index.static-export.jsx#L173-L179
+				
+				cancelAnimationFrame(window.lastRequestAnimationFrameId);
+				window.lastRequestAnimationFrameId = null;
+
+				this._instance = null; // renderer only reinitialize if instance not available.
+				this._instance = new Renderer();
 
 				return this._instance;
 			}
@@ -855,7 +873,8 @@ namespace Renderer {
 			}
 
 			private render() {
-				requestAnimationFrame(this.render.bind(this));
+				window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
+
 				taro.client.emit('tick');
 				if (this.entityEditor) this.entityEditor.update();
 				if (this.camera.target && !taro.isMobile) {
