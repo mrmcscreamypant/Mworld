@@ -148,6 +148,7 @@ namespace Renderer {
 					} else {
 						const animationMgr = AnimationManager.instance();
 						gAssetManager.load([{ name: key, type: 'texture', src: Utils.patchAssetUrl(key) }], null, () => {
+							const tex = gAssetManager.getTexture(key);
 							animationMgr.createAnimationsFromTaroData(key, taroEntity._stats as unknown as EntityData);
 							const frameWidth = tex.image.width / cols;
 							const frameHeight = tex.image.height / rows;
