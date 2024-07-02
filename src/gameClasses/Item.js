@@ -967,10 +967,13 @@ var Item = TaroEntityPhysics.extend({
 			self.script.trigger('thisItemChangesInventorySlot', triggerParams); // this entity (item) (need to rename rename 'itemIsUsed' -> 'thisItemIsUsed')
 			owner.script.trigger('thisUnitMovesItemInInventory', triggerParams); // this entity (unit)
 
-			if (index >= owner._stats.inventorySize || index !== owner._stats.currentItemIndex) {
+			if (index >= owner._stats.inventorySize) {
 				this.hide();
-			} else if (index < owner._stats.inventorySize) {
+				// show if there is a body
+			} else if (this._stats.currentBody) {
 				this.show();
+			} else {
+				this.hide();
 			}
 		}
 	},
