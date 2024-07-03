@@ -218,6 +218,8 @@ const Client = TaroEventingClass.extend({
 
 				taro.entitiesToRender = new EntitiesToRender();
 
+				taro.developerMode = new DeveloperMode();
+
 				if (taro.game.data.defaultData.defaultRenderer === '3d') {
 					if (options?.resetRenderer) {
 						taro.renderer = Renderer.Three.reset(); // reset renderer
@@ -227,8 +229,6 @@ const Client = TaroEventingClass.extend({
 				} else {
 					taro.renderer = new PhaserRenderer();
 				}
-
-				taro.developerMode = new DeveloperMode();
 
 				if (!window.isStandalone) {
 					this.servers = this.getServersArray();
