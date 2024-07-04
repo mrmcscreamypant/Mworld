@@ -18,7 +18,7 @@ var Unit = TaroEntityPhysics.extend({
 		self.isMoving = false;
 		self.angleToTarget = undefined;
 		self.angleToTargetRelative = 0;
-
+		self.isTabInactive = true;
 		// merge various data into one _stats variable
 		var unitData = {};
 		if (!data.hasOwnProperty('equipmentAllowed')) {
@@ -2314,10 +2314,7 @@ var Unit = TaroEntityPhysics.extend({
 		// if entity (unit/item/player/projectile) has attribute, run regenerate
 		if (
 			taro.isServer ||
-			(taro.physics &&
-				taro.isClient &&
-				taro.client.selectedUnit == this &&
-				this._stats.controls?.clientPredictedMovement)
+			(taro.physics && taro.isClient && taro.client.selectedUnit == this && this._stats.controls?.cspMode) // client-side prediction is enabled (cspMode either 1 or 2)
 		) {
 			if (this._stats.buffs && this._stats.buffs.length > 0) {
 				for (let i = 0; i < this._stats.buffs.length; i++) {

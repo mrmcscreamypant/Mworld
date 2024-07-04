@@ -105,6 +105,7 @@ const Client = TaroEventingClass.extend({
 		this.scaleMode = 0; //old comment => 'none'
 		this.renderBuffer = 66; // this is later updated again in gameComponent.js
 		this.isActiveTab = true;
+		this.tabBecameActiveAt = Date.now();
 		this.sendNextPingAt = 0;
 
 		this.isZooming = false;
@@ -149,9 +150,11 @@ const Client = TaroEventingClass.extend({
 			//old comment => 'apply entities' merged stats saved during inactive tab
 			if (!document.hidden) {
 				// this.applyInactiveTabEntityStream();
+				self.tabBecameActiveAt = Date.now();
+				console.log('tab became active at', self.tabBecameActiveAt);
 			}
 
-			this.isActiveTab = !document.hidden;
+			self.isActiveTab = !document.hidden;
 		});
 
 		//go fetch
@@ -212,7 +215,7 @@ const Client = TaroEventingClass.extend({
 				}
 
 				this.initializeConfigurationFields();
-				
+
 				await this.configureEngine();
 				taro.addComponent(TaroInputComponent);
 

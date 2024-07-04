@@ -348,12 +348,12 @@ var ClientNetworkEvents = {
 		const latency = now - data.sentAt;
 
 		// console.log("onPing", taro._currentTime, data.sentAt, latency);
-
+		let myUnit = taro.client.selectedUnit;
 		// start reconciliation based on discrepancy between
 		// where my unit when ping was sent and where unit is when ping is received
 		if (
 			taro.client.selectedUnit?.posHistory &&
-			taro.client.myUnitStreamedPosition &&
+			myUnit.serverStreamedPosition &&
 			!taro.client.selectedUnit.isTeleporting
 		) {
 			let history = taro.client.selectedUnit.posHistory;
@@ -368,11 +368,11 @@ var ClientNetworkEvents = {
 					};
 
 					taro.client.selectedUnit.reconRemaining = {
-						x: taro.client.myUnitStreamedPosition.x - taro.client.myUnitPositionWhenPingSent.x,
-						y: taro.client.myUnitStreamedPosition.y - taro.client.myUnitPositionWhenPingSent.y,
+						x: myUnit.serverStreamedPosition.x - taro.client.myUnitPositionWhenPingSent.x,
+						y: myUnit.serverStreamedPosition.y - taro.client.myUnitPositionWhenPingSent.y,
 					};
 
-					// console.log(latency, taro.client.myUnitPositionWhenPingSent.y, taro.client.myUnitStreamedPosition.y, taro.client.selectedUnit.reconRemaining.y);
+					// console.log(latency, taro.client.myUnitPositionWhenPingSent.y, myUnit.serverStreamedPosition.y, taro.client.selectedUnit.reconRemaining.y);
 
 					taro.client.selectedUnit.posHistory = [];
 
@@ -387,8 +387,8 @@ var ClientNetworkEvents = {
 						// console.log("reconRemaining", taro.client.selectedUnit.reconRemaining);
 						taro.client.selectedUnit.emit('transform-debug', {
 							debug: 'blue-square',
-							x: taro.client.myUnitStreamedPosition.x,
-							y: taro.client.myUnitStreamedPosition.y,
+							x: myUnit.serverStreamedPosition.x,
+							y: myUnit.serverStreamedPosition.y,
 							rotation: 0,
 						});
 					}
@@ -830,7 +830,6 @@ var ClientNetworkEvents = {
 			}
 		}
 	},
-
 };
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
