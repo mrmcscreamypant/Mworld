@@ -2958,7 +2958,11 @@ var ActionComponent = TaroEntity.extend({
 						var sound = taro.game.data.sound[action.sound];
 						// if csp enable dont stream sound
 						if (sound && position) {
-							taro.network.send('sound', { id: action.sound, position: position });
+							if (taro.isServer) {
+								taro.network.send('sound', { id: action.sound, position: position });
+							} else {
+								taro.sound.run({ id: action.sound, position: position });
+							}
 						}
 						break;
 
@@ -2968,41 +2972,57 @@ var ActionComponent = TaroEntity.extend({
 						var music = taro.game.data.music[action.music];
 						// if csp enable dont stream music
 						if (music) {
-							taro.network.send('sound', { cmd: 'playMusic', id: action.music });
+							if (taro.isServer) {
+								taro.network.send('sound', { cmd: 'playMusic', id: action.music });
+							} else {
+								taro.sound.run({ cmd: 'playMusic', id: action.music });
+							}
 						}
 
 						break;
 
 					case 'stopMusic':
-						taro.network.send('sound', { cmd: 'stopMusic' });
+						if (taro.isServer) {
+							taro.network.send('sound', { cmd: 'stopMusic' });
+						} else {
+							taro.sound.run({ cmd: 'stopMusic' });
+						}
 						break;
 
 					case 'playSoundForPlayer':
 						var sound = taro.game.data.sound[action.sound];
 						var player = self._script.param.getValue(action.player, vars);
 						if (sound && player && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'playSoundForPlayer',
-									sound: action.sound,
-								},
-								player._stats.clientId
-							);
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'playSoundForPlayer',
+										sound: action.sound,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'playSoundForPlayer', sound: action.sound });
+							}
 						}
 						break;
 					case 'stopSoundForPlayer':
 						var sound = taro.game.data.sound[action.sound];
 						var player = self._script.param.getValue(action.player, vars);
 						if (sound && player && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'stopSoundForPlayer',
-									sound: action.sound,
-								},
-								player._stats.clientId
-							);
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'stopSoundForPlayer',
+										sound: action.sound,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'stopSoundForPlayer', sound: action.sound });
+							}
 						}
 						break;
 					case 'playMusicForPlayer':
@@ -3010,14 +3030,18 @@ var ActionComponent = TaroEntity.extend({
 						var player = self._script.param.getValue(action.player, vars);
 
 						if (music && player && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'playMusicForPlayer',
-									music: action.music,
-								},
-								player._stats.clientId
-							);
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'playMusicForPlayer',
+										music: action.music,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'playMusicForPlayer', music: action.music });
+							}
 						}
 
 						break;
@@ -3028,15 +3052,19 @@ var ActionComponent = TaroEntity.extend({
 						var player = self._script.param.getValue(action.player, vars);
 
 						if (music && player && time && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'playMusicForPlayerAtTime',
-									music: action.music,
-									time: action.time,
-								},
-								player._stats.clientId
-							);
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'playMusicForPlayerAtTime',
+										music: action.music,
+										time: action.time,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'playMusicForPlayerAtTime', music: action.music, time: time });
+							}
 						}
 
 						break;
@@ -3045,14 +3073,18 @@ var ActionComponent = TaroEntity.extend({
 						var music = taro.game.data.music[action.music];
 						var player = self._script.param.getValue(action.player, vars);
 						if (music && player && player._category == 'player' && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'playMusicForPlayerRepeatedly',
-									music: action.music,
-								},
-								player._stats.clientId
-							);
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'playMusicForPlayerRepeatedly',
+										music: action.music,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'playMusicForPlayerRepeatedly', music: action.music });
+							}
 						}
 
 						break;
