@@ -3,9 +3,10 @@ namespace Renderer {
 		export class EntityEditor {
 			activeEntityPlacement: boolean;
 			preview: Renderer.Three.AnimatedSprite | Renderer.Three.Model;
+			previewGroup: THREE.Group = new THREE.Group();
 			gizmo: EntityGizmo;
 			entityGroup: THREE.Group[];
-			activeEntity: { id: string; player: string; entityType: string, action?: ActionData, is3DObject?: boolean };
+			activeEntity: { id: string; player: string; entityType: string, action?: ActionData, is3DObject?: boolean, offset?: THREE.Vector3 }[];
 			selectedEntities: (InitEntity | Region | THREE.Group)[];
 			selectedGroup: THREE.Group;
 			selectedEntitiesMinMaxCenterPos: { min: THREE.Vector3, max: THREE.Vector3, center: THREE.Vector3 } = { min: new THREE.Vector3(Infinity, Infinity, Infinity), max: new THREE.Vector3(-Infinity, -Infinity, -Infinity), center: new THREE.Vector3(0, 0, 0) }
@@ -19,6 +20,7 @@ namespace Renderer {
 				(this.selectedGroup as any).tag = Three.EntityEditor.TAG;
 				const renderer = Renderer.Three.instance();
 				renderer.initEntityLayer.add(this.selectedGroup);
+				renderer.initEntityLayer.add(this.previewGroup);
 				this.activatePlacement(false);
 				this.gizmo = new EntityGizmo();
 				taro.client.on('add-entities', () => {
@@ -48,7 +50,7 @@ namespace Renderer {
 					this.selectEntity(null);
 				});
 				taro.client.on('updateActiveEntity', () => {
-					this.activeEntity = inGameEditor.getActiveEntity && inGameEditor.getActiveEntity();
+					this.activeEntity = [inGameEditor.getActiveEntity && inGameEditor.getActiveEntity()];
 					this.updatePreview();
 				});
 				const initEntities = renderer.entityManager.initEntities;
@@ -84,23 +86,29 @@ namespace Renderer {
 					if (event.key === 'Delete' || event.key === 'Backspace') {
 						this.deleteEntity();
 					}
-					if (event.key === 'c' && event.ctrlKey && this.selectedEntities && this.selectedEntities instanceof InitEntity) {
-						const action = this.selectedEntities.action;
-						const is3DObject = this.selectedEntities.isObject3D;
+					if (event.key === 'c' && event.ctrlKey && this.selectedEntities.some((e) => e instanceof InitEntity)) {
 
-						this.selectEntity(null);
-						this.activatePlacement(true);
+
+
 						setTimeout(() => {
-							(window as any).selectTool('add-entities');
-							this.activeEntity = {
-								id: action.entity,
-								player: action.player.variableName,
-								entityType: action.entityType,
-								action: action,
-								is3DObject
-							}
 
+							console.log(this.selectedEntities)
+							this.activeEntity = this.selectedEntities.filter((e) => e instanceof InitEntity).map((e: InitEntity) => {
+								const action = e.action
+								return {
+									id: action.entity,
+									player: action.player.variableName,
+									entityType: action.entityType,
+									action: action,
+									is3DObject: e.isObject3D,
+									offset: e.offset
+								}
+							}).filter(e => e !== null)
+							console.log(this.activeEntity)
+							this.selectEntity(null);
+							this.activatePlacement(true);
 							this.updatePreview();
+							(window as any).selectTool('add-entities');
 						}, 0)
 
 					}
@@ -131,86 +139,99 @@ namespace Renderer {
 			}
 
 			updatePreview(): void {
-				const entityData = this.activeEntity;
+				this.previewGroup.clear();
 				const renderer = Renderer.Three.instance();
-				if (this.preview) {
-					this.preview.destroy();
-				}
-				if (!entityData) {
-					if (this.preview) {
-						this.preview.visible = false;
+				if (this.activeEntity.length === 0) {
+					if (this.previewGroup) {
+						this.previewGroup.visible = false;
 					}
 					return;
-				}
-
-				const entity = taro.game.data[entityData.entityType] && taro.game.data[entityData.entityType][entityData.id];
-				let height: number;
-				let width: number;
-				let depth: number;
-				let key: string;
-
-				if (entityData.entityType === 'unitTypes') {
-					key = `${entity.cellSheet.url}`;
-					if (entity.bodies?.default) {
-						height = entity.bodies.default.height;
-						width = entity.bodies.default.width;
-						depth = entity.bodies.default.depth;
-					} else {
-						console.log('no default body for unit', entityData.id);
-						return;
-					}
-				} else if (entityData.entityType === 'itemTypes') {
-					key = `${entity.cellSheet.url}`;
-					if (entity.bodies?.dropped) {
-						height = entity.bodies.dropped.height;
-						width = entity.bodies.dropped.width;
-						depth = entity.bodies.dropped.depth;
-					} else {
-						console.log('no dropped body for item', entityData.id);
-						return;
-					}
-				} else if (entityData.entityType === 'projectileTypes') {
-					key = `${entity.cellSheet.url}`;
-					if (entity.bodies?.default) {
-						height = entity.bodies.default.height;
-						width = entity.bodies.default.width;
-						depth = entity.bodies.default.depth;
-					} else {
-						console.log('no default body for projectile', entityData.id);
-						return;
-					}
-				}
-				if (entityData.action && entityData.action.scale) {
-					height *= entityData.action.scale.z;
-					width *= entityData.action.scale.x;
-					depth *= entityData.action.scale.y;
-				}
-				const cols = entity.cellSheet.columnCount || 1;
-				const rows = entity.cellSheet.rowCount || 1;
-				if (entity.is3DObject) {
-					this.preview = new Renderer.Three.Model(key);
-					this.preview.setSize(Utils.pixelToWorld(width), Utils.pixelToWorld(depth), Utils.pixelToWorld(height));
-					this.preview.setOpacity(0.5);
-					if (entityData.action && entityData.action.rotation) {
-						this.preview.rotation.set(
-							THREE.MathUtils.degToRad(entityData.action.rotation.x),
-							THREE.MathUtils.degToRad(entityData.action.rotation.y),
-							THREE.MathUtils.degToRad(entityData.action.rotation.z)
-						);
-					}
-					renderer.initEntityLayer.add(this.preview);
 				} else {
-					const tex = gAssetManager.getTexture(key).clone();
-					const frameWidth = tex.image.width / cols;
-					const frameHeight = tex.image.height / rows;
-					const texture = new TextureSheet(key, tex, frameWidth, frameHeight);
-
-					this.preview = new Renderer.Three.AnimatedSprite(texture) as Renderer.Three.AnimatedSprite;
-					this.preview.setBillboard(entity.isBillboard, renderer.camera);
-					this.preview.scale.set(Utils.pixelToWorld(width), 1, Utils.pixelToWorld(height));
-					this.preview.setOpacity(0.5);
-					renderer.initEntityLayer.add(this.preview);
+					this.previewGroup.visible = true;
 				}
+
+				this.activeEntity.forEach((entityData) => {
+					console.log(entityData)
+					if (entityData !== null) {
+						const entity = taro.game.data[entityData.entityType] && taro.game.data[entityData.entityType][entityData.id];
+						let height: number;
+						let width: number;
+						let depth: number;
+						let key: string;
+						let newPreview;
+						if (entityData.entityType === 'unitTypes') {
+							key = `${entity.cellSheet.url}`;
+							if (entity.bodies?.default) {
+								height = entity.bodies.default.height;
+								width = entity.bodies.default.width;
+								depth = entity.bodies.default.depth;
+							} else {
+								console.log('no default body for unit', entityData.id);
+								return;
+							}
+						} else if (entityData.entityType === 'itemTypes') {
+							key = `${entity.cellSheet.url}`;
+							if (entity.bodies?.dropped) {
+								height = entity.bodies.dropped.height;
+								width = entity.bodies.dropped.width;
+								depth = entity.bodies.dropped.depth;
+							} else {
+								console.log('no dropped body for item', entityData.id);
+								return;
+							}
+						} else if (entityData.entityType === 'projectileTypes') {
+							key = `${entity.cellSheet.url}`;
+							if (entity.bodies?.default) {
+								height = entity.bodies.default.height;
+								width = entity.bodies.default.width;
+								depth = entity.bodies.default.depth;
+							} else {
+								console.log('no default body for projectile', entityData.id);
+								return;
+							}
+						}
+						if (entityData.action && entityData.action.scale) {
+							height *= entityData.action.scale.z;
+							width *= entityData.action.scale.x;
+							depth *= entityData.action.scale.y;
+						}
+						const cols = entity.cellSheet.columnCount || 1;
+						const rows = entity.cellSheet.rowCount || 1;
+						if (entity.is3DObject) {
+							newPreview = new Renderer.Three.Model(key);
+							newPreview.setSize(Utils.pixelToWorld(width), Utils.pixelToWorld(depth), Utils.pixelToWorld(height));
+							newPreview.setOpacity(0.5);
+							if (entityData.action && entityData.action.rotation) {
+								newPreview.rotation.set(
+									THREE.MathUtils.degToRad(entityData.action.rotation.x),
+									THREE.MathUtils.degToRad(entityData.action.rotation.y),
+									THREE.MathUtils.degToRad(entityData.action.rotation.z)
+								);
+							}
+							this.previewGroup.add(newPreview);
+						} else {
+							const tex = gAssetManager.getTexture(key).clone();
+							const frameWidth = tex.image.width / cols;
+							const frameHeight = tex.image.height / rows;
+							const texture = new TextureSheet(key, tex, frameWidth, frameHeight);
+
+							newPreview = new Renderer.Three.AnimatedSprite(texture) as Renderer.Three.AnimatedSprite;
+							newPreview.setBillboard(entity.isBillboard, renderer.camera);
+							newPreview.scale.set(Utils.pixelToWorld(width), 1, Utils.pixelToWorld(height));
+							newPreview.setOpacity(0.5);
+
+							this.previewGroup.add(newPreview);
+						}
+						if (entityData.offset) {
+							newPreview.position.set(entityData.offset.x, entityData.offset.y, entityData.offset.z);
+						}
+					}
+
+				})
+
+
+
+
 			}
 
 			resetMinMax() {
@@ -247,16 +268,18 @@ namespace Renderer {
 
 			update(): void {
 				const renderer = Renderer.Three.instance();
-				if (this.activeEntityPlacement && this.preview) {
+				if (this.activeEntityPlacement && this.previewGroup) {
 					const worldPoint = renderer.raycastFloor(0);
 					if (worldPoint) {
-						this.preview.position.setX(worldPoint.x);
-						this.preview.position.setY(Renderer.Three.getVoxels().calcLayersHeight(0) + 0.1);
-						this.preview.position.setZ(worldPoint.z);
+						this.previewGroup.position.setX(worldPoint.x);
+						this.previewGroup.position.setY(Renderer.Three.getVoxels().calcLayersHeight(0) + 0.1);
+						this.previewGroup.position.setZ(worldPoint.z);
 					}
-					if (this.preview instanceof Renderer.Three.AnimatedSprite) {
-						this.preview.setBillboard(this.preview.billboard, renderer.camera);
-					}
+					this.previewGroup.children.forEach((child) => {
+						if (child instanceof Renderer.Three.AnimatedSprite) {
+							child.setBillboard(child.billboard, renderer.camera);
+						}
+					})
 				}
 				renderer.initEntityLayer.children.forEach((e: any) => {
 					this.updateGroupOrEntity(e)

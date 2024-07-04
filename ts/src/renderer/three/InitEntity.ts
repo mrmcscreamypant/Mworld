@@ -9,6 +9,7 @@ namespace Renderer {
 			defaultHeight: number;
 			defaultDepth: number;
 			isBillboard = false;
+			offset = new THREE.Vector3();
 			debounceUpdateAction: (action: { data: ActionData[] }) => void;
 			mergedTemplate: MergedTemplate<{ data: ActionData[] }>;
 			constructor(action: ActionData, type?: 'unit' | 'item' | 'projectile') {
@@ -120,6 +121,7 @@ namespace Renderer {
 					this.action.wasEdited = true;
 					action.wasEdited = true;
 				}
+				this.offset.copy(offset)
 				taro.network.send<any>('editInitEntity', { ...action, offset });
 			}
 
