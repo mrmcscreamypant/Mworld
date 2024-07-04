@@ -2953,6 +2953,7 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					/* Sound */
+
 					case 'playSoundAtPosition':
 						var position = self._script.param.getValue(action.position, vars);
 						var sound = taro.game.data.sound[action.sound];
@@ -2962,6 +2963,44 @@ var ActionComponent = TaroEntity.extend({
 								taro.network.send('sound', { id: action.sound, position: position });
 							} else {
 								taro.sound.run({ id: action.sound, position: position });
+							}
+						}
+						break;
+
+					case 'playSoundForPlayer':
+						var sound = taro.game.data.sound[action.sound];
+						var player = self._script.param.getValue(action.player, vars);
+						if (sound && player && player._stats.clientId) {
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'playSoundForPlayer',
+										sound: action.sound,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'playSoundForPlayer', sound: action.sound });
+							}
+						}
+						break;
+
+					case 'stopSoundForPlayer':
+						var sound = taro.game.data.sound[action.sound];
+						var player = self._script.param.getValue(action.player, vars);
+						if (sound && player && player._stats.clientId) {
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'stopSoundForPlayer',
+										sound: action.sound,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'stopSoundForPlayer', sound: action.sound });
 							}
 						}
 						break;
@@ -2989,42 +3028,6 @@ var ActionComponent = TaroEntity.extend({
 						}
 						break;
 
-					case 'playSoundForPlayer':
-						var sound = taro.game.data.sound[action.sound];
-						var player = self._script.param.getValue(action.player, vars);
-						if (sound && player && player._stats.clientId) {
-							if (taro.isServer) {
-								taro.network.send(
-									'sound',
-									{
-										cmd: 'playSoundForPlayer',
-										sound: action.sound,
-									},
-									player._stats.clientId
-								);
-							} else if (player._stats.clientId === taro.network.id()) {
-								taro.sound.run({ cmd: 'playSoundForPlayer', sound: action.sound });
-							}
-						}
-						break;
-					case 'stopSoundForPlayer':
-						var sound = taro.game.data.sound[action.sound];
-						var player = self._script.param.getValue(action.player, vars);
-						if (sound && player && player._stats.clientId) {
-							if (taro.isServer) {
-								taro.network.send(
-									'sound',
-									{
-										cmd: 'stopSoundForPlayer',
-										sound: action.sound,
-									},
-									player._stats.clientId
-								);
-							} else if (player._stats.clientId === taro.network.id()) {
-								taro.sound.run({ cmd: 'stopSoundForPlayer', sound: action.sound });
-							}
-						}
-						break;
 					case 'playMusicForPlayer':
 						var music = taro.game.data.music[action.music];
 						var player = self._script.param.getValue(action.player, vars);
@@ -3044,6 +3047,24 @@ var ActionComponent = TaroEntity.extend({
 							}
 						}
 
+						break;
+
+					case 'stopMusicForPlayer':
+						var player = self._script.param.getValue(action.player, vars);
+
+						if (player && player._category === 'player' && player._stats.clientId) {
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'stopMusicForPlayer',
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'stopMusicForPlayer' });
+							}
+						}
 						break;
 
 					case 'playMusicForPlayerAtTime':
@@ -3088,6 +3109,7 @@ var ActionComponent = TaroEntity.extend({
 						}
 
 						break;
+
 					case 'showMenuAndSelectCurrentServer':
 						var player = self._script.param.getValue(action.player, vars);
 						if (player && player._stats && player._category == 'player' && player._stats.clientId) {
@@ -3108,20 +3130,6 @@ var ActionComponent = TaroEntity.extend({
 								'ui',
 								{
 									command: 'showMenuAndSelectBestServer',
-								},
-								player._stats.clientId
-							);
-						}
-						break;
-
-					case 'stopMusicForPlayer':
-						var player = self._script.param.getValue(action.player, vars);
-
-						if (player && player._category === 'player' && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'stopMusicForPlayer',
 								},
 								player._stats.clientId
 							);
