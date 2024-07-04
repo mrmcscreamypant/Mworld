@@ -748,10 +748,10 @@ var PhysicsComponent = TaroEventingClass.extend({
 											player.isTabActive = false;
 										}
 
-										// client msg was received within 100ms,
+										// client msg was received within 200ms,
 										// also ignore client msg if client just recently became active again (<2s)
 										// as the client's position isn't as reliable. for the next 3s, the client's position will be dictated by the server stream
-										if (now - clientStreamReceivedAt < 100 && now - player.tabBecameActiveAt > 2000) {
+										if (now - clientStreamReceivedAt < 200 && now - player.tabBecameActiveAt > 2000) {
 											let clientStreamedPosition = entity.clientStreamedKeyFrame[1];
 											x += (clientStreamedPosition[0] - x) / 2;
 											y += (clientStreamedPosition[1] - y) / 2;
