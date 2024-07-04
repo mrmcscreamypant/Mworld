@@ -30,7 +30,8 @@ namespace Renderer {
 			camera: Camera;
 			scene: THREE.Scene;
 			mode = Mode.Play;
-
+			selectionBox: SelectionBox;
+			selectionHelper: SelectionHelper;
 			private clock = new THREE.Clock();
 			private pointer = new THREE.Vector2();
 			private initLoadingManager = new THREE.LoadingManager();
@@ -82,7 +83,8 @@ namespace Renderer {
 
 				this.scene = new THREE.Scene();
 				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
-
+				this.selectionBox = new SelectionBox(this.camera.instance, this.scene);
+				this.selectionHelper = new SelectionHelper(this.renderer, 'selectBox')
 				window.addEventListener('resize', () => {
 					this.camera.resize(window.innerWidth, window.innerHeight);
 					renderer.setSize(window.innerWidth, window.innerHeight);
@@ -98,10 +100,31 @@ namespace Renderer {
 				let width: number;
 				let height: number;
 
-				renderer.domElement.addEventListener('mousemove', (evt: MouseEvent) => {
+				renderer.domElement.addEventListener('mousemove', (event: MouseEvent) => {
 					if (this.mode === Mode.Map) {
+						if (this.entityEditor.gizmo.control.dragging) {
+							return;
+						}
 						switch (taro.developerMode.activeButton) {
 							case 'cursor': {
+								if (this.selectionHelper.isDown) {
+									this.selectionBox.endPoint.set(
+										(event.clientX / window.innerWidth) * 2 - 1,
+										- (event.clientY / window.innerHeight) * 2 + 1,
+										0.5);
+
+									const allSelected = this.selectionBox.select();
+
+									allSelected.forEach((e) => {
+										if (e.entity instanceof InitEntity) {
+											this.entityEditor.showOrHideOutline(e.entity, true);
+											if (!this.entityEditor.selectedEntities.includes(e.entity)) {
+												this.entityEditor.selectEntity(e.entity, 'addOrRemove');
+											}
+										}
+									})
+
+								}
 								break;
 							}
 							case 'fill': {
@@ -113,8 +136,8 @@ namespace Renderer {
 							}
 						}
 					}
-					this.pointer.set((evt.clientX / window.innerWidth) * 2 - 1, -(evt.clientY / window.innerHeight) * 2 + 1);
-					if (!Utils.isLeftButton(evt.buttons)) return;
+					this.pointer.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
+					if (!Utils.isLeftButton(event.buttons)) return;
 					if (taro.developerMode.regionTool) {
 						const worldPoint = this.camera.getWorldPoint(this.pointer);
 						width = worldPoint.x - this.regionDrawStart.x;
@@ -154,8 +177,14 @@ namespace Renderer {
 								switch (developerMode.activeButton) {
 									case 'cursor': {
 										if (this.entityEditor.gizmo.control.dragging) {
+											this.selectionHelper.enabled = false;
 											return;
 										}
+										this.selectionHelper.enabled = true;
+										this.selectionBox.startPoint.set(
+											(event.clientX / window.innerWidth) * 2 - 1,
+											- (event.clientY / window.innerHeight) * 2 + 1,
+											0.5);
 										const raycaster = new THREE.Raycaster();
 										raycaster.setFromCamera(this.pointer, this.camera.instance);
 
@@ -405,6 +434,18 @@ namespace Renderer {
 				window.addEventListener('mouseup', (event: MouseEvent) => {
 					const developerMode = taro.developerMode;
 					this.voxelEditor.leftButtonDown = false;
+					if (developerMode.active &&
+						developerMode.activeTab === 'map' &&
+						Utils.isRightButton(event.button) &&
+						(developerMode.activeButton === 'cursor')) {
+						this.selectionBox.endPoint.set(
+							(event.clientX / window.innerWidth) * 2 - 1,
+							- (event.clientY / window.innerHeight) * 2 + 1,
+							0.5);
+
+						const allSelected = this.selectionBox.select();
+						console.log(allSelected)
+					}
 					if (developerMode.regionTool) {
 						developerMode.regionTool = false;
 						this.camera.controls.enablePan = true;
@@ -464,7 +505,7 @@ namespace Renderer {
 					this.init();
 					taro.input.setupListeners(this.renderer.domElement);
 					taro.client.rendererLoaded.resolve();
-					
+
 					window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
 				};
 
@@ -520,7 +561,7 @@ namespace Renderer {
 			static reset() {
 				// event listeners are being removed in be-next while switching the game
 				// https://github.com/moddio/be-next/blob/master/src/pages/index.static-export.jsx#L173-L179
-				
+
 				cancelAnimationFrame(window.lastRequestAnimationFrameId);
 				window.lastRequestAnimationFrameId = null;
 

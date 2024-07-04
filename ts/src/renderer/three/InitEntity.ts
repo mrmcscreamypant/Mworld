@@ -9,10 +9,12 @@ namespace Renderer {
 			defaultHeight: number;
 			defaultDepth: number;
 			isBillboard = false;
-
+			debounceUpdateAction: (action: { data: ActionData[] }) => void;
+			mergedTemplate: MergedTemplate<{ data: ActionData[] }>;
 			constructor(action: ActionData, type?: 'unit' | 'item' | 'projectile') {
 				super();
 				this.action = action;
+				this.mergedTemplate = { data: { method: 'array', calc: 'sum' } };
 				let key: string;
 				let cols: number;
 				let rows: number;
@@ -139,15 +141,12 @@ namespace Renderer {
 
 			updateAction(action: ActionData): void {
 				//update action in editor
-				if (inGameEditor && inGameEditor.updateAction && !window.isStandalone) {
-					const actionWithoutOffset = {};
-					Object.keys(action).forEach((k) => {
-						if (k !== 'offset') {
-							actionWithoutOffset[k] = action[k]
-						}
-					})
-					inGameEditor.updateAction(actionWithoutOffset);
+				if (inGameEditor && inGameEditor.updateAction && !window.isStandalone && this.debounceUpdateAction === undefined) {
+					this.debounceUpdateAction = debounce((actionData) => {
+						inGameEditor.updateAction(actionData.data as any)
+					}, 0, this.mergedTemplate)
 				}
+				this.debounceUpdateAction?.({ data: [action] })
 				if (action.wasEdited) this.action.wasEdited = true;
 				if (
 					this.action.position &&

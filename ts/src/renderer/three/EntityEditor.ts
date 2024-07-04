@@ -20,9 +20,6 @@ namespace Renderer {
 				const renderer = Renderer.Three.instance();
 				renderer.initEntityLayer.add(this.selectedGroup);
 				this.activatePlacement(false);
-				setInterval(() => {
-					console.log(this.selectedEntities)
-				}, 1000)
 				this.gizmo = new EntityGizmo();
 				taro.client.on('add-entities', () => {
 					this.selectEntity(null);

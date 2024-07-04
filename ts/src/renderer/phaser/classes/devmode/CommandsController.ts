@@ -36,7 +36,7 @@ class CommandController implements CommandControllerProps {
 	 * @param mapEdit this command is for map editing? if so, it will check if the map changed after
 	 * command exec, if no change happened, it will not go into the history.
 	 */
-	addCommand(command: CommandEmitterProps, forceToHistory = false, history = true, mapEdit = true ) {
+	addCommand(command: CommandEmitterProps, forceToHistory = false, history = true, mapEdit = true, cache: any = undefined) {
 		const oldTaroMap = JSON.stringify(taro.game.data.map.layers);
 		command.func();
 		if (history || forceToHistory) {
@@ -61,13 +61,14 @@ class CommandController implements CommandControllerProps {
 				this.commands.push(command);
 			}
 		}
+		this.commands[this.commands.length - 1].cache = cache;
 	}
 
 	undo() {
 		if (this.commands[this.nowInsertIndex - 1]) {
 			this.nowInsertIndex -= 1;
 			this.commands[this.nowInsertIndex].undo();
-			if(this.commands[this.nowInsertIndex - 1]?.mergedUuid !== undefined && this.commands[this.nowInsertIndex - 1].mergedUuid === this.commands[this.nowInsertIndex].mergedUuid) {
+			if (this.commands[this.nowInsertIndex - 1]?.mergedUuid !== undefined && this.commands[this.nowInsertIndex - 1].mergedUuid === this.commands[this.nowInsertIndex].mergedUuid) {
 				this.undo();
 			}
 		}
@@ -77,7 +78,7 @@ class CommandController implements CommandControllerProps {
 		if (this.commands[this.nowInsertIndex]) {
 			this.commands[this.nowInsertIndex].func();
 			this.nowInsertIndex += 1;
-			if(this.commands[this.nowInsertIndex + 1]?.mergedUuid !== undefined && this.commands[this.nowInsertIndex + 1].mergedUuid === this.commands[this.nowInsertIndex].mergedUuid) {
+			if (this.commands[this.nowInsertIndex + 1]?.mergedUuid !== undefined && this.commands[this.nowInsertIndex + 1].mergedUuid === this.commands[this.nowInsertIndex].mergedUuid) {
 				this.redo();
 			}
 		}

@@ -124,21 +124,20 @@ namespace Renderer {
 								if (editedAction && e instanceof InitEntity) {
 									const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction[idx]));
 									const nowEntity = e;
-									setTimeout(() => {
-										renderer.voxelEditor.commandController.addCommand(
-											{
-												func: () => {
-													(nowEntity as InitEntity).edit(editedAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
-												},
-												undo: () => {
-													(nowEntity as InitEntity).edit(nowUndoAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
-												},
-												mergedUuid: uuid,
+									renderer.voxelEditor.commandController.addCommand(
+										{
+											func: () => {
+												(nowEntity as InitEntity).edit(editedAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
 											},
-											true,
-											true
-										);
-									}, idx * 100);
+											undo: () => {
+												(nowEntity as InitEntity).edit(nowUndoAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
+											},
+											mergedUuid: uuid,
+										},
+										true,
+										true
+									);
+
 
 									this.undoAction[idx] = undefined;
 								} else if (editedAction && e instanceof Region) {
