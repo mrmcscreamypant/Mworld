@@ -3260,12 +3260,20 @@ var ActionComponent = TaroEntity.extend({
 									angle = parseFloat(360 - (angle % 360));
 								}
 								if (!isNaN(scale?.x)) {
-									width = parseFloat(scale.x * entityTypeData.bodies.default?.width);
+									if (entityType === 'itemTypes') {
+										width = parseFloat(scale.x * entityTypeData.bodies.dropped?.width);
+									} else {
+										width = parseFloat(scale.x * entityTypeData.bodies.default?.width);
+									}
 								} else {
 									width = parseFloat(width);
 								}
 								if (!isNaN(scale?.y)) {
-									height = parseFloat(scale.y * entityTypeData.bodies.default?.height);
+									if (entityType === 'itemTypes') {
+										height = parseFloat(scale.y * entityTypeData.bodies.dropped?.height);
+									} else {
+										height = parseFloat(scale.y * entityTypeData.bodies.default?.height);
+									}
 								} else {
 									height = parseFloat(height);
 								}

@@ -29,9 +29,18 @@ namespace Renderer {
 						rows = entityTypeData.cellSheet.rowCount || 1;
 					}
 				}
-				const defaultWidth = (this.defaultWidth = entityTypeData.bodies?.default?.width);
-				const defaultHeight = (this.defaultHeight = entityTypeData.bodies?.default?.height);
-				const defaultDepth = (this.defaultDepth = entityTypeData.bodies?.default?.depth);
+				let defaultWidth;
+				let defaultHeight;
+				let defaultDepth;
+				if (action.entityType === 'itemTypes') {
+					defaultWidth = this.defaultWidth = entityTypeData.bodies?.dropped?.width;
+					defaultHeight = this.defaultHeight = entityTypeData.bodies?.dropped?.height;
+					defaultDepth = this.defaultDepth = entityTypeData.bodies?.dropped?.depth;
+				} else {
+					defaultWidth = this.defaultWidth = entityTypeData.bodies?.default?.width;
+					defaultHeight = this.defaultHeight = entityTypeData.bodies?.default?.height;
+					defaultDepth = this.defaultDepth = entityTypeData.bodies?.default?.depth;
+				}
 				this.isBillboard = entityTypeData?.isBillboard ?? false;
 				const renderer = Renderer.Three.instance();
 				let body: (Renderer.Three.AnimatedSprite | Renderer.Three.Model) & { entity: InitEntity };
