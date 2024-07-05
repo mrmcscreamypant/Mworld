@@ -332,7 +332,11 @@ var Server = TaroClass.extend({
 		app.get('/', (req, res) => {
 			const token = Math.random().toString(36).substring(2, 14); // random token for standalone
 			const guestUserToken = Math.random().toString(36).substring(2, 14); // random token for standalone
-
+			if (taro.game === undefined) {
+				console.error('please select one game.json first');
+				res.send('please select one game.json first');
+				return;
+			}
 			const videoChatEnabled =
 				taro.game.data && taro.game.data.defaultData && taro.game.data.defaultData.enableVideoChat
 					? taro.game.data.defaultData.enableVideoChat
