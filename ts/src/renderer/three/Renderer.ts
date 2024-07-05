@@ -175,6 +175,7 @@ namespace Renderer {
 													this.entityEditor.selectedEntity === undefined ||
 													this.entityEditor.selectedEntity.uuid !== initEntity.uuid)
 											) {
+												console.log(initEntity)
 												this.entityEditor.selectEntity(initEntity);
 												taro.client.emit('block-rotation', !!initEntity.isBillboard);
 											} else if (clickDelay < 350) {
@@ -676,9 +677,9 @@ namespace Renderer {
 				});
 			}
 
-			private onEnterEntitiesMode() {}
+			private onEnterEntitiesMode() { }
 
-			private onExitEntitiesMode() {}
+			private onExitEntitiesMode() { }
 
 			private showEntities() {
 				this.setEntitiesVisible(true);

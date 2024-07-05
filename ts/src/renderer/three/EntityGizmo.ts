@@ -72,6 +72,7 @@ namespace Renderer {
 									function: 'vector3',
 								};
 							} else if (control.object.body instanceof Model) {
+								console.log(control.object.body.getSize())
 								editedAction['scale'] = {
 									x: Utils.worldToPixel(control.object.body.getSize().x / control.object.defaultWidth),
 									y: Utils.worldToPixel(control.object.body.getSize().z / control.object.defaultHeight),
