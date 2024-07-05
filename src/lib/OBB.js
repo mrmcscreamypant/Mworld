@@ -8,6 +8,12 @@ const b = {
 	c: null, // center
 	u: [ new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3() ], // basis vectors
 	e: [] // half width
+};
+
+const R = [[], [], []];
+const AbsR = [[], [], []];
+const t = [];
+
 const xAxis = new THREE.Vector3();
 const yAxis = new THREE.Vector3();
 const zAxis = new THREE.Vector3();
