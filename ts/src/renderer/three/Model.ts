@@ -86,8 +86,15 @@ namespace Renderer {
 			}
 
 			getCenter() {
-				this.aabb.setFromObject(this.scene);
-				return this.aabb.getCenter(this.center);
+				if (this.firstTime) {
+					this.aabb.setFromObject(this.scene, true);
+					this.firstTime = false
+				}
+				this.scene.updateMatrix();
+				this.scene.updateMatrixWorld();
+				this.obb.fromBox3(this.aabb);
+				this.obb.applyMatrix4(this.scene.matrixWorld)
+				return this.obb.center;
 			}
 
 			update(dt) {
