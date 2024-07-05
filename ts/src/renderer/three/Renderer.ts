@@ -466,7 +466,7 @@ namespace Renderer {
 					this.init();
 					taro.input.setupListeners(this.renderer.domElement);
 					taro.client.rendererLoaded.resolve();
-					
+
 					window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
 				};
 
@@ -522,7 +522,7 @@ namespace Renderer {
 			static reset() {
 				// event listeners are being removed in be-next while switching the game
 				// https://github.com/moddio/be-next/blob/master/src/pages/index.static-export.jsx#L173-L179
-				
+
 				cancelAnimationFrame(window.lastRequestAnimationFrameId);
 				window.lastRequestAnimationFrameId = null;
 
