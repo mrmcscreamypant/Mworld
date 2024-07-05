@@ -124,7 +124,7 @@ NetIo.Client = NetIo.EventingClass.extend({
 				? ''
 				: `&cfwp=${parseInt(taro.client.server?.name?.split('.')[1] || 0) + 2000}`;
 
-		this.wsUrl = `${url}?token=${gsAuthToken}&guestUserToken=${''}&sid=${taro.client.server.id}${workerPortQuery}&distinctId=${distinctId}&ws_port=${taro.client.server.wsPort}`;
+		this.wsUrl = `${url}?token=${gsAuthToken}&guestUserToken=${guestUserToken}&sid=${taro.client.server.id}${workerPortQuery}&distinctId=${distinctId}&ws_port=${taro.client.server.wsPort}`;
 		this.wsStartTime = Date.now();
 		this.startTimeSinceLoad = performance.now();
 
