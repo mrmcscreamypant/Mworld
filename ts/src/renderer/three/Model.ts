@@ -7,6 +7,7 @@ namespace Renderer {
 			firstTime = true;
 			private scene: THREE.Group;
 			private aabb = new THREE.Box3();
+			// OBB is something just like Box3 but with rotation
 			private obb = new OBB();
 			private center = new THREE.Vector3();
 
@@ -38,7 +39,9 @@ namespace Renderer {
 				}
 				this.scene.updateMatrix();
 				this.scene.updateMatrixWorld();
+				// get its original aabb which means its original geometry
 				this.obb.fromBox3(this.aabb);
+				// apply the additional translation, rotation, scale
 				this.obb.applyMatrix4(this.scene.matrixWorld)
 				return this.obb.getSize(this.size);
 			}
