@@ -173,9 +173,9 @@ namespace Renderer {
 												initEntity &&
 												(this.entityEditor.selectedEntity === null ||
 													this.entityEditor.selectedEntity === undefined ||
-													this.entityEditor.selectedEntity.uuid !== initEntity.uuid)
+													this.entityEditor.selectedEntity.uuid !== initEntity.uuid && !this.entityEditor.gizmo.control.dragging)
+
 											) {
-												console.log(initEntity)
 												this.entityEditor.selectEntity(initEntity);
 												taro.client.emit('block-rotation', !!initEntity.isBillboard);
 											} else if (clickDelay < 350) {
