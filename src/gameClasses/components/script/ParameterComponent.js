@@ -872,6 +872,15 @@ var ParameterComponent = TaroEntity.extend({
 
 						break;
 
+					case 'tan':
+						var angle = self.getValue(text.angle, vars);
+
+						if (angle !== undefined) {
+							returnValue = Math.tan(angle);
+						}
+
+						break;
+
 					case 'stringToNumber':
 						var value = self.getValue(text.value, vars);
 						var parsedValue = Number(value);
@@ -3192,7 +3201,7 @@ var ParameterComponent = TaroEntity.extend({
 				if (player) {
 					return player._stats.invitedUsersCount || 0;
 				}
-			}
+			},
 		};
 	},
 });
