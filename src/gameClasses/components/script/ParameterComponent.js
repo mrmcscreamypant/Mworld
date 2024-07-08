@@ -2821,6 +2821,21 @@ var ParameterComponent = TaroEntity.extend({
 				return taro.game.getComputerPlayerByNumber(number);
 			},
 
+			getTriggeringEntity: function (text, vars) {
+				if (vars && vars.triggeredBy) {
+					if (vars.triggeredBy.unitId) {
+						var id = vars.triggeredBy.unitId;
+						return taro.$(id);
+					} else if (vars.triggeredBy.itemId) {
+						var id = vars.triggeredBy.itemId;
+						return taro.$(id);
+					} else if (vars.triggeredBy.projectileId) {
+						var id = vars.triggeredBy.projectileId;
+						return taro.$(id);
+					}
+				}
+			},
+
 			/* unit */
 
 			getTriggeringUnit: function (text, vars) {
