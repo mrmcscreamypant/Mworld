@@ -103,8 +103,8 @@ namespace Renderer {
 				if (particleData['z-index'].offset) zPosition += Utils.pixelToWorld(particleData['z-index'].offset);
 
 				const xAngle = Utils.deg2rad(+particleData.direction?.x ?? 0);
-				const yAngle = Utils.deg2rad(+particleData.direction?.y ?? 0);
-				const zAngle = Utils.deg2rad(+particleData.direction?.z ?? 0);
+				const yAngle = Utils.deg2rad(+particleData.direction?.z ?? 0);
+				const zAngle = Utils.deg2rad(+particleData.direction?.y ?? 0);
 				const direction = new THREE.Euler(xAngle, yAngle, zAngle, 'XYZ');
 				const dirVec = new THREE.Vector3(1, 0, 0);
 				dirVec.applyEuler(direction);
@@ -127,8 +127,8 @@ namespace Renderer {
 
 				const shape = {
 					width: particleData.emitZone?.x ?? 0,
-					height: particleData.emitZone?.y ?? 0,
-					depth: particleData.emitZone?.z ?? 0,
+					height: particleData.emitZone?.z ?? 0,
+					depth: particleData.emitZone?.y ?? 0,
 				};
 
 				const rotation = {
