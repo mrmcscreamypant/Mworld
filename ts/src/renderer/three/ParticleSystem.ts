@@ -334,9 +334,7 @@ namespace Renderer {
 						// it currently works in the Phaser renderer. We might want to add more
 						// control to this in the future and give users more emitter settings to
 						// play with in the editor.
-						let t = 1 - particle.live / particle.lifetime;
-						if (t < 0) t = 0;
-						else if (t > 1) t = 1;
+						let t = (particle.lifetime - particle.live) / particle.lifetime;
 						particle.color[3] = Utils.lerp(particle.opacity_from, particle.opacity_to, t);
 
 						if (particle.color_t < 1) {
