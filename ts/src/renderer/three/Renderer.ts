@@ -173,8 +173,8 @@ namespace Renderer {
 												initEntity &&
 												(this.entityEditor.selectedEntity === null ||
 													this.entityEditor.selectedEntity === undefined ||
-													this.entityEditor.selectedEntity.uuid !== initEntity.uuid && !this.entityEditor.gizmo.control.dragging)
-
+													(this.entityEditor.selectedEntity.uuid !== initEntity.uuid &&
+														!this.entityEditor.gizmo.control.dragging))
 											) {
 												this.entityEditor.selectEntity(initEntity);
 												taro.client.emit('block-rotation', !!initEntity.isBillboard);
@@ -677,9 +677,9 @@ namespace Renderer {
 				});
 			}
 
-			private onEnterEntitiesMode() { }
+			private onEnterEntitiesMode() {}
 
-			private onExitEntitiesMode() { }
+			private onExitEntitiesMode() {}
 
 			private showEntities() {
 				this.setEntitiesVisible(true);
