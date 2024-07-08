@@ -46,6 +46,7 @@ namespace Renderer {
 						vertexShader: vs,
 						fragmentShader: fs,
 						transparent: true,
+						depthWrite: false,
 						blending: THREE.CustomBlending,
 						blendEquation: THREE.AddEquation,
 						blendSrc: THREE.OneFactor,
