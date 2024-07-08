@@ -177,6 +177,7 @@ namespace Renderer {
 
 											) {
 												this.entityEditor.selectEntity(initEntity);
+												taro.client.emit('block-scale', !(initEntity.action.scale || initEntity.action.height || initEntity.action.width));
 												taro.client.emit('block-rotation', !!initEntity.isBillboard);
 											} else if (clickDelay < 350) {
 												console.log('showing script for entity', initEntity.action.actionId);
