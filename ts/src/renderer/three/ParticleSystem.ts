@@ -118,8 +118,8 @@ namespace Renderer {
 				const elevationMin = Utils.deg2rad(+particleData.elevation?.min ?? 0);
 				const elevationMax = Utils.deg2rad(+particleData.elevation?.max ?? 0);
 
-				const lifetimeFrom = (+particleData.lifetime?.min || 0) / 1000 ?? 1;
-				const lifetimeTo = (+particleData.lifetime?.max || 0) / 1000 ?? 1;
+				const lifetimeFrom = (+particleData.lifetime?.min || 1000) / 1000 ?? 1;
+				const lifetimeTo = (+particleData.lifetime?.max || 1000) / 1000 ?? 1;
 
 				const emitting = false;
 
@@ -171,7 +171,7 @@ namespace Renderer {
 					particleTypeId: config.particleId,
 					position: { x: config.position.x, y: zPosition, z: config.position.y },
 					target: undefined,
-					direction,
+					direction: { x: direction.x, y: direction.y, z: direction.z },
 					azimuth: { min: azimuthMin, max: azimuthMax },
 					elevation: { min: elevationMin, max: elevationMax },
 					shape,
