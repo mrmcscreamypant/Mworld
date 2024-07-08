@@ -31,6 +31,7 @@ interface ParticleData {
 	fixedRotation: boolean;
 
 	// 3D settings
+	lifetime?: { min: number; max: number };
 	direction?: { x: number; y: number; z: number };
 	azimuth?: { min: number; max: number };
 	elevation?: { min: number; max: number };

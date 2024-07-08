@@ -118,8 +118,8 @@ namespace Renderer {
 				const elevationMin = Utils.deg2rad(+particleData.elevation?.min ?? 0);
 				const elevationMax = Utils.deg2rad(+particleData.elevation?.max ?? 0);
 
-				const lifetimeFrom = +particleData.lifeBase / 1000 ?? 1;
-				const lifetimeTo = +particleData.lifeBase / 1000 ?? 1;
+				const lifetimeFrom = (+particleData.lifetime?.min || 0) / 1000 ?? 1;
+				const lifetimeTo = (+particleData.lifetime?.max || 0) / 1000 ?? 1;
 
 				const emitting = false;
 
