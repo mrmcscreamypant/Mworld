@@ -41,7 +41,6 @@ interface ParticleData {
 	colorSpeed?: { min: number; max: number };
 	brightness?: { min: number; max: number };
 	opacity?: { start: number; end: number };
-	blend?: number;
 }
 
 interface Particle {
