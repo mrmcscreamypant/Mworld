@@ -367,7 +367,7 @@ namespace Renderer {
 				this.forward.set(emitter.direction.x, emitter.direction.y, emitter.direction.z).normalize();
 				this.right.crossVectors({ x: 0, y: 1, z: 0 } as THREE.Vector3, this.forward).normalize();
 				if (this.forward.x <= Number.EPSILON && this.forward.z <= Number.EPSILON) {
-					this.right.set(0, 0, 1);
+					this.right.set(0, 0, -1);
 				}
 				this._up.crossVectors(this.forward, this.right).normalize();
 				this.basis.makeBasis(this.right, this._up, this.forward);
@@ -378,7 +378,7 @@ namespace Renderer {
 				const speed = Utils.lerp(emitter.speed.min, emitter.speed.max, Math.random()) * dt;
 
 				this.velocity
-					.set(Math.cos(randAzimuth + angleOffset), Math.sin(randElevation), Math.sin(randAzimuth + angleOffset))
+					.setFromSphericalCoords(1, angleOffset - randElevation, -randAzimuth)
 					.normalize()
 					.applyMatrix4(this.basis)
 					.multiplyScalar(speed);
