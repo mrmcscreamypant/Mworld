@@ -164,8 +164,6 @@ namespace Renderer {
 					end: +particleData.opacity?.end ?? 1,
 				};
 
-				const blend = +particleData.blend ?? 1;
-
 				const duration = +particleData.duration / 1000 ?? 1;
 
 				return {
@@ -185,7 +183,7 @@ namespace Renderer {
 					color_speed: colorSpeed,
 					brightness: brightness,
 					opacity: opacity,
-					blend,
+					blend: 1,
 					texture: tex,
 					emitting,
 					duration,
