@@ -1811,6 +1811,11 @@ var Unit = TaroEntityPhysics.extend({
 							// changing body dimensions
 							self._scaleBox2dBody(newValue);
 						} else if (taro.isClient) {
+							self._scaleBox2dBody(newValue);
+
+							// for some reason we are scaling texture with physics body
+							// TODO: we should address this sometime
+							// currently though, this is a bug for so long that it is expected behaviour
 							self._stats.scale = newValue;
 							self._scaleTexture();
 						}
