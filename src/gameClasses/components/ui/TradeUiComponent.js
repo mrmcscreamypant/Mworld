@@ -8,16 +8,31 @@ var TradeUiComponent = TaroEntity.extend({
 		$('#accept-trade-request-button').on('click', function () {
 			var requestedBy = $('#requested-by').text();
 			var acceptedBy = taro.client.myPlayer.id();
+
 			taro.network.send('trade', { type: 'start', requestedBy: requestedBy, acceptedBy: acceptedBy });
 			$('#trade-request-div').hide();
 			taro.tradeUi.startTrading(taro.client.myPlayer, taro.$(requestedBy));
 		});
 
 		$('#accept-trade-button').on('click', function () {
+			$('#accept-trade-button').addClass('disabled-trade-button');
+			$('#you-accept').addClass('active');
+
+			var selectedUnit = taro.client.myPlayer.getSelectedUnit();
+			var totalInventorySlot = selectedUnit?.inventory?.getTotalInventorySize();
+
+			if (totalInventorySlot) {
+				for (let i = totalInventorySlot; i <= totalInventorySlot + 5; i++) {
+					if (selectedUnit._stats.itemIds[i]) {
+						$(`#item-${i}`).addClass('trade-item-success');
+					}
+				}
+			}
+
 			taro.network.send('trade', {
 				type: 'accept',
 				acceptedBy: taro.client.myPlayer.id(),
-				acceptedFor: taro.client.myPlayer.tradingWith
+				acceptedFor: taro.client.myPlayer.tradingWith,
 			});
 		});
 
@@ -44,10 +59,25 @@ var TradeUiComponent = TaroEntity.extend({
 			offerSlots.append(
 				$('<div/>', {
 					id: `offer-${i}`,
-					class: 'btn btn-light trade-offer-slot'
+					class: 'btn btn-light trade-offer-slot trade-slot',
 				})
 			);
 			i++;
+		}
+
+		$('#accept-trade-button').removeClass('disabled-trade-button');
+		$('#you-accept').removeClass('active');
+		$('#trader-accept').removeClass('active');
+		$('#accept-trade-text').text('Accept');
+		var selectedUnit = taro.client.myPlayer.getSelectedUnit();
+		var totalInventorySlot = selectedUnit?.inventory?.getTotalInventorySize();
+
+		if (totalInventorySlot) {
+			for (let i = 0; i <= 5; i++) {
+				const idx = totalInventorySlot + i;
+				$(`#item-${idx}`).removeClass('trade-item-success trade-item-added');
+				$(`#offer-${i + 1}`).removeClass('trade-item-success trade-item-added');
+			}
 		}
 	},
 
@@ -71,30 +101,49 @@ var TradeUiComponent = TaroEntity.extend({
 		var tradeItems = [];
 		var id = 0;
 		for (var i = totalInventorySlot; i < totalInventorySlot + 5; i++) {
-			tradeItems[id++] = selectedUnit._stats.itemIds[i];
+			$(`#item-${i}`).removeClass('trade-item-success');
+			$(`#offer-${id + 1}`).removeClass('trade-item-success');
+			tradeItems[id] = selectedUnit._stats.itemIds[i];
+
+			id++;
 		}
 		taro.network.send('trade', {
 			type: 'offer',
 			from: taro.client.myPlayer.id(),
 			to: taro.client.myPlayer.tradingWith,
-			tradeItems: tradeItems
+			tradeItems: tradeItems,
 		});
 	},
 	receiveOfferingItems: function (tradeItems) {
+		var selectedUnit = taro.client.myPlayer.getSelectedUnit();
+		var totalInventorySlot = selectedUnit?.inventory?.getTotalInventorySize();
+
 		for (var i = 0; i < tradeItems.length; i++) {
 			var index = i + 1;
 			var itemId = tradeItems[i];
 			var item = taro.$(itemId);
-			$(`#offer-${index}`).html('');
+			const offerDiv = $(`#offer-${index}`);
+			offerDiv.html('');
 			if (itemId && item && item._category === 'item') {
 				var itemDiv = taro.itemUi.getItemDiv(item, {
 					isDraggable: false,
 					popover: 'top',
-					isTrading: true
+					isTrading: true,
 				});
-				$(`#offer-${index}`).html(itemDiv);
+				offerDiv.html(itemDiv);
+				offerDiv.addClass('trade-item-added');
+			} else {
+				offerDiv.removeClass('trade-item-added');
 			}
+
+			offerDiv.removeClass('trade-item-success');
+			$(`#item-${totalInventorySlot + i}`).removeClass('trade-item-success');
 		}
+
+		$('#you-accept').removeClass('active');
+		$('#trader-accept').removeClass('active');
+		$('#accept-trade-button').removeClass('disabled-trade-button');
+		$('#accept-trade-text').text('Accept');
 	},
 	closeTradeRequest: function () {
 		$('#trade-request-div').hide();
@@ -114,9 +163,9 @@ var TradeUiComponent = TaroEntity.extend({
 	tradeOptionClicked: function ({ clientId, unitId }) {
 		taro.network.send('playerClickTradeOption', {
 			tradeWithClientId: clientId,
-			tradeWithUnitId: unitId
+			tradeWithUnitId: unitId,
 		});
-	}
+	},
 });
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

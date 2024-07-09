@@ -5,14 +5,14 @@ var Game = TaroClass.extend({
         taro = new TaroEngine(options);
         console.log('taro initialized', taro.isClient, taro.isServer);
         if (taro.isClient) {
-            taro.client = new App();
+            taro.client = new App(options);
         }
         if (taro.isServer) {
             taro.server = new App(options);
         }
-    }
+    },
 });
-if (typeof (module) !== 'undefined' && typeof (module.exports) !== 'undefined') {
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = Game;
 }
 else {

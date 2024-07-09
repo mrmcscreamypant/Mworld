@@ -8,14 +8,14 @@ var NetIo = {};
  */
 NetIo._debug = {
 	_enabled: true,
-	_node: typeof (module) !== 'undefined' && typeof (module.exports) !== 'undefined',
+	_node: typeof module !== 'undefined' && typeof module.exports !== 'undefined',
 	_level: ['log', 'warning', 'error'],
 	_stacks: false,
 	_throwErrors: true,
 	_trace: {
 		setup: false,
 		enabled: false,
-		match: ''
+		match: '',
 	},
 	enabled: function (val) {
 		if (val !== undefined) {
@@ -24,7 +24,7 @@ NetIo._debug = {
 		}
 
 		return this._enabled;
-	}
+	},
 };
 
 /**
@@ -65,9 +65,15 @@ NetIo.Client = NetIo.EventingClass.extend({
 		// this.COMPRESSION_THRESHOLD = 30000;
 
 		// Set some default options
-		if (this._options.connectionRetry === undefined) { this._options.connectionRetry = true; }
-		if (this._options.connectionRetryMax === undefined) { this._options.connectionRetryMax = 10; }
-		if (this._options.reconnect === undefined) { this._options.reconnect = true; }
+		if (this._options.connectionRetry === undefined) {
+			this._options.connectionRetry = true;
+		}
+		if (this._options.connectionRetryMax === undefined) {
+			this._options.connectionRetryMax = 10;
+		}
+		if (this._options.reconnect === undefined) {
+			this._options.reconnect = true;
+		}
 
 		// If we were passed a url, connect to it
 		if (url !== undefined) {
@@ -110,10 +116,15 @@ NetIo.Client = NetIo.EventingClass.extend({
 		// Create new websocket to the url
 
 		var distinctId = window.distinctId || '';
-		var posthogDistinctId = window.posthogDistinctId || (window.posthog && window.posthog.get_distinct_id ? window.posthog.get_distinct_id() : '');	
-		const workerPortQuery = (new URL(window.location.href).searchParams.get('proxy') === 'master') ? '' : `&cfwp=${(parseInt(taro.client.server?.name?.split('.')[1] || 0) + 2000)}`;
+		// var posthogDistinctId =
+		// 	window.posthogDistinctId ||
+		// 	(window.posthog && window.posthog.get_distinct_id ? window.posthog.get_distinct_id() : '');
+		const workerPortQuery =
+			new URL(window.location.href).searchParams.get('proxy') === 'master'
+				? ''
+				: `&cfwp=${parseInt(taro.client.server?.name?.split('.')[1] || 0) + 2000}`;
 
-		this.wsUrl = `${url}?token=${gsAuthToken}&sid=${taro.client.server.id}${workerPortQuery}&distinctId=${distinctId}&posthogDistinctId=${posthogDistinctId}&ws_port=${taro.client.server.wsPort}`;
+		this.wsUrl = `${url}?token=${gsAuthToken}&guestUserToken=${guestUserToken}&sid=${taro.client.server.id}${workerPortQuery}&distinctId=${distinctId}&ws_port=${taro.client.server.wsPort}`;
 		this.wsStartTime = Date.now();
 		this.startTimeSinceLoad = performance.now();
 
@@ -134,64 +145,63 @@ NetIo.Client = NetIo.EventingClass.extend({
 		};
 	},
 
-	reconnect: function() {
+	reconnect: function () {
 		var self = this;
 		return new Promise((resolve) => {
-			
 			this.reconnectedAt = Date.now();
 			this.reconnectedAt = null;
 			this.fallbackTimeout = null;
 			this.connectionOpenTimeout = null;
-			
+
 			// Set the state to connecting
 			this._state = 1;
-			
+
 			// Create new websocket to the url
 			this.wsStartTime = Date.now();
 			this.startTimeSinceLoad = performance.now();
-			
+
 			this._socket = new WebSocket(this.wsUrl, ['netio1', 'reconnect']);
-			
+
 			// Setup event listeners
 			this._socket.onopen = function () {
-				console.warn('...reconnected at ' + new Date().toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " "));
+				console.warn(`...reconnected at ${new Date().toISOString().slice(0, 19).replace(/-/g, '/').replace('T', ' ')}`);
 				self._onOpen.apply(self, arguments);
-				
+
 				// resolve if connection is open for about a second
 				self.connectionOpenTimeout = setTimeout(() => {
 					clearTimeout(self.fallbackTimeout);
-					resolve({status: 'open', code: 0, reason: '', state: self._state});
+					resolve({ status: 'open', code: 0, reason: '', state: self._state });
 				}, 1000);
 			};
-			
+
 			this._socket.onmessage = function () {
 				self._onData.apply(self, arguments);
 			};
-			
+
 			this._socket.onclose = function (event) {
 				const reason = self._disconnectReason || event.reason;
 				const state = self._state;
 				self._onClose.apply(self, arguments);
-				
+
 				clearTimeout(self.fallbackTimeout);
 				clearTimeout(self.connectionOpenTimeout);
-				resolve({status: 'closed', code: event.code, reason, state});
+				resolve({ status: 'closed', code: event.code, reason, state });
 			};
-			
+
 			this._socket.onerror = function (event) {
 				const reason = self._disconnectReason || event?.reason;
 				const state = self._state;
 				self._onError.apply(self, arguments);
-				
+
 				clearTimeout(self.fallbackTimeout);
 				clearTimeout(self.connectionOpenTimeout);
-				resolve({status: 'error', code: event?.code, reason, state});
+				resolve({ status: 'error', code: event?.code, reason, state });
 			};
-			
-			// fallback - timeout if none of the above events are triggerred 
+
+			// fallback - timeout if none of the above events are triggerred
 			this.fallbackTimeout = setTimeout(() => {
 				clearTimeout(self.connectionOpenTimeout);
-				resolve({status: 'timeout', code: 0, reason: self._disconnectReason, state: self._state});
+				resolve({ status: 'timeout', code: 0, reason: self._disconnectReason, state: self._state });
 			}, 10000);
 		});
 	},
@@ -236,49 +246,42 @@ NetIo.Client = NetIo.EventingClass.extend({
 		}
 	},
 
-	trackLatency: function (actionName, actionEvent, data) {
-		var self = this;
+	averageLatency99thPercentile: function (pingLatency) {
+		// Sort the array in ascending order
+		pingLatency.sort((a, b) => a - b);
 
-		if (actionName === 'gs-websocket-ping') {
-			const endTime = Date.now();
-			if (window.newrelic) {
-				// track only if document is in focus to avoid tracking inaccurate latencies
-				if (document.hasFocus()) {
-					window.newrelic.addPageAction(actionName, {
-						wsUrl: this.wsUrl,
-						wsAction: actionEvent,
-						wsState: this._socket.readyState,
-						wsUserId: userId,
-						wsGameSlug: gameSlug,
-						wsServerName: taro.client.server.name,
-						wsServerUrl: taro.client.server.url,
-						wsLatency: endTime - data.clientSentAt,
-						wsStartTime: data.clientSentAt,
-						wsEndTime: endTime,
-					});
-				}
-			}
-		} else {
-			const endTimeSinceLoad = performance.now();
-			if (window.newrelic) {
-				window.newrelic.addPageAction(actionName, {
-					wsUrl: this.wsUrl,
-					wsAction: actionEvent,
-					wsState: this._socket.readyState,
-					wsUserId: userId,
-					wsGameSlug: gameSlug,
-					wsServerName: taro.client.server.name,
-					wsServerUrl: taro.client.server.url,
-					wsLatency: endTimeSinceLoad - this.startTimeSinceLoad,
-					wsStartTimeSinceLoad: this.startTimeSinceLoad,
-					wsEndTimeSinceLoad: endTimeSinceLoad,
-					wsStartTime: this.wsStartTime,
-					wsEndTime: Date.now(),
-					reconnectedAt: this.reconnectedAt,
-					wsReason: data?.reason,
+		// Calculate the index for the 99th percentile
+		const index99Percentile = Math.floor((pingLatency.length - 1) * 0.99);
+
+		// Take the sum of elements up to the 99th percentile index
+		let sum99Percentile = 0;
+		for (let i = 0; i <= index99Percentile; i++) {
+			sum99Percentile += pingLatency[i];
+		}
+
+		// Calculate the average of the 99th percentile sum
+		const average99thPercentile = sum99Percentile / (index99Percentile + 1);
+
+		return Math.floor(average99thPercentile);
+	},
+
+	trackLatency: function () {
+		var self = this;
+		clearInterval(taro.trackLatencyInterval);
+		// track latency every 30 seconds
+		taro.trackLatencyInterval = setInterval(function () {
+			// track only if document is in focus to avoid tracking inaccurate latencies
+			if (window.newrelic && taro.pingLatency?.length && document.hasFocus()) {
+				window.newrelic.addPageAction('gsPing', {
+					user: window.username,
+					game: window.gameSlug,
+					container: taro.client.server.name,
+					server: taro.client.server.url,
+					latency: self.averageLatency99thPercentile(taro.pingLatency),
 				});
 			}
-		}
+			taro.pingLatency = [];
+		}, 30 * 1000);
 	},
 
 	_onOpen: function (event) {
@@ -287,6 +290,8 @@ NetIo.Client = NetIo.EventingClass.extend({
 		var serverDomain = urlWithoutProtocol.split('/')[0];
 		var serverName = serverDomain.split(':')[0];
 		this._state = 2;
+
+		this.trackLatency();
 	},
 
 	_onData: function (data) {
@@ -295,7 +300,6 @@ NetIo.Client = NetIo.EventingClass.extend({
 	},
 
 	_onDecode: function (packet, data) {
-
 		// how many UTF8 characters did we receive (assume 1 byte per char and mostly ascii)
 		// var receivedBytes = data.data.size;
 		var receivedBytes = (data.data && data.data.length) || 0;
@@ -356,14 +360,18 @@ NetIo.Client = NetIo.EventingClass.extend({
 	},
 
 	_onClose: function (event) {
-
 		var wasClean = event.wasClean;
 		var reason = this._disconnectReason || event.reason;
 		var code = event.code;
-		
-		console.warn('disconnected at ' + new Date().toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ") + ' with code', code, this._state, 'and start reconnecting...');
+
+		console.warn(
+			`disconnected at ${new Date().toISOString().slice(0, 19).replace(/-/g, '/').replace('T', ' ')} with code`,
+			code,
+			this._state,
+			'and start reconnecting...'
+		);
 		console.log('close event', event, { _disconnectReason: this._disconnectReason, state: this._state, reason });
-		
+
 		const disconnectData = {
 			wsUrl: this.wsUrl,
 			wsReadyState: this._socket.readyState,
@@ -379,47 +387,45 @@ NetIo.Client = NetIo.EventingClass.extend({
 			wsCode: code,
 			wsWasReconnected: window.wasReconnected,
 		};
-		
+
 		// if we don't know why we disconnected and the server IS responding(!1)
 		if (!reason && this._state !== 1) {
-			
 			// wait 500ms before attempting reconnection
 			return setTimeout(() => {
 				window.wasReconnected = true;
 				window.reconnectInProgress = true;
-				this.reconnect(this.wsUrl)
-					.then(({status, reason, code, state}) => {
-						console.log('disconnected', disconnectData);
-						
-						disconnectData.wsReconnectState = state;
-						disconnectData.wsReconnectStatus = status;
-						disconnectData.wsReconnectReason = reason;
-						disconnectData.wsReconnectCode = code;
-						
-						if (window.newrelic) {
-							window.newrelic.addPageAction('gs-websocket-disconnects', disconnectData);
-						}
-						
-						if (window.trackEvent) {
-							window.trackEvent('Socket Disconnect', disconnectData);
-						}
-						
-						window.reconnectInProgress = false;
-					});
+				this.reconnect(this.wsUrl).then(({ status, reason, code, state }) => {
+					console.log('disconnected', disconnectData);
+
+					disconnectData.wsReconnectState = state;
+					disconnectData.wsReconnectStatus = status;
+					disconnectData.wsReconnectReason = reason;
+					disconnectData.wsReconnectCode = code;
+
+					if (window.newrelic) {
+						window.newrelic.addPageAction('gs-websocket-disconnects', disconnectData);
+					}
+
+					if (window.trackEvent) {
+						window.trackEvent('Socket Disconnect', disconnectData);
+					}
+
+					window.reconnectInProgress = false;
+				});
 			}, 500);
 		}
-		
+
 		console.log('disconnected', disconnectData);
 		if (!window.reconnectInProgress) {
 			if (window.newrelic) {
 				window.newrelic.addPageAction('gs-websocket-disconnects', disconnectData);
 			}
-			
+
 			if (window.trackEvent) {
 				window.trackEvent('Socket Disconnect', disconnectData);
 			}
 		}
-		
+
 		// If we are already connected and have an id...
 		if (this._state === 3) {
 			this._state = 0;
@@ -435,27 +441,38 @@ NetIo.Client = NetIo.EventingClass.extend({
 		// If we were trying to connect...
 		if (this._state === 1) {
 			this._state = 0;
-			
-			function parseJwt (token) {
+
+			function parseJwt(token) {
 				var base64Url = token.split('.')[1];
 				var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-				var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-					return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-				}).join(''));
-				
+				var jsonPayload = decodeURIComponent(
+					window
+						.atob(base64)
+						.split('')
+						.map(function (c) {
+							return `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`;
+						})
+						.join('')
+				);
+
 				return JSON.parse(jsonPayload);
 			}
-			
+
 			const decodedToken = parseJwt(window.gsAuthToken);
-			const bannedReason = 'Restricted IP detected. If you think you were wrongfully banned, please contact a staff member in our Discord: <a href="https://discord.gg/XRe8T7K">https://discord.gg/XRe8T7K</a>.';
-			
-			const disconnectReason = decodedToken.isBanned ? bannedReason : 'Error trying to contact server. Please refresh this page or visit our homepage.';
+			const bannedReason =
+				'Restricted IP detected. If you think you were wrongfully banned, please contact a staff member in our Discord: <a href="https://discord.gg/XRe8T7K">https://discord.gg/XRe8T7K</a>.';
+
+			const disconnectReason = decodedToken.isBanned
+				? bannedReason
+				: 'Error trying to contact server. Please refresh this page or visit our homepage.';
 			taro.menuUi.onDisconnectFromServer('netio-client index:446', disconnectReason);
 			this.emit('error', { reason: 'Cannot establish connection, is server running?' });
 		}
 
 		// Remove the last disconnect reason
 		delete this._disconnectReason;
+
+		clearInterval(taro.trackLatencyInterval);
 	},
 
 	_onError: function () {
@@ -501,5 +518,5 @@ NetIo.Client = NetIo.EventingClass.extend({
 		// 	self._onDecode(packet, data);
 		// };
 		// fileReader.readAsArrayBuffer(blob);
-	}
+	},
 });

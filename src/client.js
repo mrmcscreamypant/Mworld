@@ -36,7 +36,7 @@ const statsPanels = {}; // will we need this?
 const Client = TaroEventingClass.extend({
 	classId: 'Client',
 
-	init: function () {
+	init: function (options) {
 		var self = this;
 		this.data = [];
 		this.host = window.isStandalone ? 'https://www.modd.io' : '';
@@ -105,6 +105,7 @@ const Client = TaroEventingClass.extend({
 		this.scaleMode = 0; //old comment => 'none'
 		this.renderBuffer = 66; // this is later updated again in gameComponent.js
 		this.isActiveTab = true;
+		this.tabBecameActiveAt = Date.now();
 		this.sendNextPingAt = 0;
 
 		this.isZooming = false;
@@ -149,19 +150,27 @@ const Client = TaroEventingClass.extend({
 			//old comment => 'apply entities' merged stats saved during inactive tab
 			if (!document.hidden) {
 				// this.applyInactiveTabEntityStream();
+				self.tabBecameActiveAt = Date.now();
+				console.log('tab became active at', self.tabBecameActiveAt);
 			}
 
-			this.isActiveTab = !document.hidden;
+			self.isActiveTab = !document.hidden;
 		});
 
 		//go fetch
+		taro.addComponent(GameTextComponent);
 		taro.addComponent(GameComponent);
 		taro.addComponent(ProfilerComponent);
 		taro.addComponent(MenuUiComponent);
+		taro.mergeGameJson = mergeGameJson;
 		// we're going to try and insert the fetch here
 		let promise = new Promise((resolve, reject) => {
 			// if the gameJson is available as a global object, use it instead of sending another ajax request
-			if (window.gameJson) {
+			if (window.gameDetails.worldId && window.worldJson) {
+				const gameJson = taro.mergeGameJson(window?.worldJson, window?.gameJson);
+
+				resolve(gameJson);
+			} else if (window.gameJson) {
 				resolve(window.gameJson);
 			} else if (gameId && !window.isStandalone) {
 				$.ajax({
@@ -205,7 +214,6 @@ const Client = TaroEventingClass.extend({
 					}
 				}
 
-
 				this.initializeConfigurationFields();
 
 				await this.configureEngine();
@@ -213,13 +221,17 @@ const Client = TaroEventingClass.extend({
 
 				taro.entitiesToRender = new EntitiesToRender();
 
+				taro.developerMode = new DeveloperMode();
+
 				if (taro.game.data.defaultData.defaultRenderer === '3d') {
-					taro.renderer = ThreeRenderer.getInstance();
+					if (options?.resetRenderer) {
+						taro.renderer = Renderer.Three.reset(); // reset renderer
+					} else {
+						taro.renderer = Renderer.Three.instance();
+					}
 				} else {
 					taro.renderer = new PhaserRenderer();
 				}
-
-				taro.developerMode = new DeveloperMode();
 
 				if (!window.isStandalone) {
 					this.servers = this.getServersArray();
@@ -264,7 +276,7 @@ const Client = TaroEventingClass.extend({
 					this.servers = this.getServersArray();
 				}
 				// undefined if our params did not have a serverId
-				this.preSelectedServerId = params.serverId;
+				this.preSelectedServerId = window.preSelectedServerId || params.serverId;
 
 				if (this.preSelectedServerId) {
 					//
@@ -301,13 +313,17 @@ const Client = TaroEventingClass.extend({
 			taro.game.data.defaultData.defaultRenderer = '2d';
 		}
 
+		if (!taro.game.data.defaultData.mapBackgroundColor) {
+			taro.game.data.defaultData.mapBackgroundColor = '#000000';
+		}
+
 		const skyboxDefaultUrls = {
-			left: 'https://cache.modd.io/asset/spriteImage/1708009182743_left.png',
-			right: 'https://cache.modd.io/asset/spriteImage/1708009210421_right.png',
-			bottom: 'https://cache.modd.io/asset/spriteImage/1708007218891_bottom.png',
-			top: 'https://cache.modd.io/asset/spriteImage/1708009237292_top.png',
-			front: 'https://cache.modd.io/asset/spriteImage/1708009150127_front.png',
-			back: 'https://cache.modd.io/asset/spriteImage/1708007016275_back.png',
+			left: '',
+			right: '',
+			bottom: '',
+			top: '',
+			front: '',
+			back: '',
 		};
 
 		if (!taro.game.data.settings.skybox) {
@@ -338,19 +354,11 @@ const Client = TaroEventingClass.extend({
 
 		const clientPhysicsEngine = taro.game.data.defaultData.clientPhysicsEngine;
 		const serverPhysicsEngine = taro.game.data.defaultData.physicsEngine;
-
+		const resolveFunc = this.physicsConfigLoaded.resolve.bind(this);
 		if (clientPhysicsEngine) {
-			taro.addComponent(PhysicsComponent).physics.sleep(true);
-		}
-		if (clientPhysicsEngine.toUpperCase() === 'BOX2DWASM') {
-			const loadedInterval = setInterval(() => {
-				if (taro.physics.gravity) {
-					clearInterval(loadedInterval);
-					this.physicsConfigLoaded.resolve();
-				}
-			}, 50);
+			taro.addComponent(PhysicsComponent, undefined, resolveFunc).physics.sleep(true);
 		} else {
-			this.physicsConfigLoaded.resolve();
+			resolveFunc();
 		}
 	},
 
@@ -421,12 +429,17 @@ const Client = TaroEventingClass.extend({
 				0
 			);
 
+			taro.client.emit('camera-instant-move', [
+				(taro.map.data.width * tileWidth) / 2,
+				(taro.map.data.height * tileHeight) / 2,
+			]);
+
 			taro.addComponent(AdComponent);
 
 			let zoom = 1000;
 
-			if (gameData.settings.camera && gameData.settings.camera.zoom && gameData.settings.camera.zoom.default) {
-				zoom = gameData.settings.camera.zoom.default;
+			if (gameData.settings.camera && gameData.settings.camera.zoom) {
+				zoom = gameData.settings.camera.zoom.default ?? zoom;
 				this._trackTranslateSmoothing = gameData.settings.camera.trackingDelay || 15;
 			}
 
@@ -528,7 +541,11 @@ const Client = TaroEventingClass.extend({
 		for (let server of validServers) {
 			const capacity = server.playerCount / server.maxPlayers;
 
-			if (capacity < overloadCriteria && server.playerCount > maxPlayersInUnderLoadedServer) {
+			if (
+				capacity < overloadCriteria &&
+				server.playerCount > maxPlayersInUnderLoadedServer &&
+				server.acceptingPlayers
+			) {
 				firstChoice = server;
 				maxPlayersInUnderLoadedServer = server.playerCount;
 			}
@@ -545,6 +562,8 @@ const Client = TaroEventingClass.extend({
 	setZoom: function (zoom) {
 		this.zoom = zoom;
 		if (taro.developerMode.active && taro.developerMode.activeTab !== 'play') {
+		} else if (taro.isMobile) {
+			this.emit('zoom', zoom * 0.75);
 		} else {
 			this.emit('zoom', zoom);
 		}
@@ -577,6 +596,10 @@ const Client = TaroEventingClass.extend({
 
 			$(self.getCachedElementById('loading-container')).addClass('slider-out');
 
+			if (window.STATIC_EXPORT_ENABLED) {
+				window.PokiSDK?.gameplayStart();
+			}
+
 			console.log('connected to ', taro.client.server.url, 'clientId ', taro.network.id()); // idk if this needs to be in production
 
 			taro.client.defineNetworkEvents();
@@ -592,6 +615,7 @@ const Client = TaroEventingClass.extend({
 			// old comment => 'create a listener that will fire whenever an entity is created because of the incoming stream data'
 			taro.network.stream.on('entityCreated', (entity) => {
 				if (entity._category == 'player') {
+					console.log('player created', entity._stats.clientId);
 					// old comment => 'apply skin to all units owned by this player'
 					const player = entity;
 
@@ -677,6 +701,8 @@ const Client = TaroEventingClass.extend({
 	// not much here except definitions
 	defineNetworkEvents: function () {
 		taro.network.define('ping', this._onPing);
+		taro.network.define('sendPlayerToMap', this._onSendPlayerToMap);
+		taro.network.define('sendPlayerToGame', this._onSendPlayerToGame);
 
 		taro.network.define('makePlayerSelectUnit', this._onMakePlayerSelectUnit);
 		taro.network.define('makePlayerCameraTrackUnit', this._onMakePlayerCameraTrackUnit);
@@ -711,12 +737,12 @@ const Client = TaroEventingClass.extend({
 		taro.network.define('errorLogs', this._onErrorLogs);
 
 		taro.network.define('sound', this._onSound);
-		taro.network.define('particle', this._onParticle);
 		taro.network.define('camera', this._onCamera);
 
 		taro.network.define('gameSuggestion', this._onGameSuggestion);
 
 		taro.network.define('createFloatingText', this._onCreateFloatingText);
+		taro.network.define('createDynamicFloatingText', this._onCreateDynamicFloatingText);
 
 		taro.network.define('openShop', this._onOpenShop);
 		taro.network.define('openDialogue', this._onOpenDialogue);
@@ -738,6 +764,7 @@ const Client = TaroEventingClass.extend({
 		taro.network.define('updateProjectile', this._onUpdateProjectile);
 		taro.network.define('updateShop', this._onUpdateShop);
 		taro.network.define('updateDialogue', this._onUpdateDialogue);
+		taro.network.define('updateDevelopersData', this._onUpdateDevelopersData);
 
 		taro.network.define('renderSocketLogs', this._onRenderSocketLogs);
 	},
@@ -839,7 +866,7 @@ const Client = TaroEventingClass.extend({
 		};
 
 		// old comment => 'if serverId is present then add it to vars
-		window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, (m, key, value) => {
+		(window.originalUrl || window.location.href).replace(/[?&]+([^=&]+)=([^&]*)/gi, (m, key, value) => {
 			// not sure about this after looking up .replace()
 
 			vars[key] = value;
