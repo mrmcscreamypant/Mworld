@@ -116,6 +116,7 @@ var Item = TaroEntityPhysics.extend({
 		this.scaleDimensions(this._stats.width, this._stats.height);
 
 		if (taro.isClient) {
+			taro.script.trigger('entityCreatedGlobal', { entityId: this.id() });
 			this.script.trigger('entityCreated');
 		}
 	},
@@ -451,6 +452,7 @@ var Item = TaroEntityPhysics.extend({
 											streamMode: this._stats.projectileStreamMode || 0, // editor incorrectly sets streamMode to undefined when item CSP is on
 										});
 										var projectile = new Projectile(projectileData);
+										taro.script.trigger('entityCreatedGlobal', { entityId: projectile.id() });
 										projectile.script.trigger('entityCreated');
 										taro.game.lastCreatedProjectileId = projectile.id();
 									}
