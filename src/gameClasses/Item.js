@@ -1030,6 +1030,9 @@ var Item = TaroEntityPhysics.extend({
 					case 'scaleBody':
 						this._stats[attrName] = newValue;
 						if (taro.isClient) {
+							if (taro.physics) {
+								self._scaleBox2dBody(newValue);
+							}
 							self._stats.scale = newValue;
 							self._scaleTexture();
 
