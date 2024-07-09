@@ -73,12 +73,18 @@ namespace Renderer {
 						);
 					};
 
+					const createInstancedAttributeInt = (size: number, step: number) => {
+						return new THREE.InstancedBufferAttribute(new Int32Array(size * step), step).setUsage(
+							THREE.DynamicDrawUsage
+						);
+					};
+
 					geometry.setAttribute('offset', createInstancedAttribute(maxParticlesPerGroup, 3));
 					geometry.setAttribute('scale', createInstancedAttribute(maxParticlesPerGroup, 2));
 					geometry.setAttribute('rotation', createInstancedAttribute(maxParticlesPerGroup, 1));
 					geometry.setAttribute('color', createInstancedAttribute(maxParticlesPerGroup, 4));
 					geometry.setAttribute('blend', createInstancedAttribute(maxParticlesPerGroup, 1));
-					geometry.setAttribute('texture', createInstancedAttribute(maxParticlesPerGroup, 1));
+					geometry.setAttribute('texture', createInstancedAttributeInt(maxParticlesPerGroup, 1));
 
 					this.geometries.push(geometry);
 
@@ -469,14 +475,14 @@ namespace Renderer {
   attribute float rotation;
   attribute vec4 color;
   attribute float blend;
-  attribute float texture;
+  attribute int texture;
 
   uniform float time;
 
   varying vec2 vUv;
   varying vec4 vColor;
   varying float vBlend;
-  varying float vTexture;
+  flat varying int vTexture;
 
   void main() {
     vUv = uv;
@@ -502,28 +508,28 @@ namespace Renderer {
   varying vec2 vUv;
   varying vec4 vColor;
   varying float vBlend;
-  varying float vTexture;
+  flat varying int vTexture;
 
   void main() {
-    if (vTexture == 0.0) gl_FragColor = texture2D(textures[0], vUv) * vColor;
-    else if (vTexture == 1.0) gl_FragColor = texture2D(textures[1], vUv) * vColor;
-    else if (vTexture == 2.0) gl_FragColor = texture2D(textures[2], vUv) * vColor;
-    else if (vTexture == 3.0) gl_FragColor = texture2D(textures[3], vUv) * vColor;
-    else if (vTexture == 4.0) gl_FragColor = texture2D(textures[4], vUv) * vColor;
-    else if (vTexture == 5.0) gl_FragColor = texture2D(textures[5], vUv) * vColor;
-    else if (vTexture == 6.0) gl_FragColor = texture2D(textures[6], vUv) * vColor;
-    else if (vTexture == 7.0) gl_FragColor = texture2D(textures[7], vUv) * vColor;
-    else if (vTexture == 8.0) gl_FragColor = texture2D(textures[8], vUv) * vColor;
-    else if (vTexture == 9.0) gl_FragColor = texture2D(textures[9], vUv) * vColor;
-    else if (vTexture == 10.0) gl_FragColor = texture2D(textures[10], vUv) * vColor;
-    else if (vTexture == 11.0) gl_FragColor = texture2D(textures[11], vUv) * vColor;
-    else if (vTexture == 12.0) gl_FragColor = texture2D(textures[12], vUv) * vColor;
-    else if (vTexture == 13.0) gl_FragColor = texture2D(textures[13], vUv) * vColor;
-    else if (vTexture == 14.0) gl_FragColor = texture2D(textures[14], vUv) * vColor;
-    else if (vTexture == 15.0) gl_FragColor = texture2D(textures[15], vUv) * vColor;
+    if (vTexture == 0) gl_FragColor = texture2D(textures[0], vUv) * vColor;
+    else if (vTexture == 1) gl_FragColor = texture2D(textures[1], vUv) * vColor;
+    else if (vTexture == 2) gl_FragColor = texture2D(textures[2], vUv) * vColor;
+    else if (vTexture == 3) gl_FragColor = texture2D(textures[3], vUv) * vColor;
+    else if (vTexture == 4) gl_FragColor = texture2D(textures[4], vUv) * vColor;
+    else if (vTexture == 5) gl_FragColor = texture2D(textures[5], vUv) * vColor;
+    else if (vTexture == 6) gl_FragColor = texture2D(textures[6], vUv) * vColor;
+    else if (vTexture == 7) gl_FragColor = texture2D(textures[7], vUv) * vColor;
+    else if (vTexture == 8) gl_FragColor = texture2D(textures[8], vUv) * vColor;
+    else if (vTexture == 9) gl_FragColor = texture2D(textures[9], vUv) * vColor;
+    else if (vTexture == 10) gl_FragColor = texture2D(textures[10], vUv) * vColor;
+    else if (vTexture == 11) gl_FragColor = texture2D(textures[11], vUv) * vColor;
+    else if (vTexture == 12) gl_FragColor = texture2D(textures[12], vUv) * vColor;
+    else if (vTexture == 13) gl_FragColor = texture2D(textures[13], vUv) * vColor;
+    else if (vTexture == 14) gl_FragColor = texture2D(textures[14], vUv) * vColor;
+    else if (vTexture == 15) gl_FragColor = texture2D(textures[15], vUv) * vColor;
 
     gl_FragColor.rgb *= gl_FragColor.a;
-		gl_FragColor.a *= vBlend;
+	gl_FragColor.a *= vBlend;
 
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
