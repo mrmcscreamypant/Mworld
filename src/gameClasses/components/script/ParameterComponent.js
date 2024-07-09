@@ -2822,17 +2822,9 @@ var ParameterComponent = TaroEntity.extend({
 			},
 
 			getTriggeringEntity: function (text, vars) {
-				if (vars && vars.triggeredBy) {
-					if (vars.triggeredBy.unitId) {
-						var id = vars.triggeredBy.unitId;
-						return taro.$(id);
-					} else if (vars.triggeredBy.itemId) {
-						var id = vars.triggeredBy.itemId;
-						return taro.$(id);
-					} else if (vars.triggeredBy.projectileId) {
-						var id = vars.triggeredBy.projectileId;
-						return taro.$(id);
-					}
+				if (vars && vars.triggeredBy && vars.triggeredBy.entityId) {
+					var id = vars.triggeredBy.entityId;
+					return taro.$(id);
 				}
 			},
 
