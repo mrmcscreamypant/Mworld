@@ -1306,6 +1306,11 @@ var Item = TaroEntityPhysics.extend({
 			var y = ownerUnit._translate.y + self.anchoredOffset.y;
 
 			if (taro.isServer) {
+				if (ownerUnit.body) {
+					// on server, add anchoredOffset to the position of the physics body, not Unit._translate
+					x = ownerUnit.body.getPosition().x * ownerUnit._b2dRef._scaleRatio + self.anchoredOffset.x;
+					y = ownerUnit.body.getPosition().y * ownerUnit._b2dRef._scaleRatio + self.anchoredOffset.y;
+				}
 				// for client-side, translate+rotate is handled in entitiesToRender.ts
 				self.translateTo(x, y);
 				self.rotateTo(0, 0, rotate);
