@@ -1814,6 +1814,9 @@ var Unit = TaroEntityPhysics.extend({
 							// changing body dimensions
 							self._scaleBox2dBody(newValue);
 						} else if (taro.isClient) {
+							if (taro.physics) {
+								self._scaleBox2dBody(newValue);
+							}
 							self._stats.scale = newValue;
 							self._scaleTexture();
 						}
