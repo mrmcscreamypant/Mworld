@@ -708,9 +708,10 @@ var TaroEntityPhysics = TaroEntity.extend({
 				break;
 			}
 			case 'rectangle': {
-				var normalizer = 0.45;
-				shapeData.width = body.width * (scale) * normalizer;
-				shapeData.height = body.height * (scale) * normalizer;
+				// this should be unnecessary now that shapeData w/h are converted to halfW/H in updateBody()
+				// var normalizer = 0.45;
+				shapeData.width = body.width * scale;
+				shapeData.height = body.height * scale;
 				break;
 			}
 		}
