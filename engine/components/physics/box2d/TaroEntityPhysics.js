@@ -67,8 +67,8 @@ var TaroEntityPhysics = TaroEntity.extend({
 			return;
 		}
 
-		this.width(parseFloat(body.width) * this._scale.x);
-		this.height(parseFloat(body.height) * this._scale.y);
+		this.width(parseFloat(body.width * (this._stats.scaleBody || 1)));
+		this.height(parseFloat(body.height * (this._stats.scaleBody || 1)));
 
 		var shapeData = (body.fixtures && body.fixtures[0] && body.fixtures[0].shape && body.fixtures[0].shape.data) ? body.fixtures[0].shape.data : undefined;
 
