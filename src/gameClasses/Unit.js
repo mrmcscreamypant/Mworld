@@ -1248,10 +1248,8 @@ var Unit = TaroEntityPhysics.extend({
 				taro.game.lastCreatedItemId = item.id(); // this is necessary in case item isn't a new instance, but an existing item getting quantity updated
 				returnQueued = true;
 			} else {
-				console.log(itemData);
 				// if designated item slot is already occupied, unit cannot get this item
 				var availableSlot = self.inventory.getFirstAvailableSlotForItem(itemData);
-				console.log(`availableSlot: ${availableSlot}`);
 				// Check if the item can merge
 				if (itemData.controls?.canMerge) {
 					// insert/merge itemData's quantity into matching items in the inventory
@@ -1260,11 +1258,9 @@ var Unit = TaroEntityPhysics.extend({
 						var currentItemId = self._stats.itemIds[i];
 						if (currentItemId) {
 							var currentItem = taro.$(currentItemId);
-
 							// if a matching item found in the inventory, try merging them
 							if (currentItem && currentItem._stats.itemTypeId == itemTypeId) {
 								var matchingItem = currentItem;
-
 								// lastCreatedItem is used to track the last item created by the server.
 								// This is necessary in case item isn't a new instance, but an existing item getting quantity updated
 								taro.game.lastCreatedItemId = matchingItem.id();
@@ -1281,15 +1277,13 @@ var Unit = TaroEntityPhysics.extend({
 
 								// the new item can fit in, because the matching item isn't full or has infinite quantity. Increase matching item's quantity only.
 								let maxQuantity = matchingItem._stats.maxQuantity || Infinity;
-								console.log(itemData.quantity > 0);
-								console.log(maxQuantity - matchingItem._stats.quantity > 0);
+
 								if (itemData.quantity > 0 && maxQuantity - matchingItem._stats.quantity > 0) {
 									if (matchingItem._stats.maxQuantity !== undefined) {
 										var quantityToBeTakenFromItem = Math.min(
 											itemData.quantity,
 											maxQuantity - matchingItem._stats.quantity
 										);
-										console.log(quantityToBeTakenFromItem);
 									} else {
 										// var quantityToBeTakenFromItem = itemData.quantity;
 										// if matching item has infinite quantity, do not take any quantity from the new item

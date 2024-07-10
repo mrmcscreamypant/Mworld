@@ -261,25 +261,20 @@ var InventoryComponent = TaroEntity.extend({
 			var quantity = itemData.quantity;
 			for (var i = equipRequirementMet ? 0 : this._entity._stats.inventorySize; i < totalInventorySize; i++) {
 				var itemId = self._entity._stats.itemIds[i];
-				console.log(itemId);
+
 				if (itemId) {
 					var item = taro.$(itemId);
-					console.log(item._stats.quantity, item._stats.maxQuantity);
+
 					// matching item found in inventory
 					if (item && item._stats.itemTypeId == itemTypeId) {
 						// matching item has infinite quantity. merge items unless item also has infinite quantity
 						if (item._stats.quantity === null && quantity !== null) {
-							console.log('quantity undefined checks. returning slot: ', i + 1);
 							return i + 1;
 						}
 
 						let existingQuantity = item._stats.quantity || Infinity;
 						let newQuantity = quantity || Infinity;
 						let maxQuantity = item._stats.maxQuantity || Infinity;
-
-						console.log(`existingQuantity: ${existingQuantity}`);
-						console.log(`newQuantity: ${newQuantity}`);
-						console.log(`maxQuantity: ${maxQuantity}`);
 
 						// matching item isn't full, and new item can fit in.
 						if (maxQuantity - existingQuantity >= newQuantity) {
@@ -308,7 +303,6 @@ var InventoryComponent = TaroEntity.extend({
 			) {
 				var itemId = self._entity._stats.itemIds[i];
 				if (!(itemId && taro.$(itemId))) {
-					console.log(i + 1);
 					return i + 1; // empty slot found
 				}
 			}
