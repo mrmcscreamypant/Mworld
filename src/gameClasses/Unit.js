@@ -1253,7 +1253,7 @@ var Unit = TaroEntityPhysics.extend({
 				var availableSlot = self.inventory.getFirstAvailableSlotForItem(itemData);
 				console.log(`availableSlot: ${availableSlot}`);
 				// Check if the item can merge
-				if (!!itemData.controls?.canMerge) {
+				if (itemData.controls?.canMerge) {
 					// insert/merge itemData's quantity into matching items in the inventory
 					var totalInventorySize = this.inventory.getTotalInventorySize();
 					for (var i = equipRequirementMet ? 0 : this._stats.inventorySize; i < totalInventorySize; i++) {
@@ -1280,12 +1280,16 @@ var Unit = TaroEntityPhysics.extend({
 								}
 
 								// the new item can fit in, because the matching item isn't full or has infinite quantity. Increase matching item's quantity only.
-								if (itemData.quantity > 0 && matchingItem._stats.maxQuantity - matchingItem._stats.quantity > 0) {
-									if (matchingItem._stats.maxQuantity != undefined) {
+								let maxQuantity = matchingItem._stats.maxQuantity || Infinity;
+								console.log(itemData.quantity > 0);
+								console.log(maxQuantity - matchingItem._stats.quantity > 0);
+								if (itemData.quantity > 0 && maxQuantity - matchingItem._stats.quantity > 0) {
+									if (matchingItem._stats.maxQuantity !== undefined) {
 										var quantityToBeTakenFromItem = Math.min(
 											itemData.quantity,
-											matchingItem._stats.maxQuantity - matchingItem._stats.quantity
+											maxQuantity - matchingItem._stats.quantity
 										);
+										console.log(quantityToBeTakenFromItem);
 									} else {
 										// var quantityToBeTakenFromItem = itemData.quantity;
 										// if matching item has infinite quantity, do not take any quantity from the new item
