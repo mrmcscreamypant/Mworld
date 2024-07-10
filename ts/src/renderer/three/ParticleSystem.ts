@@ -108,9 +108,9 @@ namespace Renderer {
 				if (particleData['z-index'].depth) zPosition += Utils.getDepthZOffset(particleData['z-index'].depth);
 				if (particleData['z-index'].offset) zPosition += Utils.pixelToWorld(particleData['z-index'].offset);
 
-				const xAngle = Utils.deg2rad(+particleData.direction?.x ?? 0);
-				const yAngle = Utils.deg2rad(+particleData.direction?.z ?? 0);
-				const zAngle = Utils.deg2rad(+particleData.direction?.y ?? 0);
+				const xAngle = Utils.deg2rad(+(particleData.direction?.x ?? 0));
+				const yAngle = Utils.deg2rad(+(particleData.direction?.z ?? 0));
+				const zAngle = Utils.deg2rad(+(particleData.direction?.y ?? 0));
 				const direction = new THREE.Euler(xAngle, yAngle, zAngle, 'XYZ');
 				const dirVec = new THREE.Vector3(1, 0, 0);
 				dirVec.applyEuler(direction);
@@ -118,60 +118,60 @@ namespace Renderer {
 				direction.y = dirVec.y;
 				direction.z = dirVec.z;
 
-				const azimuthMin = Utils.deg2rad(+particleData.azimuth?.min ?? 0);
-				const azimuthMax = Utils.deg2rad(+particleData.azimuth?.max ?? 0);
+				const azimuthMin = Utils.deg2rad(+(particleData.azimuth?.min ?? 0));
+				const azimuthMax = Utils.deg2rad(+(particleData.azimuth?.max ?? 0));
 
-				const elevationMin = Utils.deg2rad(+particleData.elevation?.min ?? 0);
-				const elevationMax = Utils.deg2rad(+particleData.elevation?.max ?? 0);
+				const elevationMin = Utils.deg2rad(+(particleData.elevation?.min ?? 0));
+				const elevationMax = Utils.deg2rad(+(particleData.elevation?.max ?? 0));
 
-				const lifetimeFrom = (+particleData.lifetime?.min || 1000) / 1000 ?? 1;
-				const lifetimeTo = (+particleData.lifetime?.max || 1000) / 1000 ?? 1;
+				const lifetimeFrom = +(particleData.lifetime?.min ?? 1000) / 1000 ?? 1;
+				const lifetimeTo = +(particleData.lifetime?.max ?? 1000) / 1000 ?? 1;
 
 				const emitting = false;
 
-				const frequency = 1 / +particleData.emitFrequency ?? 10;
+				const frequency = 1 / +(particleData.emitFrequency ?? 10);
 
 				const shape = {
-					width: particleData.emitZone?.x ?? 0,
-					height: particleData.emitZone?.z ?? 0,
-					depth: particleData.emitZone?.y ?? 0,
+					width: +(particleData.emitZone?.x ?? 0),
+					height: +(particleData.emitZone?.z ?? 0),
+					depth: +(particleData.emitZone?.y ?? 0),
 				};
 
 				const rotation = {
-					min: Utils.deg2rad(+particleData.rotation?.min ?? 0),
-					max: Utils.deg2rad(+particleData.rotation?.max ?? 0),
+					min: Utils.deg2rad(+(particleData.rotation?.min ?? 0)),
+					max: Utils.deg2rad(+(particleData.rotation?.max ?? 0)),
 				};
 
 				const speed = {
-					min: +particleData.speed?.min ?? 0,
-					max: +particleData.speed?.max ?? 0,
+					min: +(particleData.speed?.min ?? 0),
+					max: +(particleData.speed?.max ?? 0),
 				};
 
 				const scale = {
-					x: +particleData.scale?.x ?? 1,
-					y: +particleData.scale?.y ?? 1,
+					x: +(particleData.scale?.x ?? 1),
+					y: +(particleData.scale?.y ?? 1),
 					start: 1,
-					step: +particleData.scale?.step ?? 0,
+					step: +(particleData.scale?.step ?? 0),
 				};
 
 				const startColor = Utils.hexToRgb(particleData.colorStart);
 				const endColor = Utils.hexToRgb(particleData.colorEnd);
 				const colorSpeed = {
-					min: +particleData.colorSpeed?.min ?? 1,
-					max: +particleData.colorSpeed?.max ?? 1,
+					min: +(particleData.colorSpeed?.min ?? 1),
+					max: +(particleData.colorSpeed?.max ?? 1),
 				};
 
 				const brightness = {
-					min: +particleData.brightness?.min ?? 1,
-					max: +particleData.brightness?.max ?? 1,
+					min: +(particleData.brightness?.min ?? 1),
+					max: +(particleData.brightness?.max ?? 1),
 				};
 
 				const opacity = {
-					start: +particleData.opacity?.start ?? 1,
-					end: +particleData.opacity?.end ?? 1,
+					start: +(particleData.opacity?.start ?? 1),
+					end: +(particleData.opacity?.end ?? 1),
 				};
 
-				const duration = +particleData.duration / 1000 ?? 1;
+				const duration = +(particleData.duration / 1000 ?? 1);
 
 				return {
 					particleTypeId: config.particleId,
