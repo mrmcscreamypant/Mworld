@@ -261,17 +261,23 @@ var InventoryComponent = TaroEntity.extend({
 			var quantity = itemData.quantity;
 			for (var i = equipRequirementMet ? 0 : this._entity._stats.inventorySize; i < totalInventorySize; i++) {
 				var itemId = self._entity._stats.itemIds[i];
+
 				if (itemId) {
 					var item = taro.$(itemId);
+
 					// matching item found in inventory
 					if (item && item._stats.itemTypeId == itemTypeId) {
 						// matching item has infinite quantity. merge items unless item also has infinite quantity
-						if (item._stats.quantity == undefined && quantity != undefined) {
+						if (item._stats.quantity === null && quantity !== null) {
 							return i + 1;
 						}
 
+						let existingQuantity = item._stats.quantity || Infinity;
+						let newQuantity = quantity || Infinity;
+						let maxQuantity = item._stats.maxQuantity || Infinity;
+
 						// matching item isn't full, and new item can fit in.
-						if (item._stats.maxQuantity - item._stats.quantity >= quantity) {
+						if (maxQuantity - existingQuantity >= newQuantity) {
 							return i + 1;
 						} else {
 							if (item._stats.quantity != undefined) {
@@ -289,7 +295,7 @@ var InventoryComponent = TaroEntity.extend({
 			// if item was mapped to a specific slot, then check if there's available slot in the backpack
 			// if item didn't have mapping, then return the first available slot including both inventory + backpack
 			if (
-				(mappedSlot == undefined && equipRequirementMet) ||
+				(mappedSlot == undefined && equipRequirementMet && i < this._entity._stats.inventorySize) ||
 				(i >= this._entity._stats.inventorySize &&
 					(itemData.controls == undefined ||
 						itemData.controls.backpackAllowed == true ||
@@ -457,50 +463,54 @@ var InventoryComponent = TaroEntity.extend({
 	isItemDropAllowed: function (fromSlot, toSlot, fromItem, toItem) {
 		const totalInventorySize = this.getTotalInventorySize();
 		const inventorySize = this._entity._stats.inventorySize;
-	
+
 		if (toSlot >= totalInventorySize) {
 			if (fromItem._stats.controls.undroppable) {
-				return { allowed: false, reason: "Item is undroppable" };
+				return { allowed: false, reason: 'Item is undroppable' };
 			}
 			if (fromItem._stats.controls.untradable) {
-				return { allowed: false, reason: "Item is untradable" };
+				return { allowed: false, reason: 'Item is untradable' };
 			}
 		}
 
 		if (toItem && fromSlot >= totalInventorySize) {
 			if (toItem._stats.controls.undroppable) {
-				return { allowed: false, reason: "Item is undroppable" };
+				return { allowed: false, reason: 'Item is undroppable' };
 			}
 			if (toItem._stats.controls.untradable) {
-				return { allowed: false, reason: "Item is untradable" };
+				return { allowed: false, reason: 'Item is untradable' };
 			}
 		}
-	
+
 		if (toSlot + 1 <= inventorySize && !this.isEquipRequirementMet(fromItem._stats)) {
 			return { allowed: false, reason: `'${fromItem._stats.name}' equip requirements not met.` };
 		}
-	
+
 		if (toItem && fromSlot + 1 <= inventorySize && !this.isEquipRequirementMet(toItem._stats)) {
 			return { allowed: false, reason: `'${toItem._stats.name}' equip requirements not met.` };
 		}
-		
+
 		if (fromItem._stats.controls?.permittedInventorySlots?.length > 0) {
-			if (!fromItem._stats.controls.permittedInventorySlots.includes(toSlot + 1) &&
-				(toSlot + 1 <= inventorySize || fromItem._stats.controls.backpackAllowed === false)) {
-				return { allowed: false, reason: "" };
+			if (
+				!fromItem._stats.controls.permittedInventorySlots.includes(toSlot + 1) &&
+				(toSlot + 1 <= inventorySize || fromItem._stats.controls.backpackAllowed === false)
+			) {
+				return { allowed: false, reason: '' };
 			}
 		}
-	
+
 		if (toItem?._stats.controls?.permittedInventorySlots?.length > 0) {
-			if (!toItem._stats.controls.permittedInventorySlots.includes(fromSlot + 1) &&
-				(fromSlot + 1 <= inventorySize || toItem._stats.controls.backpackAllowed === false)) {
-				return { allowed: false, reason: "" };
+			if (
+				!toItem._stats.controls.permittedInventorySlots.includes(fromSlot + 1) &&
+				(fromSlot + 1 <= inventorySize || toItem._stats.controls.backpackAllowed === false)
+			) {
+				return { allowed: false, reason: '' };
 			}
 		}
-	
-		return { allowed: true, reason: "" };
+
+		return { allowed: true, reason: '' };
 	},
-	
+
 	isAttributeRequirementMet: function (requirement, key, attributes) {
 		if (attributes[key]) {
 			switch (requirement.type) {
@@ -537,18 +547,26 @@ var InventoryComponent = TaroEntity.extend({
 			if (equipRequirement.playerAttributes) {
 				for (let key in equipRequirement.playerAttributes) {
 					if (playerAttributes && playerAttributes[key]) {
-						requirementsSatisfied = self.isAttributeRequirementMet(equipRequirement.playerAttributes[key], key, playerAttributes);
+						requirementsSatisfied = self.isAttributeRequirementMet(
+							equipRequirement.playerAttributes[key],
+							key,
+							playerAttributes
+						);
 						if (!requirementsSatisfied) {
 							return false;
 						}
 					}
 				}
-			};
+			}
 
 			if (equipRequirement.unitAttributes) {
 				for (let key in equipRequirement.unitAttributes) {
 					if (unitAttributes && unitAttributes[key]) {
-						requirementsSatisfied = self.isAttributeRequirementMet(equipRequirement.unitAttributes[key], key, unitAttributes);
+						requirementsSatisfied = self.isAttributeRequirementMet(
+							equipRequirement.unitAttributes[key],
+							key,
+							unitAttributes
+						);
 						if (!requirementsSatisfied) {
 							return false;
 						}
@@ -558,7 +576,7 @@ var InventoryComponent = TaroEntity.extend({
 		}
 
 		return true;
-	}
+	},
 });
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
