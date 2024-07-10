@@ -1248,9 +1248,10 @@ var Unit = TaroEntityPhysics.extend({
 				taro.game.lastCreatedItemId = item.id(); // this is necessary in case item isn't a new instance, but an existing item getting quantity updated
 				returnQueued = true;
 			} else {
+				console.log(itemData);
 				// if designated item slot is already occupied, unit cannot get this item
 				var availableSlot = self.inventory.getFirstAvailableSlotForItem(itemData);
-
+				console.log(`availableSlot: ${availableSlot}`);
 				// Check if the item can merge
 				if (!!itemData.controls?.canMerge) {
 					// insert/merge itemData's quantity into matching items in the inventory
