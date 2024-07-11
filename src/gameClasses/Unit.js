@@ -1250,20 +1250,17 @@ var Unit = TaroEntityPhysics.extend({
 			} else {
 				// if designated item slot is already occupied, unit cannot get this item
 				var availableSlot = self.inventory.getFirstAvailableSlotForItem(itemData);
-
 				// Check if the item can merge
-				if (!!itemData.controls?.canMerge) {
+				if (itemData.controls?.canMerge) {
 					// insert/merge itemData's quantity into matching items in the inventory
 					var totalInventorySize = this.inventory.getTotalInventorySize();
 					for (var i = equipRequirementMet ? 0 : this._stats.inventorySize; i < totalInventorySize; i++) {
 						var currentItemId = self._stats.itemIds[i];
 						if (currentItemId) {
 							var currentItem = taro.$(currentItemId);
-
 							// if a matching item found in the inventory, try merging them
 							if (currentItem && currentItem._stats.itemTypeId == itemTypeId) {
 								var matchingItem = currentItem;
-
 								// lastCreatedItem is used to track the last item created by the server.
 								// This is necessary in case item isn't a new instance, but an existing item getting quantity updated
 								taro.game.lastCreatedItemId = matchingItem.id();
@@ -1279,11 +1276,13 @@ var Unit = TaroEntityPhysics.extend({
 								}
 
 								// the new item can fit in, because the matching item isn't full or has infinite quantity. Increase matching item's quantity only.
-								if (itemData.quantity > 0 && matchingItem._stats.maxQuantity - matchingItem._stats.quantity > 0) {
-									if (matchingItem._stats.maxQuantity != undefined) {
+								let maxQuantity = matchingItem._stats.maxQuantity || Infinity;
+
+								if (itemData.quantity > 0 && maxQuantity - matchingItem._stats.quantity > 0) {
+									if (matchingItem._stats.maxQuantity !== undefined) {
 										var quantityToBeTakenFromItem = Math.min(
 											itemData.quantity,
-											matchingItem._stats.maxQuantity - matchingItem._stats.quantity
+											maxQuantity - matchingItem._stats.quantity
 										);
 									} else {
 										// var quantityToBeTakenFromItem = itemData.quantity;
