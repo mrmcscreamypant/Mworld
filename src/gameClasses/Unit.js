@@ -154,6 +154,7 @@ var Unit = TaroEntityPhysics.extend({
 		self.scaleDimensions(self._stats.width, self._stats.height);
 
 		if (taro.isClient) {
+			taro.script.trigger('entityCreatedGlobal', { entityId: this.id() });
 			this.script.trigger('entityCreated');
 		}
 	},
@@ -1237,6 +1238,7 @@ var Unit = TaroEntityPhysics.extend({
 					item = new Item(itemData);
 					// don't trigger entityCreated if item is loaded from persisted data
 					if (!persistedItem) {
+						taro.script.trigger('entityCreatedGlobal', { entityId: item.id() });
 						item.script.trigger('entityCreated');
 					}
 				}
@@ -1338,6 +1340,7 @@ var Unit = TaroEntityPhysics.extend({
 						// itemData.stateId = (availableSlot-1 == this._stats.currentItemIndex) ? 'selected' : 'unselected';
 						item = new Item(itemData);
 						taro.game.lastCreatedItemId = item._id;
+						taro.script.trigger('entityCreatedGlobal', { entityId: item.id() });
 						item.script.trigger('entityCreated');
 					}
 
@@ -1811,6 +1814,9 @@ var Unit = TaroEntityPhysics.extend({
 							// changing body dimensions
 							self._scaleBox2dBody(newValue);
 						} else if (taro.isClient) {
+							if (taro.physics) {
+								self._scaleBox2dBody(newValue);
+							}
 							self._stats.scale = newValue;
 							self._scaleTexture();
 						}
@@ -1988,6 +1994,7 @@ var Unit = TaroEntityPhysics.extend({
 							var givenItem = taro.$(taro.game.lastCreatedItemId);
 							if (givenItem && givenItem.getOwnerUnit() == this) {
 								givenItem.loadPersistentData(persistedItem);
+								taro.script.trigger('entityCreatedGlobal', { givenItem: this.id() });
 								givenItem.script.trigger('entityCreated');
 							}
 						}
