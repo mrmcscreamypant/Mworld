@@ -400,7 +400,9 @@ var ClientNetworkEvents = {
 		}
 
 		taro.pingElement = taro.pingElement || document.getElementById('updateping');
-		taro.pingElement.innerHTML = Math.floor(latency);
+		if (taro.pingElement) {
+			taro.pingElement.innerHTML = Math.floor(latency);
+		}
 		taro.pingLatency = taro.pingLatency || [];
 		taro.pingLatency.push(Math.floor(latency));
 	},
