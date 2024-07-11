@@ -324,7 +324,7 @@ namespace Renderer {
 					this.controls.update();
 				}
 
-				if (this.useBounds) {
+				if (this.useBounds && !this.isEditorMode) {
 					const viewHalfWidth = this.orthographicCamera.right / this.lastAuthoritativeZoom;
 					const viewHalfHeight = this.orthographicCamera.top / this.lastAuthoritativeZoom;
 
@@ -480,7 +480,7 @@ namespace Renderer {
 
 				const dist = this.tempVec3.distanceTo(this.instance.position);
 				this.raycaster.setFromCamera(this.tempVec2, this.instance);
-				this.raycaster.far = dist;
+				this.raycaster.far = dist * 0.9; //temporary fix for unit HUDs hidind with map bound camera when near map border
 				this.raycaster.near = this.instance.near;
 
 				const intersects = this.raycaster.intersectObject(objects);
