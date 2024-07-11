@@ -641,8 +641,11 @@ var PhysicsComponent = TaroEventingClass.extend({
 					(!self.getPointer || self.getPointer(tempBod) !== self.getPointer(self.nullPtr))
 				) {
 					// Check if the body is awake && not static
+					entity = self.getPointer !== undefined ? self.metaData[self.getPointer(tempBod)]._entity : tempBod._entity;
+					if(entity && entity.tmpDefaultDepth) {
+						entity.queueStreamData({ depth: entity.tmpDefaultDepth });
+					}
 					if (tempBod.m_type !== 'static' && tempBod.isAwake() && (!tempBod.GetType || tempBod.GetType() !== 0)) {
-						entity = self.getPointer !== undefined ? self.metaData[self.getPointer(tempBod)]._entity : tempBod._entity;
 						if (entity && !entity._stats.isHidden) {
 							// apply movement if it's either human-controlled unit, or ai unit that's currently moving
 							if (entity.body && entity.vector && (entity.vector.x != 0 || entity.vector.y != 0)) {
