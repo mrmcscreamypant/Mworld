@@ -3282,6 +3282,7 @@ var ActionComponent = TaroEntity.extend({
 						let entityType = self._script.param.getValue(action.entityType, vars);
 						let entityToCreate = self._script.param.getValue(action.entity, vars);
 						var position = self._script.param.getValue(action.position, vars);
+						const defaultDepth = position.z;
 						var rotation = self._script.param.getValue(action.rotation, vars);
 						var scale = self._script.param.getValue(action.scale, vars);
 						var height = self._script.param.getValue(action.height, vars) || 100;
@@ -3429,7 +3430,10 @@ var ActionComponent = TaroEntity.extend({
 								height: height,
 								width: width,
 							};
-
+							if (defaultDepth) {
+								//FIXME: should remove tmpDefault and find somewhere else to store the defaultDepth
+								createdEntity.tmpDefaultDepth = defaultDepth
+							}
 							taro.script.trigger('entityCreatedGlobal', { entityId: createdEntity.id() });
 							createdEntity.script.trigger('entityCreated', { thisEntityId: createdEntity.id() });
 						}

@@ -41,7 +41,7 @@ namespace Renderer {
 					defaultHeight = this.defaultHeight = entityTypeData.bodies?.default?.height;
 					defaultDepth = this.defaultDepth = entityTypeData.bodies?.default?.depth;
 				}
-				this.isBillboard = entityTypeData?.isBillboard ?? false;
+				this.isBillboard = (((entityTypeData?.isBillboard) ?? entityTypeData?.bodies?.default?.isBillboard) ?? false);
 				const renderer = Renderer.Three.instance();
 				let body: (Renderer.Three.AnimatedSprite | Renderer.Three.Model) & { entity: InitEntity };
 				if (entityTypeData.is3DObject) {
@@ -57,7 +57,7 @@ namespace Renderer {
 						entity: InitEntity;
 					};
 					(body.sprite as THREE.Mesh & { entity: InitEntity }).entity = this;
-					body.setBillboard(entityTypeData.isBillboard, renderer.camera);
+					body.setBillboard(this.isBillboard, renderer.camera);
 				}
 				body.entity = this;
 				this.rotation.order = 'YXZ';
@@ -140,7 +140,13 @@ namespace Renderer {
 				}
 			}
 
-			update(action: ActionData): void {
+			update() {
+				if (this.isBillboard) {
+					this.body.update(0)
+				}
+			}
+
+			updateAction(action: ActionData): void {
 				//update action in editor
 				if (inGameEditor && inGameEditor.updateAction && !window.isStandalone) {
 					inGameEditor.updateAction(action);

@@ -902,6 +902,11 @@ namespace Renderer {
 				this.particleSystem.update(dt, time, this.camera.instance);
 				this.camera.update();
 				this.voxelEditor.update();
+				this.initEntityLayer.children.forEach((child)=>{
+					if(child instanceof InitEntity) {
+						child.update()
+					}
+				})
 
 				if (this.camera.target) {
 					this.sky.position.copy(this.camera.target.position);

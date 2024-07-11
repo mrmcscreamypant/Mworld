@@ -76,8 +76,11 @@ namespace Renderer {
 					taroEntity.on('billboard', (isBillboard) =>
 						(entity.body as AnimatedSprite).setBillboard(isBillboard, renderer.camera)
 					);
+				} else if (entity.body instanceof Model) {
+					taroEntity.on('depth', (depth) => {
+						entity.position.y = Utils.pixelToWorld(depth);
+					});
 				}
-
 				taroEntity.on(
 					'transform',
 					(data: { x: number; y: number; rotation: number }) => {
@@ -215,7 +218,7 @@ namespace Renderer {
 
 			showHud(visible: boolean) {
 				if (visible != this.hud.visible) {
-					const fadeAnimation = (from: number, to: number, onComplete = () => {}) => {
+					const fadeAnimation = (from: number, to: number, onComplete = () => { }) => {
 						new TWEEN.Tween({ opacity: from })
 							.to({ opacity: to }, 100)
 							.onUpdate(({ opacity }) => {

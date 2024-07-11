@@ -50,7 +50,7 @@ namespace Renderer {
 					initEntities.forEach((initEntity) => {
 						if (initEntity.action.actionId === data.actionId) {
 							found = true;
-							initEntity.update(data);
+							initEntity.updateAction(data);
 						}
 					});
 					if (!found) {
@@ -63,7 +63,7 @@ namespace Renderer {
 						initEntities.forEach((initEntity) => {
 							if (initEntity.action.actionId === action.actionId) {
 								found = true;
-								initEntity.update(action);
+								initEntity.updateAction(action);
 							}
 						});
 						if (!found) {
