@@ -1296,28 +1296,6 @@ var TaroObject = TaroEventingClass.extend({
 		return this._billboard;
 	},
 
-	// NOTE(nick): Supports "Rotate (3D)" editor setting under entity body,
-	// probably wanna rework this when the engine support 3D better/properly.
-	rotate3d: function (x, y, z) {
-		if (x !== undefined && y !== undefined && z !== undefined) {
-			this._rotateX = x;
-			this._rotateY = y;
-			this._rotateZ = z;
-
-			if (taro.isClient) {
-				this.emit('rotate', [x, y, z]);
-			}
-
-			return this;
-		}
-
-		return {
-			x: this._rotateX,
-			y: this._rotateY,
-			z: this._rotateZ,
-		};
-	},
-
 	/**
 	 * Loops through all child objects of this object and destroys them
 	 * by calling each child's destroy() method then clears the object's
