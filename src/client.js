@@ -225,7 +225,7 @@ const Client = TaroEventingClass.extend({
 
 				if (taro.game.data.defaultData.defaultRenderer === '3d') {
 					if (options?.resetRenderer) {
-						taro.renderer = Renderer.Three.reset(); // reset renderer
+						taro.renderer = Renderer.Three.reset(options.rendererOptions); // reset renderer
 					} else {
 						taro.renderer = Renderer.Three.instance();
 					}

@@ -12,8 +12,8 @@ namespace Renderer {
 			return Renderer.instance();
 		}
 
-		export function reset() {
-			return Renderer.reset();
+		export function reset(rendererOptions) {
+			return Renderer.reset(rendererOptions);
 		}
 
 		export function getPointer() {
@@ -55,7 +55,7 @@ namespace Renderer {
 
 			private regionDrawStart: { x: number; y: number } = { x: 0, y: 0 };
 
-			private constructor() {
+			private constructor(rendererOptions?: { canvas: HTMLCanvasElement }) {
 				// For JS interop; in case someone uses new Renderer.ThreeRenderer()
 				if (!Renderer._instance) {
 					Renderer._instance = this;
@@ -69,7 +69,7 @@ namespace Renderer {
 				//@ts-ignore
 				THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 				THREE.Mesh.prototype.raycast = acceleratedRaycast;
-				const renderer = new THREE.WebGLRenderer();
+				const renderer = new THREE.WebGLRenderer(rendererOptions);
 				renderer.setSize(window.innerWidth, window.innerHeight);
 				document.querySelector('#game-div')?.appendChild(renderer.domElement);
 				this.renderer = renderer;
@@ -521,7 +521,7 @@ namespace Renderer {
 				return this._instance;
 			}
 
-			static reset() {
+			static reset(rendererOptions) {
 				// event listeners are being removed in be-next while switching the game
 				// https://github.com/moddio/be-next/blob/master/src/pages/index.static-export.jsx#L173-L179
 
@@ -529,7 +529,7 @@ namespace Renderer {
 				window.lastRequestAnimationFrameId = null;
 
 				this._instance = null; // renderer only reinitialize if instance not available.
-				this._instance = new Renderer();
+				this._instance = new Renderer(rendererOptions);
 
 				return this._instance;
 			}
