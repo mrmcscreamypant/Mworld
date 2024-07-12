@@ -1978,10 +1978,21 @@ var Unit = TaroEntityPhysics.extend({
 		var self = this;
 		var owner = self.getOwner();
 		var persistedData = rfdc()(owner.persistedData);
+
 		if (persistedData && persistedData.data && persistedData.data.unit) {
 			TaroEntity.prototype.loadPersistentData.call(this, persistedData.data.unit);
 
 			var persistedInventoryItems = persistedData.data.unit.inventoryItems;
+			// destroy items given to unit as defaultItems if there is inventory to load
+			if (persistedInventoryItems.length() > 0) {
+				this._stats.itemIds.forEach((itemId, i) => {
+					if (itemId) {
+						taro.$(itemId).destroy();
+						this._stats.itemIds[i] = null;
+					}
+				});
+			}
+			// now inventory should be empty and we can load in items to the slotIndex saved
 			for (var i = 0; i < persistedInventoryItems.length; i++) {
 				var persistedItem = persistedInventoryItems[i];
 				if (persistedItem) {
