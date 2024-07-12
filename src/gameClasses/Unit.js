@@ -1984,7 +1984,7 @@ var Unit = TaroEntityPhysics.extend({
 
 			var persistedInventoryItems = persistedData.data.unit.inventoryItems;
 			// destroy items given to unit as defaultItems if there is inventory to load
-			if (persistedInventoryItems.length() > 0) {
+			if (persistedInventoryItems.length > 0) {
 				this._stats.itemIds.forEach((itemId, i) => {
 					if (itemId) {
 						taro.$(itemId).destroy();
