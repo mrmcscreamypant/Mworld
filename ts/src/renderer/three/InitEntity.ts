@@ -41,7 +41,7 @@ namespace Renderer {
 					defaultHeight = this.defaultHeight = entityTypeData.bodies?.default?.height;
 					defaultDepth = this.defaultDepth = entityTypeData.bodies?.default?.depth;
 				}
-				this.isBillboard = (((entityTypeData?.isBillboard) ?? entityTypeData?.bodies?.default?.isBillboard) ?? false);
+				this.isBillboard = entityTypeData?.bodies?.default?.isBillboard ?? false;
 				const renderer = Renderer.Three.instance();
 				let body: (Renderer.Three.AnimatedSprite | Renderer.Three.Model) & { entity: InitEntity };
 				if (entityTypeData.is3DObject) {
@@ -142,7 +142,7 @@ namespace Renderer {
 
 			update() {
 				if (this.isBillboard) {
-					this.body.update(0)
+					this.body.update(0);
 				}
 			}
 
