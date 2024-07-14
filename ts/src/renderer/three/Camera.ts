@@ -16,6 +16,8 @@ namespace Renderer {
 			isEditorMode = false;
 
 			private debugMode = false;
+			// private rayHelpers = [];
+			// private rayHitHelpers = [];
 
 			private orthographicCamera: THREE.OrthographicCamera;
 			private perspectiveCamera: THREE.PerspectiveCamera;
@@ -45,28 +47,14 @@ namespace Renderer {
 
 			private bounds = { x: 0, y: 0, width: 0, height: 0 };
 
+			private cameraO: THREE.OrthographicCamera;
+			private cameraP: THREE.PerspectiveCamera;
+
 			constructor(
 				private viewportWidth: number,
 				private viewportHeight: number,
 				private canvas: HTMLCanvasElement
 			) {
-				// Public API
-
-				// DONE
-				// camera.setProjection(string)
-				// camera.setElevationAngle(number)
-				// camera.getElevationAngle()
-				// camera.setAzimuthAngle(number)
-				// camera.setOffset(x, y, z)
-				// camera.setElevationRange(min, max)
-				// camera.setZoom(number)
-				// camera.setPointerLock(bool)
-
-				// TODO
-				// camera.setTarget(object3d | null, moveInstantOrLerp)
-				// camera.setFollowSpeed(number)
-				// camera.update(dt <-- add dt to func)
-
 				const persCamera = new THREE.PerspectiveCamera(75, viewportWidth / viewportHeight, 0.1, 15000);
 				this.perspectiveCamera = persCamera;
 				this.fovInitial = Math.tan(((Math.PI / 180) * this.perspectiveCamera.fov) / 2);
@@ -84,7 +72,16 @@ namespace Renderer {
 				this.orthographicCamera.position.y = distance;
 				this.originalDistance = distance;
 
-				this.instance = orthoCamera;
+				// Used by the scene, copies position from the cameras above.
+				// This is so that we can change the position of the camera
+				// without affecting the original position directed by
+				// OrbitControls. Ideally we want to rewrite this class and no
+				// longer use OrbitControls but move much of that logic here.
+				// For now we use this solution.
+				this.cameraO = orthoCamera.clone();
+				this.cameraP = persCamera.clone();
+
+				this.instance = this.cameraO;
 
 				this.controls = new OrbitControls(this.instance, canvas);
 				this.controls.enableRotate = false;
@@ -132,7 +129,7 @@ namespace Renderer {
 						this.isLocked ? this.unlock() : this.lock();
 					} else if (evt.key === ',') {
 						this.isPerspective = false;
-						this.instance = this.orthographicCamera;
+						this.instance = this.cameraO;
 						this.controls.object = this.orthographicCamera;
 						this.zoom = this.lastAuthoritativeZoom;
 
@@ -178,6 +175,18 @@ namespace Renderer {
 					canvas.ownerDocument.addEventListener('pointerlockchange', this.onPointerlockChange.bind(this));
 					canvas.ownerDocument.addEventListener('pointerlockerror', this.onPointerlockError.bind(this));
 				}
+
+				// this.rayHelpers.push(new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(), 1, 0xff0000));
+				// this.rayHelpers.push(new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, 0x00ff00));
+				// this.rayHelpers.push(new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 1, 0x0000ff));
+				// this.rayHelpers.push(new THREE.ArrowHelper(new THREE.Vector3(0, -1, 0), new THREE.Vector3(), 1, 0xff0000));
+				// this.rayHelpers.forEach((helper) => Three.instance().scene.add(helper));
+
+				// this.rayHitHelpers.push(new THREE.AxesHelper(0.1));
+				// this.rayHitHelpers.push(new THREE.AxesHelper(0.1));
+				// this.rayHitHelpers.push(new THREE.AxesHelper(0.1));
+				// this.rayHitHelpers.push(new THREE.AxesHelper(0.1));
+				// this.rayHitHelpers.forEach((helper) => Three.instance().scene.add(helper));
 			}
 
 			setBounds(x: number, y: number, width: number, height: number) {
@@ -226,6 +235,9 @@ namespace Renderer {
 				this.orthographicCamera.position.setFromSpherical(spherical).add(this.controls.target);
 
 				this.controls.update();
+
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 			}
 
 			getElevationAngle() {
@@ -248,6 +260,9 @@ namespace Renderer {
 				this.orthographicCamera.position.setFromSpherical(spherical).add(this.controls.target);
 
 				this.controls.update();
+
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 			}
 
 			setDistance(distance: number) {
@@ -271,6 +286,9 @@ namespace Renderer {
 					this.orthographicCamera.updateProjectionMatrix();
 				}
 
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
+
 				this.controls.update();
 			}
 
@@ -289,6 +307,9 @@ namespace Renderer {
 			}
 
 			update() {
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
+
 				if (this.isEditorMode) {
 					const azimuthAngle = this.controls.getAzimuthalAngle() * (180 / Math.PI);
 					const elevationAngle = this.getElevationAngle() * (180 / Math.PI);
@@ -337,6 +358,88 @@ namespace Renderer {
 
 					this.setPosition(x, this.controls.target.y, z);
 				}
+
+				if (taro?.game?.data?.settings?.camera?.collisions && this.isPerspective && !this.isEditorMode) {
+					const halfExtends = new THREE.Vector3();
+					halfExtends.y = this.cameraP.near * Math.tan(0.5 * (Math.PI / 180) * this.cameraP.fov);
+					halfExtends.x = halfExtends.y * this.cameraP.aspect;
+
+					const target = this.controls.target;
+
+					// For debugging
+					// window.addEventListener('keydown', (evt) => {
+					// 	if (evt.key === '5') {
+					// 		const castRay = (idx: number, x: number, y: number) => {
+					// 			const helper = this.rayHelpers[idx];
+					// 			Three.instance().scene.remove(helper);
+					// 			const whalfExtends = this.cameraP.localToWorld(new THREE.Vector3(x, y, 0));
+					// 			const dir = new THREE.Vector3()
+					// 				.subVectors(whalfExtends, this.cameraP.localToWorld(new THREE.Vector3(x, y, -1)))
+					// 				.normalize();
+					// 			const origin = this.cameraP.localToWorld(
+					// 				this.cameraP
+					// 					.worldToLocal(new THREE.Vector3(target.x, target.y, target.z))
+					// 					.add(new THREE.Vector3(x, y, 0))
+					// 			);
+
+					// 			const length = this.controls.getDistance() - this.controls.object.near;
+					// 			this.rayHelpers[idx] = new THREE.ArrowHelper(dir, origin, length, 0xff0000);
+					// 			Three.instance().scene.add(this.rayHelpers[idx]);
+
+					// 			const ray = new THREE.Raycaster(origin, dir, 0, length);
+					// 			//@ts-ignore
+					// 			ray.firstHitOnly = true;
+					// 			const intersects = ray.intersectObjects(Three.instance().voxels.children, false);
+					// 			if (intersects.length > 0) {
+					// 				this.rayHitHelpers[idx].position.copy(intersects[0].point);
+					// 			}
+					// 		};
+
+					// 		castRay(0, -halfExtends.x, -halfExtends.y);
+					// 		castRay(1, halfExtends.x, -halfExtends.y);
+					// 		castRay(2, halfExtends.x, halfExtends.y);
+					// 		castRay(3, -halfExtends.x, halfExtends.y);
+					// 	}
+					// });
+
+					const castRay = (x: number, y: number) => {
+						const whalfExtends = this.cameraP.localToWorld(new THREE.Vector3(x, y, 0));
+						const dir = new THREE.Vector3()
+							.subVectors(whalfExtends, this.cameraP.localToWorld(new THREE.Vector3(x, y, -1)))
+							.normalize();
+						const origin = this.cameraP.localToWorld(
+							this.cameraP.worldToLocal(new THREE.Vector3(target.x, target.y, target.z)).add(new THREE.Vector3(x, y, 0))
+						);
+						const length = this.controls.getDistance() - this.controls.object.near;
+						const ray = new THREE.Raycaster(origin, dir, 0, length);
+						//@ts-ignore
+						ray.firstHitOnly = true;
+						const intersects = ray.intersectObjects(Three.instance().voxels.children, false);
+						return intersects.length > 0 ? intersects[0] : undefined;
+					};
+
+					const intersects = [];
+					for (const dir of [
+						{ x: -1, y: -1 },
+						{ x: 1, y: -1 },
+						{ x: 1, y: 1 },
+						{ x: -1, y: 1 },
+						{ x: 0, y: 0 },
+					]) {
+						const intersect = castRay(dir.x * halfExtends.x, dir.y * halfExtends.y);
+						if (intersect) intersects.push(intersect);
+					}
+					if (intersects.length > 0) {
+						const closest = intersects.reduce((prev, curr) => (prev.distance < curr.distance ? prev : curr));
+						const newPos = new THREE.Vector3()
+							.subVectors(this.controls.object.position, target)
+							.normalize()
+							.multiplyScalar(closest.distance + this.controls.object.near)
+							.add(target);
+						this.cameraP.position.set(newPos.x, newPos.y, newPos.z);
+						this.cameraO.position.set(newPos.x, newPos.y, newPos.z);
+					}
+				}
 			}
 
 			resize(width: number, height: number) {
@@ -358,6 +461,9 @@ namespace Renderer {
 				this.orthographicCamera.updateProjectionMatrix();
 
 				this.setZoom(Math.max(this.viewportWidth, this.viewportHeight) / this.zoomHeight);
+
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 			}
 
 			setZoom(ratio: number) {
@@ -399,21 +505,18 @@ namespace Renderer {
 					const pointer = new THREE.Vector3(p.x, p.y, 0.5);
 					pointer.unproject(this.instance);
 					pointer.sub(this.instance.position).normalize();
-					const dist =
-						target.clone().sub(this.perspectiveCamera.position).dot(this.perspectiveCamera.up) /
-						pointer.dot(this.perspectiveCamera.up);
+					const dist = target.clone().sub(this.cameraP.position).dot(this.cameraP.up) / pointer.dot(this.cameraP.up);
 					return this.instance.position.clone().add(pointer.multiplyScalar(dist));
 				} else {
 					const pointer = new THREE.Vector3(
 						p.x,
 						p.y,
-						(this.orthographicCamera.near + this.orthographicCamera.far) /
-							(this.orthographicCamera.near - this.orthographicCamera.far)
+						(this.cameraO.near + this.cameraO.far) / (this.cameraO.near - this.cameraO.far)
 					);
-					pointer.unproject(this.orthographicCamera);
+					pointer.unproject(this.cameraO);
 					pointer.y -= target.y;
-					const v = new THREE.Vector3(0, 0, -1).applyQuaternion(this.orthographicCamera.quaternion);
-					const dist = -pointer.dot(this.orthographicCamera.up) / v.dot(this.orthographicCamera.up);
+					const v = new THREE.Vector3(0, 0, -1).applyQuaternion(this.cameraO.quaternion);
+					const dist = -pointer.dot(this.cameraO.up) / v.dot(this.cameraO.up);
 					const result = pointer.clone().add(v.multiplyScalar(dist));
 					return result;
 				}
@@ -426,6 +529,8 @@ namespace Renderer {
 				this.controls.target.lerp(this.controls.target.clone().add(diff), t);
 				this.orthographicCamera.position.lerp(this.orthographicCamera.position.clone().add(diff), t);
 				this.perspectiveCamera.position.lerp(this.perspectiveCamera.position.clone().add(diff), t);
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 			}
 
 			setPosition2D(x: number, z: number, lerp = false) {
@@ -435,6 +540,8 @@ namespace Renderer {
 				this.controls.target.lerp(this.controls.target.clone().add(diff), t);
 				this.orthographicCamera.position.lerp(this.orthographicCamera.position.clone().add(diff), t);
 				this.perspectiveCamera.position.lerp(this.perspectiveCamera.position.clone().add(diff), t);
+				this.cameraP.copy(this.perspectiveCamera);
+				this.cameraO.copy(this.orthographicCamera);
 			}
 
 			onChange(cb: () => void) {
@@ -489,9 +596,11 @@ namespace Renderer {
 				this.orthographicCamera.zoom = this.zoom;
 				this.orthographicCamera.lookAt(this.controls.target);
 				this.orthographicCamera.updateProjectionMatrix();
-				this.instance = this.orthographicCamera;
 				this.controls.object = this.orthographicCamera;
-				this.instance.lookAt(this.controls.target);
+
+				this.cameraO.copy(this.orthographicCamera);
+				this.instance = this.cameraO;
+
 				this.controls.update();
 			}
 
@@ -509,10 +618,13 @@ namespace Renderer {
 					.add(this.controls.target);
 
 				this.perspectiveCamera.position.copy(newPos);
+				this.perspectiveCamera.lookAt(this.controls.target);
 				this.perspectiveCamera.updateProjectionMatrix();
-				this.instance = this.perspectiveCamera;
 				this.controls.object = this.perspectiveCamera;
-				this.instance.lookAt(this.controls.target);
+
+				this.cameraP.copy(this.perspectiveCamera);
+				this.instance = this.cameraP;
+
 				this.controls.update();
 			}
 
