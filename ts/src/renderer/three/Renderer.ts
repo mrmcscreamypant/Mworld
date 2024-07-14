@@ -41,7 +41,7 @@ namespace Renderer {
 			public initEntityLayer = new THREE.Group();
 
 			private sky: Skybox;
-			private voxels: Voxels;
+			voxels: Voxels;
 			private particleSystem: ParticleSystem;
 
 			private raycastIntervalSeconds = 0.1;
@@ -74,14 +74,14 @@ namespace Renderer {
 				document.querySelector('#game-div')?.appendChild(renderer.domElement);
 				this.renderer = renderer;
 
+				this.scene = new THREE.Scene();
+				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
+
 				this.camera = new Camera(window.innerWidth, window.innerHeight, this.renderer.domElement);
 				this.camera.setElevationAngle(taro.game.data.settings.camera.defaultPitch);
 				if (taro.game.data.settings.camera.projectionMode !== 'orthographic') {
 					this.camera.setProjection(taro.game.data.settings.camera.projectionMode);
 				}
-
-				this.scene = new THREE.Scene();
-				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
 
 				window.addEventListener('resize', () => {
 					this.camera.resize(window.innerWidth, window.innerHeight);
@@ -177,7 +177,10 @@ namespace Renderer {
 														!this.entityEditor.gizmo.control.dragging))
 											) {
 												this.entityEditor.selectEntity(initEntity);
-												taro.client.emit('block-scale', !(initEntity.action.scale || initEntity.action.height || initEntity.action.width));
+												taro.client.emit(
+													'block-scale',
+													!(initEntity.action.scale || initEntity.action.height || initEntity.action.width)
+												);
 												taro.client.emit('block-rotation', !!initEntity.isBillboard);
 											} else if (clickDelay < 350) {
 												console.log('showing script for entity', initEntity.action.actionId);
@@ -902,11 +905,11 @@ namespace Renderer {
 				this.particleSystem.update(dt, time, this.camera.instance);
 				this.camera.update();
 				this.voxelEditor.update();
-				this.initEntityLayer.children.forEach((child)=>{
-					if(child instanceof InitEntity) {
-						child.update()
+				this.initEntityLayer.children.forEach((child) => {
+					if (child instanceof InitEntity) {
+						child.update();
 					}
-				})
+				});
 
 				if (this.camera.target) {
 					this.sky.position.copy(this.camera.target.position);
