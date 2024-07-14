@@ -84,9 +84,6 @@ namespace Renderer {
 				this.orthographicCamera.position.y = distance;
 				this.originalDistance = distance;
 
-				this.perspectiveCamera.position.add(this.offset);
-				this.orthographicCamera.position.add(this.offset);
-
 				this.instance = orthoCamera;
 
 				this.controls = new OrbitControls(this.instance, canvas);
@@ -212,23 +209,21 @@ namespace Renderer {
 			}
 
 			setElevationAngle(deg: number) {
-				let degRad = deg * (Math.PI / 180);
-				if (degRad < this.minElevationAngle) degRad = this.minElevationAngle;
-				else if (degRad > this.maxElevationAngle) degRad = this.maxElevationAngle;
+				let rad = Utils.deg2rad(deg);
+				if (rad < this.minElevationAngle) rad = this.minElevationAngle;
+				else if (rad > this.maxElevationAngle) rad = this.maxElevationAngle;
 
-				this.elevationAngle = deg;
+				this.elevationAngle = Utils.rad2deg(rad);
 
-				const spherical = new THREE.Spherical();
-				spherical.radius = this.controls.getDistance();
-				spherical.theta = this.controls.getAzimuthalAngle();
+				if (rad === this.minElevationAngle || rad === this.maxElevationAngle) return;
 
-				const rad = deg * (Math.PI / 180);
-				spherical.phi = Math.PI * 0.5 - rad;
-
-				spherical.makeSafe();
-
-				this.perspectiveCamera.position.setFromSpherical(spherical).add(this.controls.target).add(this.offset);
-				this.orthographicCamera.position.setFromSpherical(spherical).add(this.controls.target).add(this.offset);
+				const spherical = new THREE.Spherical(
+					this.controls.getDistance(),
+					Math.PI / 2 - Utils.deg2rad(deg),
+					this.controls.getAzimuthalAngle()
+				).makeSafe();
+				this.perspectiveCamera.position.setFromSpherical(spherical).add(this.controls.target);
+				this.orthographicCamera.position.setFromSpherical(spherical).add(this.controls.target);
 
 				this.controls.update();
 			}
@@ -244,15 +239,13 @@ namespace Renderer {
 			setAzimuthAngle(deg: number) {
 				this.azimuthAngle = deg;
 
-				const spherical = new THREE.Spherical();
-				spherical.radius = this.controls.getDistance();
-				spherical.phi = this.controls.getPolarAngle();
-
-				const rad = deg * (Math.PI / 180);
-				spherical.theta = rad;
-
-				this.perspectiveCamera.position.setFromSpherical(spherical).add(this.controls.target).add(this.offset);
-				this.orthographicCamera.position.setFromSpherical(spherical).add(this.controls.target).add(this.offset);
+				const spherical = new THREE.Spherical(
+					this.controls.getDistance(),
+					Math.PI / 2 - Utils.deg2rad(this.elevationAngle),
+					Utils.deg2rad(deg)
+				).makeSafe();
+				this.perspectiveCamera.position.setFromSpherical(spherical).add(this.controls.target);
+				this.orthographicCamera.position.setFromSpherical(spherical).add(this.controls.target);
 
 				this.controls.update();
 			}
@@ -269,8 +262,8 @@ namespace Renderer {
 					.multiplyScalar(distance)
 					.add(this.controls.target);
 
-				this.perspectiveCamera.position.copy(newPos).add(this.offset);
-				this.orthographicCamera.position.copy(newPos).add(this.offset);
+				this.perspectiveCamera.position.copy(newPos);
+				this.orthographicCamera.position.copy(newPos);
 
 				if (this.instance instanceof THREE.OrthographicCamera) {
 					this.orthographicCamera.zoom = this.zoom;
@@ -317,6 +310,7 @@ namespace Renderer {
 				if (this.target && !this.isEditorMode) {
 					const targetWorldPos = new THREE.Vector3();
 					this.target.getWorldPosition(targetWorldPos);
+					targetWorldPos.add(this.offset);
 					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z, true);
 				}
 
@@ -429,18 +423,18 @@ namespace Renderer {
 				const oldTarget = this.controls.target.clone();
 				const diff = new THREE.Vector3(x, y, z).sub(oldTarget);
 				const t = lerp ? (taro?.game?.data?.settings?.camera?.trackingDelay || 3) / taro.fps() : 1;
-				this.controls.target.lerp(this.controls.target.clone().add(this.offset).add(diff), t);
-				this.orthographicCamera.position.lerp(this.orthographicCamera.position.clone().add(this.offset).add(diff), t);
-				this.perspectiveCamera.position.lerp(this.perspectiveCamera.position.clone().add(this.offset).add(diff), t);
+				this.controls.target.lerp(this.controls.target.clone().add(diff), t);
+				this.orthographicCamera.position.lerp(this.orthographicCamera.position.clone().add(diff), t);
+				this.perspectiveCamera.position.lerp(this.perspectiveCamera.position.clone().add(diff), t);
 			}
 
 			setPosition2D(x: number, z: number, lerp = false) {
 				const oldTarget = this.controls.target.clone();
 				const diff = new THREE.Vector3(x, oldTarget.y, z).sub(oldTarget);
 				const t = lerp ? (taro?.game?.data?.settings?.camera?.trackingDelay || 3) / taro.fps() : 1;
-				this.controls.target.lerp(this.controls.target.clone().add(this.offset).add(diff), t);
-				this.orthographicCamera.position.lerp(this.orthographicCamera.position.clone().add(this.offset).add(diff), t);
-				this.perspectiveCamera.position.lerp(this.perspectiveCamera.position.clone().add(this.offset).add(diff), t);
+				this.controls.target.lerp(this.controls.target.clone().add(diff), t);
+				this.orthographicCamera.position.lerp(this.orthographicCamera.position.clone().add(diff), t);
+				this.perspectiveCamera.position.lerp(this.perspectiveCamera.position.clone().add(diff), t);
 			}
 
 			onChange(cb: () => void) {
@@ -489,7 +483,7 @@ namespace Renderer {
 
 			private switchToOrthographicCamera() {
 				this.isPerspective = false;
-				this.orthographicCamera.position.copy(this.perspectiveCamera.position).add(this.offset);
+				this.orthographicCamera.position.copy(this.perspectiveCamera.position);
 				this.orthographicCamera.quaternion.copy(this.perspectiveCamera.quaternion);
 
 				this.orthographicCamera.zoom = this.zoom;
@@ -503,7 +497,7 @@ namespace Renderer {
 
 			private switchToPerspectiveCamera() {
 				this.isPerspective = true;
-				this.perspectiveCamera.position.copy(this.orthographicCamera.position).add(this.offset);
+				this.perspectiveCamera.position.copy(this.orthographicCamera.position);
 				this.perspectiveCamera.quaternion.copy(this.orthographicCamera.quaternion);
 
 				const yFovDeg = this.perspectiveCamera.fov * (Math.PI / 180);
