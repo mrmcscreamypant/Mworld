@@ -921,6 +921,10 @@ var Player = TaroEntity.extend({
 				$('.open-menu-button').show();
 			}
 
+			if (window.STATIC_EXPORT_ENABLED) {
+				window.PokiSDK?.gameplayStart();
+			}
+
 			window.reactApp && window.reactApp.playerJoinedGame && window.reactApp.playerJoinedGame();
 			window && window.playerJoinedGame && window.playerJoinedGame();
 			window.playerJoinedTheGame = true;

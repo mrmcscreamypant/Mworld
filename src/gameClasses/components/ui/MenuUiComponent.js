@@ -203,6 +203,10 @@ var MenuUiComponent = TaroEntity.extend({
 			$('.open-menu-button').on('click', function () {
 				self.toggleMenu();
 				$('.open-menu-button').hide();
+				
+				if (window.STATIC_EXPORT_ENABLED) {
+					window.PokiSDK?.gameplayStop();
+				}
 			});
 
 			$('#change-server').on('click', function () {
@@ -829,7 +833,14 @@ var MenuUiComponent = TaroEntity.extend({
 		}
 
 		$('#server-disconnect-modal .modal-body').html(message || defaultContent);
-		$('#return-to-homepage-server').show();
+
+		if (window.STATIC_EXPORT_ENABLED) {
+			$('#return-to-homepage-server').hide();
+			$('.return-to-homepage-cta').hide();
+		} else {
+			$('#return-to-homepage-server').show();
+		}
+		
 		$('#join-another-server').hide();
 
 		$('#server-disconnect-modal').modal('show');
