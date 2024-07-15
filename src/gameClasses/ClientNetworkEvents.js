@@ -755,7 +755,9 @@ var ClientNetworkEvents = {
 	},
 
 	_handlePokiSwitch: function (data) {
-		window.PokiSDK?.gameplayStop();
+		window.PokiSDK?.gameplayStop(); 
+		window.PokiSDK?.commercialBreak();
+		
 		if (window.switchGameWrapper) {
 			window.switchGameWrapper(data);
 		}

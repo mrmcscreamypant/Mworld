@@ -596,10 +596,6 @@ const Client = TaroEventingClass.extend({
 
 			$(self.getCachedElementById('loading-container')).addClass('slider-out');
 
-			if (window.STATIC_EXPORT_ENABLED) {
-				window.PokiSDK?.gameplayStart();
-			}
-
 			console.log('connected to ', taro.client.server.url, 'clientId ', taro.network.id()); // idk if this needs to be in production
 
 			taro.client.defineNetworkEvents();
