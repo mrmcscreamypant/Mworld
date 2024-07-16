@@ -11,6 +11,7 @@ namespace Renderer {
 
 			constructor() {
 				super();
+				this.matrixAutoUpdate = false;
 			}
 
 			clear() {
