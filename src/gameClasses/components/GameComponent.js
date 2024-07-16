@@ -276,6 +276,9 @@ var GameComponent = TaroEntity.extend({
 				taro.game.devLogs[data.params.variableName] = data.params.newValue;
 			}
 		} else if (taro.isClient) {
+			if (!$(taro.client.getCachedElementById('dev-status-content')).is(':visible')) {
+				return;
+			}
 			// update GS CPU graphs if data present
 			if (data.status && data.status.cpu) {
 				// cpu time spent in user code (ms) since last dev console update - may end up being greater than actual elapsed time if multiple CPU cores are performing work for this process
@@ -333,7 +336,6 @@ var GameComponent = TaroEntity.extend({
 					$('#streaming-entity-warning').show();
 					self.streamingWarningShown = true;
 				}
-
 				var innerHtml = '';
 
 				innerHtml =
