@@ -249,6 +249,12 @@ var TaroEntity = TaroObject.extend({
 			}
 
 			self.billboard(!!body['isBillboard']);
+
+			if (!body.rotate) body.rotate = { x: 0, y: 0, z: 0 };
+			body.rotate.x ||= 0;
+			body.rotate.y ||= 0;
+			body.rotate.z ||= 0;
+			self.rotate3d(body.rotate.x, body.rotate.y, body.rotate.z);
 		}
 	},
 

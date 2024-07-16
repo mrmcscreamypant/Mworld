@@ -81,6 +81,7 @@ namespace Renderer {
 						entity.position.y = Utils.pixelToWorld(depth);
 					});
 				}
+
 				taroEntity.on(
 					'transform',
 					(data: { x: number; y: number; rotation: number }) => {
@@ -88,7 +89,7 @@ namespace Renderer {
 						entity.position.z = Utils.pixelToWorld(data.y);
 
 						if (entity.body instanceof AnimatedSprite) {
-							entity.body.setRotationY(-data.rotation);
+							entity.body.rotation.y = -data.rotation;
 							const flip = taroEntity._stats.flip;
 							entity.body.setFlip(flip % 2 === 1, flip > 1);
 						} else {
@@ -97,6 +98,18 @@ namespace Renderer {
 					},
 					this
 				);
+
+				taroEntity.on('rotate', (x: number, y: number, z: number) => {
+					if (entity.body instanceof AnimatedSprite) {
+						entity.body.sprite.rotation.x = Utils.deg2rad(x);
+						entity.body.sprite.rotation.y = Utils.deg2rad(z);
+						entity.body.sprite.rotation.z = Utils.deg2rad(y);
+					} else {
+						entity.body.rotation.x = Utils.deg2rad(x);
+						entity.body.rotation.y = Utils.deg2rad(z);
+						entity.body.rotation.z = Utils.deg2rad(y);
+					}
+				});
 
 				taroEntity.on(
 					'size',
@@ -218,7 +231,7 @@ namespace Renderer {
 
 			showHud(visible: boolean) {
 				if (visible != this.hud.visible) {
-					const fadeAnimation = (from: number, to: number, onComplete = () => { }) => {
+					const fadeAnimation = (from: number, to: number, onComplete = () => {}) => {
 						new TWEEN.Tween({ opacity: from })
 							.to({ opacity: to }, 100)
 							.onUpdate(({ opacity }) => {

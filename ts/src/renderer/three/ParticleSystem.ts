@@ -398,7 +398,7 @@ namespace Renderer {
 					z: emitter.shape.depth * Math.random() - emitter.shape.depth * 0.5,
 				};
 
-				const targetAngle = -emitter.target.body.rotation.y;
+				const targetAngle = -emitter.target.rotation.y;
 				const tempX = offset.x;
 				offset.x = offset.x * Math.cos(targetAngle) - offset.z * Math.sin(targetAngle);
 				offset.z = tempX * Math.sin(targetAngle) + offset.z * Math.cos(targetAngle);
