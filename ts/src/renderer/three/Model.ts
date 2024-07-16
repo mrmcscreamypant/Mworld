@@ -13,6 +13,7 @@ namespace Renderer {
 
 			private mixer: THREE.AnimationMixer;
 			private clips: THREE.AnimationClip[];
+			private center = new THREE.Vector3();
 
 			constructor(name: string) {
 				super();
@@ -89,15 +90,7 @@ namespace Renderer {
 			}
 
 			getCenter() {
-				if (this.firstTime) {
-					this.aabb.setFromObject(this.mesh, true);
-					this.firstTime = false;
-				}
-				this.mesh.updateMatrix();
-				this.mesh.updateMatrixWorld();
-				this.obb.fromBox3(this.aabb);
-				this.obb.applyMatrix4(this.mesh.matrixWorld);
-				return this.obb.center;
+				return this.aabb.getCenter(this.center).multiply(this.mesh.scale);
 			}
 
 			update(dt) {

@@ -42,6 +42,10 @@ namespace Renderer {
 				this.body.attach(this.hud);
 				this.hud.add(this.label);
 				this.hud.add(this.attributes);
+
+				if (this.body instanceof Model) {
+					this.hud.position.copy(this.body.getCenter());
+				}
 			}
 
 			static create(taroEntity: TaroEntityPhysics) {
@@ -227,6 +231,10 @@ namespace Renderer {
 
 				this.updateAttributesOffset();
 				this.updateLabelOffset();
+
+				if (this.body instanceof Model) {
+					this.hud.position.copy(this.body.getCenter());
+				}
 			}
 
 			showHud(visible: boolean) {
@@ -276,11 +284,11 @@ namespace Renderer {
 
 			private updateLabelOffset() {
 				const halfHeight = this.getBodyHeightInPixels() * 0.5;
-				let topOfTopBars = halfHeight + this.attributes.topBarsHeight;
 				const scaling = 1 / this.hud.scale.y;
-				if (this.attributes.topBarsHeight > 0) topOfTopBars += 16 * scaling;
+				let topOfTopBars = (halfHeight + this.attributes.topBarsHeight) * scaling;
+				if (this.attributes.topBarsHeight > 0) topOfTopBars += 16;
 				this.label.setCenterY(1);
-				this.label.setOffsetY(16 * scaling + topOfTopBars);
+				this.label.setOffsetY(16 + topOfTopBars);
 			}
 		}
 	}
