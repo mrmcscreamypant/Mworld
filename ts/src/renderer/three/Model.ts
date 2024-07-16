@@ -5,11 +5,11 @@ namespace Renderer {
 			originalSize = new THREE.Vector3();
 			originalScale = new THREE.Vector3();
 			firstTime = true;
-			private scene: THREE.Group;
+			mesh: THREE.Group;
+
 			private aabb = new THREE.Box3();
 			// OBB is something just like Box3 but with rotation
 			private obb = new OBB();
-			private center = new THREE.Vector3();
 
 			private mixer: THREE.AnimationMixer;
 			private clips: THREE.AnimationClip[];
@@ -18,38 +18,38 @@ namespace Renderer {
 				super();
 
 				const model = gAssetManager.getModel(name);
-				this.scene = SkeletonUtils.clone(model.scene);
-				this.add(this.scene);
+				this.mesh = SkeletonUtils.clone(model.scene);
+				this.add(this.mesh);
 
 				this.originalSize.copy(this.getSize());
-				this.originalScale.copy(this.scene.scale);
+				this.originalScale.copy(this.mesh.scale);
 
-				const mixer = new THREE.AnimationMixer(this.scene);
+				const mixer = new THREE.AnimationMixer(this.mesh);
 				this.mixer = mixer;
 
 				this.clips = model.animations;
 
-				this.aabb.setFromObject(this.scene);
+				this.aabb.setFromObject(this.mesh);
 			}
 
 			getSize() {
 				if (this.firstTime) {
-					this.aabb.setFromObject(this.scene, true);
-					this.firstTime = false
+					this.aabb.setFromObject(this.mesh, true);
+					this.firstTime = false;
 				}
-				this.scene.updateMatrix();
-				this.scene.updateMatrixWorld();
+				this.mesh.updateMatrix();
+				this.mesh.updateMatrixWorld();
 				// get its original aabb which means its original geometry
 				this.obb.fromBox3(this.aabb);
 				// apply the additional translation, rotation, scale
-				this.obb.applyMatrix4(this.scene.matrixWorld)
+				this.obb.applyMatrix4(this.mesh.matrixWorld);
 				return this.obb.getSize(this.size);
 			}
 
 			setSize(x: number, y: number, z: number) {
-				this.scene.scale.x = this.originalScale.x * (x / this.originalSize.x);
-				this.scene.scale.y = this.originalScale.y * (y / this.originalSize.y);
-				this.scene.scale.z = this.originalScale.z * (z / this.originalSize.z);
+				this.mesh.scale.x = this.originalScale.x * (x / this.originalSize.x);
+				this.mesh.scale.y = this.originalScale.y * (y / this.originalSize.y);
+				this.mesh.scale.z = this.originalScale.z * (z / this.originalSize.z);
 			}
 
 			setOpacity(opacity: number, time = undefined) {
@@ -90,13 +90,13 @@ namespace Renderer {
 
 			getCenter() {
 				if (this.firstTime) {
-					this.aabb.setFromObject(this.scene, true);
-					this.firstTime = false
+					this.aabb.setFromObject(this.mesh, true);
+					this.firstTime = false;
 				}
-				this.scene.updateMatrix();
-				this.scene.updateMatrixWorld();
+				this.mesh.updateMatrix();
+				this.mesh.updateMatrixWorld();
 				this.obb.fromBox3(this.aabb);
-				this.obb.applyMatrix4(this.scene.matrixWorld)
+				this.obb.applyMatrix4(this.mesh.matrixWorld);
 				return this.obb.center;
 			}
 
