@@ -30,6 +30,7 @@ var ServerNetworkEvents = {
 
 	_onClientDisconnect: function ({ clientId, reason }) {
 		var self = this;
+		let userId;
 
 		if (!reason) {
 			// socket already disconnected, why sending clientDisconnect command then?
@@ -50,15 +51,16 @@ var ServerNetworkEvents = {
 			if (player) {
 				console.log(`_onclientDisconnect ${clientId} (${player._stats.name}) ${Date.now() - client.lastEventAt}`);
 				player.updatePlayerHighscore();
-
-				if (player._stats.userId) {
-					taro.workerComponent.saveLastPlayedTime(player._stats.userId);
-				}
+				userId = player._stats.userId;
 			}
 		}
 
 		if (player) {
 			player.remove();
+		}
+
+		if (userId) {
+			taro.workerComponent.saveLastPlayedTime(userId);
 		}
 	},
 
