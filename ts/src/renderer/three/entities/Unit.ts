@@ -105,9 +105,9 @@ namespace Renderer {
 						entity.body.sprite.rotation.y = Utils.deg2rad(z);
 						entity.body.sprite.rotation.z = Utils.deg2rad(y);
 					} else {
-						entity.body.rotation.x = Utils.deg2rad(x);
-						entity.body.rotation.y = Utils.deg2rad(z);
-						entity.body.rotation.z = Utils.deg2rad(y);
+						entity.body.mesh.rotation.x = Utils.deg2rad(x);
+						entity.body.mesh.rotation.y = Utils.deg2rad(z);
+						entity.body.mesh.rotation.z = Utils.deg2rad(y);
 					}
 				});
 
