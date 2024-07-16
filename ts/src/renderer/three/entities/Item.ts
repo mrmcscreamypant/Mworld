@@ -48,9 +48,6 @@ namespace Renderer {
 						entity.position.z = Utils.pixelToWorld(data.y);
 
 						if (entity.ownerUnit) {
-							const parent = entity.ownerUnit;
-							entity.position.y = parent.position.y;
-
 							const anchoredOffset = entity.taroEntity?.anchoredOffset;
 							if (anchoredOffset) {
 								let x = Utils.pixelToWorld(anchoredOffset.x);
