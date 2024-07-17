@@ -34,15 +34,18 @@ namespace Renderer {
 
 				for (let i = 0; i < this.numTextureGroups; i++) {
 					const material = new THREE.ShaderMaterial({
-						uniforms: {
-							textures: {
-								value: this.textures.slice(
-									i * this.maxTexturesPerGroup,
-									i * this.maxTexturesPerGroup + this.maxTexturesPerGroup
-								),
+						uniforms: THREE.UniformsUtils.merge([
+							THREE.UniformsLib['fog'],
+							{
+								textures: {
+									value: this.textures.slice(
+										i * this.maxTexturesPerGroup,
+										i * this.maxTexturesPerGroup + this.maxTexturesPerGroup
+									),
+								},
+								time: { value: 0 },
 							},
-							time: { value: 0 },
-						},
+						]),
 						vertexShader: vs,
 						fragmentShader: fs,
 						transparent: true,
@@ -52,6 +55,7 @@ namespace Renderer {
 						blendSrc: THREE.OneFactor,
 						blendDst: THREE.OneMinusSrcAlphaFactor,
 						forceSinglePass: true,
+						fog: true,
 					});
 
 					this.materials.push(material);
@@ -470,6 +474,8 @@ namespace Renderer {
 		}
 
 		const vs = `
+  #include <fog_pars_vertex>
+
   attribute vec3 offset;
   attribute vec2 scale;
   attribute float rotation;
@@ -498,11 +504,16 @@ namespace Renderer {
     vec3 cameraUp = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
     vec3 pos = offset + cameraRight * vRotated.x * scale.x + cameraUp * vRotated.y * scale.y;
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+	vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+
+	#include <fog_vertex>
   }
 `;
 
 		const fs = `
+  #include <fog_pars_fragment>
+
   uniform sampler2D textures[16];
 
   varying vec2 vUv;
@@ -528,10 +539,11 @@ namespace Renderer {
     else if (vTexture == 14) gl_FragColor = texture2D(textures[14], vUv) * vColor;
     else if (vTexture == 15) gl_FragColor = texture2D(textures[15], vUv) * vColor;
 
+	#include <fog_fragment>
     gl_FragColor.rgb *= gl_FragColor.a;
 	gl_FragColor.a *= vBlend;
 
-    #include <tonemapping_fragment>
+	#include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
 `;
