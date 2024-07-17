@@ -353,7 +353,7 @@ var Item = TaroEntityPhysics.extend({
 		if (self.hasQuantityRemaining()) {
 			taro.game.lastUsedItemId = self.id();
 
-			if (self._stats.lastUsed + self._stats.fireRate < taro.now || self._stats.type == 'consumable') {
+			if (self._stats.lastUsed + self._stats.fireRate < taro.now) {
 				if (!self.canAffordItemCost()) {
 					taro.devLog('cannot afford item cost');
 					return;
