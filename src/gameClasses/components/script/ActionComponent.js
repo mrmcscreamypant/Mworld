@@ -466,7 +466,6 @@ var ActionComponent = TaroEntity.extend({
 							if (entity) {
 								const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
 								const localPlayer = self._script.param.getValue(action.player, vars);
-								console.log('runScriptLocally', taro.$(localScriptParams.triggeredBy.thisEntityId));
 								localPlayer.streamUpdateData([
 									{ script: { name: action.scriptName, entityId: entity.id(), params: localScriptParams } },
 								]);
