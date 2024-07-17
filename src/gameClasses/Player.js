@@ -645,6 +645,32 @@ var Player = TaroEntity.extend({
 								self.selectUnit(newValue);
 							}
 							break;
+
+						case 'script':
+							const scriptName = newValue.name;
+							const scriptParams = newValue.params;
+
+							let scriptComponent;
+							if (scriptParams.triggeredBy?.unitId) {
+								const unit = taro.$(scriptParams.triggeredBy.unitId);
+								console.log('unit', unit);
+								scriptComponent = unit.script;
+							} else if (scriptParams.triggeredBy?.itemId) {
+								const item = taro.$(scriptParams.triggeredBy.itemId);
+								scriptComponent = item.script;
+							} else if (scriptParams.triggeredBy?.projectileId) {
+								const projectile = taro.$(scriptParams.triggeredBy.projectileId);
+								scriptComponent = projectile.script;
+							} else {
+								scriptComponent = taro.script;
+							}
+							var previousScriptId = scriptComponent.currentScriptId;
+							var previousAcionBlockIdx = scriptComponent.currentActionLineNumber;
+
+							scriptComponent.runScript(scriptName, scriptParams);
+
+							scriptComponent.currentScriptId = previousScriptId;
+							scriptComponent.currentActionLineNumber = previousAcionBlockIdx;
 						default:
 							// Handle the case when attrName does not match any of the above cases.
 							break;
