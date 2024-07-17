@@ -77,6 +77,15 @@ namespace Renderer {
 				this.scene = new THREE.Scene();
 				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
 
+				if (taro.game.data.settings.fog.enabled) {
+					const fog = taro.game.data.settings.fog;
+					if (taro.game.data.settings.fog.type === 'exp2') {
+						this.scene.fog = new THREE.FogExp2(fog.color, fog.density);
+					} else {
+						this.scene.fog = new THREE.Fog(fog.color, fog.near, fog.far);
+					}
+				}
+
 				this.camera = new Camera(window.innerWidth, window.innerHeight, this.renderer.domElement);
 				this.camera.setElevationAngle(taro.game.data.settings.camera.defaultPitch);
 				if (taro.game.data.settings.camera.projectionMode !== 'orthographic') {
