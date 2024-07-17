@@ -81,8 +81,9 @@ namespace Renderer {
 						(entity.body as AnimatedSprite).setBillboard(isBillboard, renderer.camera)
 					);
 				} else if (entity.body instanceof Model) {
-					taroEntity.on('depth', (depth) => {
-						entity.position.y = Utils.pixelToWorld(depth);
+					//FIXME: when the 3d physics is ready, remove this
+					taroEntity.on('temp_translation_y', (positionY) => {
+						entity.position.y = Utils.pixelToWorld(positionY);
 					});
 				}
 

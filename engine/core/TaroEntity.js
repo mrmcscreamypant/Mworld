@@ -4369,6 +4369,12 @@ var TaroEntity = TaroObject.extend({
 							break;
 						case 'quests':
 							break;
+						//FIXME: when the 3d physics is ready, remove this
+						case 'temp_translation_y':
+							if (taro.isClient) {
+								this.emit('temp_translation_y', [data.temp_translation_y]);
+							}
+							break;
 						case 'depth':
 							this._stats[attrName] = newValue;
 							if (taro.isClient) {
