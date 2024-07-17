@@ -642,8 +642,9 @@ var PhysicsComponent = TaroEventingClass.extend({
 				) {
 					// Check if the body is awake && not static
 					entity = self.getPointer !== undefined ? self.metaData[self.getPointer(tempBod)]._entity : tempBod._entity;
-					if(entity && entity.tmpDefaultDepth) {
-						entity.queueStreamData({ depth: entity.tmpDefaultDepth });
+					//FIXME: when the 3d physics is ready, remove this
+					if (entity && entity.tmpDefaultDepth) {
+						entity.queueStreamData({ temp_translation_y: entity.tmpDefaultDepth });
 					}
 					if (tempBod.m_type !== 'static' && tempBod.isAwake() && (!tempBod.GetType || tempBod.GetType() !== 0)) {
 						if (entity && !entity._stats.isHidden) {
