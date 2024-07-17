@@ -443,7 +443,7 @@ var ActionComponent = TaroEntity.extend({
 						}
 						break;
 
-					case 'runScriptLocally':
+					case 'runScriptOnClient':
 						if (taro.isServer) {
 							var previousScriptId = self._script.currentScriptId;
 							var previousAcionBlockIdx = self._script.currentActionLineNumber;
@@ -454,6 +454,28 @@ var ActionComponent = TaroEntity.extend({
 
 							self._script.currentScriptId = previousScriptId;
 							self._script.currentActionLineNumber = previousAcionBlockIdx;
+						}
+						break;
+
+					case 'runEntityScriptOnClient':
+						if (taro.isServer) {
+							var previousScriptId = self._script.currentScriptId;
+							var previousAcionBlockIdx = self._script.currentActionLineNumber;
+
+							var entity = self._script.param.getValue(action.entity, vars);
+							if (entity) {
+								const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
+								const localPlayer = self._script.param.getValue(action.player, vars);
+								localPlayer.streamUpdateData([
+									{ script: { name: action.scriptName, entityId: entity.id(), params: localScriptParams } },
+								]);
+
+								self._script.currentScriptId = previousScriptId;
+								self._script.currentActionLineNumber = previousAcionBlockIdx;
+
+								self._script.currentScriptId = previousScriptId;
+								self._script.currentActionLineNumber = previousAcionBlockIdx;
+							}
 						}
 						break;
 
