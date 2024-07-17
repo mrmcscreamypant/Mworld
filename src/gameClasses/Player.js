@@ -651,9 +651,11 @@ var Player = TaroEntity.extend({
 							const scriptParams = newValue.params;
 
 							let scriptComponent;
-							if (scriptParams.triggeredBy?.unitId) {
+							if (newValue.entityId) {
+								const entity = taro.$(newValue.entityId);
+								scriptComponent = entity.script;
+							} else if (scriptParams.triggeredBy?.unitId) {
 								const unit = taro.$(scriptParams.triggeredBy.unitId);
-								console.log('unit', unit);
 								scriptComponent = unit.script;
 							} else if (scriptParams.triggeredBy?.itemId) {
 								const item = taro.$(scriptParams.triggeredBy.itemId);
