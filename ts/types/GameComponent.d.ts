@@ -143,6 +143,7 @@ declare class GameComponent extends TaroEntity {
 		scripts: Record<string, ScriptData>;
 		defaultData: any;
 		map: MapData;
+		defaultRenderer: string;
 		unitTypes: Record<string, EntityData>;
 		projectileTypes: Record<string, EntityData>;
 		itemTypes: Record<string, EntityData>;
