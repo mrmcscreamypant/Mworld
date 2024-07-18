@@ -872,6 +872,12 @@ var PhysicsComponent = TaroEventingClass.extend({
 				// Call the world step; frame-rate, velocity iterations, position iterations
 				self._world.step(timeElapsedSinceLastStep / 1000, 8, 3);
 
+				if (self.debugDrawer && self.debugDrawer.begin) {
+					self.debugDrawer.begin();
+					self._world.DebugDraw();
+					self.debugDrawer.end();
+				}
+				
 				if (self.ctx) {
 					self.ctx.clear();
 					self._world.DebugDraw();

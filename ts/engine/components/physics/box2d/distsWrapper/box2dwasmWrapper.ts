@@ -108,17 +108,22 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			component.enableDebug = (flags = 1) => {
 				console.log('please make sure clientPhyscisEngine is not "", and enabled csp');
 				if (!component.renderer) {
-					const canvas = taro.renderer.scene.getScene('Game');
-					ctx = canvas.add.graphics().setDepth(9999);
 					const scale = taro.physics._scaleRatio;
-					ctx.setScale(scale);
-					const newRenderer = new Box2dDebugDraw(box2D, new Box2dHelpers(box2D), ctx, scale).constructJSDraw();
-					newRenderer.SetFlags(flags);
-					component.renderer = newRenderer;
-					component._world.SetDebugDraw(newRenderer);
-					component.ctx = ctx;
+					let debugDrawer;
+					if (taro.game.data.defaultRenderer !== '3d') {
+						const canvas = taro.renderer.scene.getScene('Game');
+						ctx = canvas.add.graphics().setDepth(9999);
+						ctx.setScale(scale);
+						component.ctx = ctx;
+						debugDrawer = new Box2dDebugDrawPhaser(box2D, new Box2dHelpers(box2D), ctx, scale).constructJSDraw();
+						debugDrawer.SetFlags(flags);
+						component._world.SetDebugDraw(debugDrawer);
+					} else {
+						debugDrawer = new Box2dDebugDrawerThree(taro.renderer.scene as any, 0.47, box2D);
+						component._world.SetDebugDraw(debugDrawer.instance);
+					}
+					component.debugDrawer = debugDrawer;
 				}
-				component.renderer.SetFlags(flags);
 			};
 			component.disableDebug = () => {
 				component.ctx.destroy();
