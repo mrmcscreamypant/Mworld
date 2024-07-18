@@ -175,6 +175,14 @@ declare class GameComponent extends TaroEntity {
 				front: string;
 				back: string;
 			};
+			fog: {
+				enabled: boolean;
+				type: 'linear' | 'exp2';
+				color: string;
+				near: number;
+				far: number;
+				density: number;
+			};
 		};
 		heightBasedZIndex: boolean;
 		texturePack: any;
