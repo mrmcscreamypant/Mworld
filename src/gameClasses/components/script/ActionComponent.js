@@ -450,7 +450,10 @@ var ActionComponent = TaroEntity.extend({
 
 							const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
 							const localPlayer = self._script.param.getValue(action.player, vars);
-							localPlayer.streamUpdateData([{ script: { name: action.scriptName, params: localScriptParams } }]);
+							localPlayer.streamUpdateData(
+								[{ script: { name: action.scriptName, params: localScriptParams } }],
+								localPlayer._stats.clientId
+							);
 
 							self._script.currentScriptId = previousScriptId;
 							self._script.currentActionLineNumber = previousAcionBlockIdx;
@@ -466,9 +469,10 @@ var ActionComponent = TaroEntity.extend({
 							if (entity) {
 								const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
 								const localPlayer = self._script.param.getValue(action.player, vars);
-								localPlayer.streamUpdateData([
-									{ script: { name: action.scriptName, entityId: entity.id(), params: localScriptParams } },
-								]);
+								localPlayer.streamUpdateData(
+									[{ script: { name: action.scriptName, entityId: entity.id(), params: localScriptParams } }],
+									localPlayer._stats.clientId
+								);
 
 								self._script.currentScriptId = previousScriptId;
 								self._script.currentActionLineNumber = previousAcionBlockIdx;
