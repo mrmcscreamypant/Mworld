@@ -100,7 +100,6 @@ namespace Renderer {
 						entity.position.x = Utils.pixelToWorld(data.x);
 						entity.position.z = Utils.pixelToWorld(data.y);
 						entity.updateMatrix();
-						entity.body.updateMatrix();
 						if (entity.body instanceof AnimatedSprite) {
 							entity.body.rotation.y = -data.rotation;
 							const flip = taroEntity._stats.flip;

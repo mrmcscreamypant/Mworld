@@ -118,8 +118,6 @@ namespace Renderer {
 						: Renderer.Three.getVoxels().calcLayersHeight(0) + 0.1,
 					Utils.pixelToWorld(action.position?.y)
 				);
-				this.body.matrixAutoUpdate = false;
-				this.matrixAutoUpdate = false;
 				renderer.initEntityLayer.add(this);
 				renderer.entityManager.initEntities.push(this);
 			}

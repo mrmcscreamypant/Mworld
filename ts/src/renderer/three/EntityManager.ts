@@ -60,7 +60,7 @@ namespace Renderer {
 					}
 				}
 
-				if (entity.matrixAutoUpdate) {
+				if (entity.matrixAutoUpdate && type !== 'region') {
 					entity.matrixAutoUpdate = false;
 				}
 				this.entities.push(entity);

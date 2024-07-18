@@ -44,6 +44,14 @@ namespace Renderer {
 				taroEntity.on(
 					'transform',
 					(data: { x: number; y: number; rotation: number }) => {
+						if (
+							entity.position.x === Utils.pixelToWorld(data.x) &&
+							entity.position.z === Utils.pixelToWorld(data.y) &&
+							entity.body.rotation.y === -data.rotation
+						) {
+							return;
+						}
+						entity.updateMatrix();
 						entity.position.x = Utils.pixelToWorld(data.x);
 						entity.position.z = Utils.pixelToWorld(data.y);
 
