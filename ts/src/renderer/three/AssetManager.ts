@@ -76,7 +76,6 @@ namespace Renderer {
 										if (material.map) {
 											material.map.magFilter = this.filter;
 										}
-
 										child.material = material;
 									}
 								});

@@ -44,6 +44,13 @@ namespace Renderer {
 				taroEntity.on(
 					'transform',
 					(data: { x: number; y: number; rotation: number }) => {
+						if (
+							entity.position.x === Utils.pixelToWorld(data.x) &&
+							entity.position.z === Utils.pixelToWorld(data.y) &&
+							entity.body.rotation.y === -data.rotation
+						) {
+							return;
+						}
 						entity.position.x = Utils.pixelToWorld(data.x);
 						entity.position.z = Utils.pixelToWorld(data.y);
 
@@ -77,6 +84,7 @@ namespace Renderer {
 						} else {
 							entity.body.rotation.y = -data.rotation;
 						}
+						entity.updateMatrix();
 					},
 					this
 				);
@@ -152,6 +160,10 @@ namespace Renderer {
 
 				taroEntity.on('setOwnerUnit', (unitId: string) => {
 					entity.ownerUnitId = unitId;
+				});
+
+				taroEntity.on('set-opacity', (data: { opacity: number; time?: number }) => {
+					entity.body.setOpacity(data.opacity, data.time);
 				});
 
 				return entity;

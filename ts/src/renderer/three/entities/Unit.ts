@@ -90,9 +90,15 @@ namespace Renderer {
 				taroEntity.on(
 					'transform',
 					(data: { x: number; y: number; rotation: number }) => {
+						if (
+							entity.position.x === Utils.pixelToWorld(data.x) &&
+							entity.position.z === Utils.pixelToWorld(data.y) &&
+							entity.body.rotation.y === -data.rotation
+						) {
+							return;
+						}
 						entity.position.x = Utils.pixelToWorld(data.x);
 						entity.position.z = Utils.pixelToWorld(data.y);
-
 						if (entity.body instanceof AnimatedSprite) {
 							entity.body.rotation.y = -data.rotation;
 							const flip = taroEntity._stats.flip;
@@ -100,6 +106,7 @@ namespace Renderer {
 						} else {
 							entity.body.rotation.y = -data.rotation;
 						}
+						entity.updateMatrix();
 					},
 					this
 				);
