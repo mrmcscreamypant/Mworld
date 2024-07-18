@@ -51,7 +51,6 @@ namespace Renderer {
 						) {
 							return;
 						}
-						entity.updateMatrix();
 						entity.position.x = Utils.pixelToWorld(data.x);
 						entity.position.z = Utils.pixelToWorld(data.y);
 
@@ -85,6 +84,7 @@ namespace Renderer {
 						} else {
 							entity.body.rotation.y = -data.rotation;
 						}
+						entity.updateMatrix();
 					},
 					this
 				);
