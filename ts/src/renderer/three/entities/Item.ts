@@ -65,11 +65,9 @@ namespace Renderer {
 								if (entity.taroEntity?._stats.type == 'weapon') {
 									entity.position.x += x;
 									entity.position.z += y;
-								} else {
-									if (entity.body instanceof AnimatedSprite) {
-										entity.body.sprite.position.x = x;
-										entity.body.sprite.position.z = y;
-									}
+								} else if (entity.body instanceof AnimatedSprite) {
+									entity.body.position.x = x;
+									entity.body.position.z = y;
 								}
 							}
 						} else if (
