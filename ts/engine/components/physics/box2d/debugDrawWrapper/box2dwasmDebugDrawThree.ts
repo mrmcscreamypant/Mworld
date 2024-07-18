@@ -85,6 +85,42 @@ class Box2dDebugDrawerThree {
 		this.circleVertexColors = [];
 	}
 
+	cleanMaterial = (material) => {
+		material.dispose();
+		for (const key of Object.keys(material)) {
+			const value = material[key];
+			if (value && typeof value.dispose === 'function') {
+				value.dispose();
+			}
+		}
+	};
+
+	destroy() {
+		[this.circleLines, this.polygonLines].forEach((obj) => {
+			obj.removeFromParent();
+
+			obj.traverse((object) => {
+				if (!(object as THREE.Mesh).isMesh && !(object as THREE.Sprite).isSprite) return;
+
+				const obj = object as THREE.Mesh | THREE.Sprite;
+
+				if ((obj as THREE.Mesh).isMesh) {
+					obj.geometry.dispose();
+				}
+
+				const material = obj.material as THREE.Material;
+
+				if (material.isMaterial) {
+					this.cleanMaterial(obj.material);
+				} else {
+					for (const material of obj.material as THREE.Material[]) {
+						this.cleanMaterial(material);
+					}
+				}
+			}); 
+		});
+	}
+
 	createRectangle(verts: number, vertexCount: number, color): void {
 		const vertices = [];
 		for (let tmpI = 0; tmpI < vertexCount; tmpI++) {
