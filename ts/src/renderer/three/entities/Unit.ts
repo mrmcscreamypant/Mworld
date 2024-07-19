@@ -76,7 +76,19 @@ namespace Renderer {
 
 				if (this.body instanceof Sprite) {
 					const size = this.body.getSize();
-					this.topHud.position.y = size.height;
+					if (this.body.billboard) {
+						this.topHud.position.y = size.height;
+						this.topHud.position.z = 0;
+
+						this.bottomHud.position.y = 0;
+						this.bottomHud.position.z = 0;
+					} else {
+						this.topHud.position.y = 0;
+						this.topHud.position.z = -size.height * 0.5;
+
+						this.bottomHud.position.y = 0;
+						this.bottomHud.position.z = size.height * 0.5;
+					}
 				} else {
 					const size = this.body.getSize();
 					this.topHud.position.y = size.y;
@@ -236,7 +248,6 @@ namespace Renderer {
 				this.body.update(dt);
 
 				const camera = Three.instance().camera.instance;
-
 				if (this.body instanceof AnimatedSprite && this.body.billboard) {
 					this.hud.quaternion.copy(camera.quaternion);
 					this.hud.position.copy(this.body.position);
@@ -293,7 +304,19 @@ namespace Renderer {
 
 				if (this.body instanceof Sprite) {
 					const size = this.body.getSize();
-					this.topHud.position.y = size.height;
+					if (this.body.billboard) {
+						this.topHud.position.y = size.height;
+						this.topHud.position.z = 0;
+
+						this.bottomHud.position.y = 0;
+						this.bottomHud.position.z = 0;
+					} else {
+						this.topHud.position.y = 0;
+						this.topHud.position.z = -size.height * 0.5;
+
+						this.bottomHud.position.y = 0;
+						this.bottomHud.position.z = size.height * 0.5;
+					}
 				} else {
 					const size = this.body.getSize();
 					this.topHud.position.y = size.y;
