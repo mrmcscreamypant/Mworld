@@ -15,6 +15,9 @@ namespace Renderer {
 			private attributes = new Attributes();
 			private chat: ChatBubble;
 
+			private topHud = new THREE.Group();
+			private bottomHud = new THREE.Group();
+
 			constructor(
 				public taroId: string,
 				public ownerId: string,
@@ -45,6 +48,56 @@ namespace Renderer {
 
 				if (this.body instanceof Model) {
 					this.hud.position.copy(this.body.getCenter());
+				}
+
+				// Create a top hud
+				// Create a bottom hud
+
+				// For model, set the top hud to the top of the model
+				// For model, set the bottom hud to the bottom of the model
+
+				// For sprite, set the top hud to the top of the sprite
+				// For sprite, set the bottom hud to the bottom of the sprite
+				// Billboard mode should move the hud with the sprite
+
+				this.add(this.topHud);
+				this.add(this.bottomHud);
+
+				const originHelper1 = new THREE.AxesHelper(0.1);
+				this.topHud.add(originHelper1);
+
+				const originHelper2 = new THREE.AxesHelper(0.1);
+				this.bottomHud.add(originHelper2);
+
+				const gridHelper1 = new THREE.GridHelper(1, 1);
+				gridHelper1.rotateX(Math.PI * 0.5);
+				gridHelper1.position.y = 0.5;
+				gridHelper1.material.depthTest = false;
+				this.topHud.add(gridHelper1);
+
+				const gridHelper2 = new THREE.GridHelper(1, 1);
+				gridHelper2.rotateX(Math.PI * 0.5);
+				gridHelper2.position.y = -0.5;
+				gridHelper2.material.depthTest = false;
+				this.bottomHud.add(gridHelper2);
+
+				const nameLabel = new Label({
+					text: 'Username',
+					color: 'white',
+					bold: false,
+					renderOnTop: true,
+					strokeThickness: 1,
+					fontSize: 6,
+				});
+				nameLabel.setCenterY(1);
+				this.topHud.add(nameLabel);
+
+				if (this.body instanceof Sprite) {
+					const size = this.body.getSize();
+					this.topHud.position.y = size.height;
+				} else {
+					const size = this.body.getSize();
+					this.topHud.position.y = size.y;
 				}
 			}
 
@@ -200,6 +253,10 @@ namespace Renderer {
 
 			update(dt: number) {
 				this.body.update(dt);
+
+				const camera = Three.instance().camera.instance;
+				this.topHud.quaternion.copy(camera.quaternion);
+				this.bottomHud.quaternion.copy(camera.quaternion);
 			}
 
 			renderChat(text: string): void {
@@ -235,6 +292,14 @@ namespace Renderer {
 
 				if (this.body instanceof Model) {
 					this.hud.position.copy(this.body.getCenter());
+				}
+
+				if (this.body instanceof Sprite) {
+					const size = this.body.getSize();
+					this.topHud.position.y = size.height;
+				} else {
+					const size = this.body.getSize();
+					this.topHud.position.y = size.y;
 				}
 			}
 
