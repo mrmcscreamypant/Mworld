@@ -64,7 +64,7 @@ namespace Renderer {
 					entity.matrixAutoUpdate = false;
 				}
 				this.entities.push(entity);
-
+				entity.updateMatrix?.();
 				return entity;
 			}
 

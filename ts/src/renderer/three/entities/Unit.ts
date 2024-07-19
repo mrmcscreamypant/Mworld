@@ -121,6 +121,7 @@ namespace Renderer {
 						entity.body.mesh.rotation.y = Utils.deg2rad(z);
 						entity.body.mesh.rotation.z = Utils.deg2rad(y);
 					}
+					entity.updateMatrix();
 				});
 
 				taroEntity.on(
@@ -130,6 +131,7 @@ namespace Renderer {
 						const height = Utils.pixelToWorld(data.height || 0);
 						const depth = Utils.pixelToWorld(entity.taroEntity._stats?.currentBody?.depth || 0);
 						entity.setScale(width, height, depth);
+						entity.updateMatrix();
 					},
 					this
 				);
