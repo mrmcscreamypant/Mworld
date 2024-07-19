@@ -429,17 +429,10 @@ const Client = TaroEventingClass.extend({
 				0
 			);
 
-			if (gameData.settings.camera.mapPreviewPos) {
-				taro.client.emit('camera-instant-move', [
-					gameData.settings.camera.mapPreviewPos.x,
-					gameData.settings.camera.mapPreviewPos.y,
-				]);
-			} else {
-				taro.client.emit('camera-instant-move', [
-					(taro.map.data.width * tileWidth) / 2,
-					(taro.map.data.height * tileHeight) / 2,
-				]);
-			}
+			taro.client.emit('camera-instant-move', [
+				gameData.settings.camera?.mapPreviewPos?.x ?? (taro.map.data.width * tileWidth) / 2,
+				gameData.settings.camera?.mapPreviewPos?.y ?? (taro.map.data.height * tileHeight) / 2,
+			]);
 
 			taro.addComponent(AdComponent);
 
