@@ -282,7 +282,7 @@ namespace Renderer {
 				return trailingZeros ? value.toFixed(decimalPlaces).toString() : toFixedWithoutZeros(value, decimalPlaces);
 			}
 
-			export function isDebugMode() {
+			export function isDebug() {
 				return location.hash === '#debug';
 			}
 		}
