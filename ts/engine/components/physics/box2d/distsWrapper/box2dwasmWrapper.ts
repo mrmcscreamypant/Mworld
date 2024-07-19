@@ -126,8 +126,9 @@ const box2dwasmWrapper: PhysicsDistProps = {
 				}
 			};
 			component.disableDebug = () => {
-				component.ctx.destroy();
-				component.renderer = undefined;
+				component.ctx?.destroy();
+				component.debugDrawer?.destroy?.();
+				component.debugDrawer = undefined;
 			};
 		}
 
