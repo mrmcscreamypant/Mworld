@@ -199,7 +199,7 @@ namespace Renderer {
 
 			protected createUpscaledTextureImage(
 				draw: (upscaledWidth: number, upscaledHeight: number, upscaleFactor: number) => void,
-				upscaleFactor = 2
+				upscaleFactor = 10
 			) {
 				let w = this.width * upscaleFactor;
 				let h = this.height * upscaleFactor;
