@@ -229,8 +229,11 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		}
 
 		// do not spawn sensors for those entities without ai
-		if (body.fixtures[0].isSensor && taro.$(entity.ownerUnitId)?.ai === undefined) {
-			return;
+		if (body.fixtures[0].isSensor) {
+			const ownerEntity = taro.$(entity.ownerUnitId);
+			if (ownerEntity && ownerEntity.ai === undefined && ownerEntity._category !== 'region') {
+				return;
+			}
 		}
 
 		// if there's already a body, destroy it first
