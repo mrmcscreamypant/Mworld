@@ -1,11 +1,12 @@
 namespace Renderer {
 	export namespace Three {
 		export class Model extends Node {
+			root = new THREE.Object3D();
+			mesh: THREE.Group;
 			size = new THREE.Vector3();
 			originalSize = new THREE.Vector3();
 			originalScale = new THREE.Vector3();
 			firstTime = true;
-			mesh: THREE.Group;
 
 			private aabb = new THREE.Box3();
 			// OBB is something just like Box3 but with rotation
@@ -20,7 +21,8 @@ namespace Renderer {
 
 				const model = gAssetManager.getModel(name);
 				this.mesh = SkeletonUtils.clone(model.scene);
-				this.add(this.mesh);
+				this.root.add(this.mesh);
+				this.add(this.root);
 
 				this.originalSize.copy(this.getSize());
 				this.originalScale.copy(this.mesh.scale);
