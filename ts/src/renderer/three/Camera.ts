@@ -50,6 +50,11 @@ namespace Renderer {
 			private cameraO: THREE.OrthographicCamera;
 			private cameraP: THREE.PerspectiveCamera;
 
+			initialTouch: { x: number; y: number };
+			lastTouch: { x: number; y: number };
+			touchStart: { x: number; y: number };
+			dragValue: { x: number; y: number };
+
 			constructor(
 				private viewportWidth: number,
 				private viewportHeight: number,
@@ -71,6 +76,12 @@ namespace Renderer {
 				this.perspectiveCamera.position.y = distance;
 				this.orthographicCamera.position.y = distance;
 				this.originalDistance = distance;
+
+				this.initialTouch = { x: 0, y: 0 };
+				this.lastTouch = { x: 0, y: 0 };
+
+				this.touchStart = { x: 0, y: 0 };
+				this.dragValue = { x: 0, y: 0 };
 
 				// Used by the scene, copies position from the cameras above.
 				// This is so that we can change the position of the camera
@@ -174,6 +185,12 @@ namespace Renderer {
 					canvas.ownerDocument.addEventListener('mousemove', this.onMouseMove.bind(this));
 					canvas.ownerDocument.addEventListener('pointerlockchange', this.onPointerlockChange.bind(this));
 					canvas.ownerDocument.addEventListener('pointerlockerror', this.onPointerlockError.bind(this));
+				}
+
+				if (taro.isMobile) {
+					canvas.addEventListener('touchstart', this.onTouchStart.bind(this));
+					canvas.ownerDocument.addEventListener('touchmove', this.onTouchMove.bind(this));
+					canvas.ownerDocument.addEventListener('touchend', this.onTouchEnd.bind(this));
 				}
 
 				// this.rayHelpers.push(new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(), 1, 0xff0000));
@@ -393,6 +410,7 @@ namespace Renderer {
 					// 			if (intersects.length > 0) {
 					// 				this.rayHitHelpers[idx].position.copy(intersects[0].point);
 					// 			}
+
 					// 		};
 
 					// 		castRay(0, -halfExtends.x, -halfExtends.y);
@@ -640,16 +658,57 @@ namespace Renderer {
 			}
 
 			private onMouseMove(event: MouseEvent) {
+				console.log('mouse moving');
 				if (this.isLocked === false) return;
 
 				const movementX = event.movementX || 0;
 				const movementY = event.movementY || 0;
+
+				console.log('movex', movementX);
+				console.log('movey', movementY);
 
 				this.euler.y = -movementX * 0.2 * this.pointerlockSpeed;
 				this.euler.x = movementY * 0.2 * this.pointerlockSpeed;
 
 				this.setElevationAngle(this.elevationAngle + this.euler.x);
 				this.setAzimuthAngle(this.azimuthAngle + this.euler.y);
+			}
+
+			onTouchStart(event) {
+				const touch = event.touches[0];
+				this.touchStart.x = touch.clientX;
+				this.touchStart.y = touch.clientY;
+			}
+
+			onTouchMove(event) {
+				const touch = event.touches[0];
+				const deltaX = touch.clientX - this.touchStart.x;
+				const deltaY = touch.clientY - this.touchStart.y;
+
+				// Normalize the values to range between -1 and 1
+				let normalizedX = deltaX / window.innerWidth;
+				let normalizedY = deltaY / window.innerHeight;
+
+				// Clamp the values between -1 and 1
+				normalizedX = Math.max(Math.min(normalizedX, 1), -1);
+				normalizedY = Math.max(Math.min(normalizedY, 1), -1);
+
+				// Calculate the drag value based on the direction and magnitude
+				this.dragValue.x = normalizedX * 10; // Adjust strength as needed
+				this.dragValue.y = normalizedY * 10; // Adjust strength as needed
+
+				console.log(`Drag value: (${this.dragValue.x}, ${this.dragValue.y})`);
+
+				this.euler.y = -this.dragValue.x * 1 * this.pointerlockSpeed;
+				this.euler.x = this.dragValue.y * 1 * this.pointerlockSpeed;
+
+				this.setElevationAngle(this.elevationAngle + this.euler.x);
+				this.setAzimuthAngle(this.azimuthAngle + this.euler.y);
+			}
+			onTouchEnd(event) {
+				// Reset the drag value when the touch ends
+				this.dragValue.x = 0;
+				this.dragValue.y = 0;
 			}
 
 			private onPointerlockChange() {

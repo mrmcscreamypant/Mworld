@@ -261,20 +261,20 @@ var MobileControlsComponent = TaroEntity.extend({
 		// building joystick zone
 		let joystickZone = document.createElement('div');
 		joystickZone.id = type + '_joystick';
-		joystickZone.style.width = '50vw';
-		joystickZone.style.height = '100vh';
+		// joystickZone.style.width = '50vw';
+		// joystickZone.style.height = '100vh';
 		joystickZone.classList.add('joystick-zone');
 		joystickZone.style.position = 'fixed';
 
 		// placing joystick in the correct zone
 		// if x is more than 450, then place the joystick on the right side of the screen
-		if (x > 450) {
-			joystickZone.style.right = '0';
-			joystickZone.style.top = '0';
-		} else {
-			joystickZone.style.left = '0';
-			joystickZone.style.top = '0';
-		}
+		// if (x > 450) {
+		// 	joystickZone.style.right = '0';
+		// 	joystickZone.style.top = '0';
+		// } else {
+		// 	joystickZone.style.left = '0';
+		// 	joystickZone.style.top = '0';
+		// }
 
 		// append joystick to the gamediv element
 		let gameDiv = document.getElementById('default-ingame-ui-container');
@@ -295,7 +295,7 @@ var MobileControlsComponent = TaroEntity.extend({
 		// assign joystick to the zone
 		var manager = window.nipplejs.create({
 			zone: joystickZone,
-			mode: 'dynamic',
+			mode: 'static',
 			position: { left: `${xPercentage}%`, top: `${yPercentage}%` },
 			color: 'black',
 		});
