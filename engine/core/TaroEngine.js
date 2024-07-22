@@ -52,6 +52,15 @@ var TaroEngine = TaroEntity.extend({
 					RNapp: function () {
 						return navigator.userAgent.match(/moddioapp/i);
 					},
+					touchDevice: function () {
+						return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+					},
+					SafariWithTouch: function () {
+						// testing to check if iPad is requesting for game using desktopview
+						var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+						var hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+						return isSafari && hasTouch;
+					},
 					any: function () {
 						return (
 							isMobile.Android() ||
@@ -59,7 +68,8 @@ var TaroEngine = TaroEntity.extend({
 							isMobile.iOS() ||
 							isMobile.Opera() ||
 							isMobile.Windows() ||
-							isMobile.RNapp()
+							isMobile.RNapp() ||
+							isMobile.SafariWithTouch()
 						);
 					},
 				};
