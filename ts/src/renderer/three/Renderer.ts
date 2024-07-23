@@ -30,6 +30,7 @@ namespace Renderer {
 			camera: Camera;
 			scene: THREE.Scene;
 			mode = Mode.Play;
+			voxels: Voxels;
 
 			private clock = new THREE.Clock();
 			private pointer = new THREE.Vector2();
@@ -41,7 +42,6 @@ namespace Renderer {
 			public initEntityLayer = new THREE.Group();
 
 			private sky: Skybox;
-			voxels: Voxels;
 			private particleSystem: ParticleSystem;
 
 			private raycastIntervalSeconds = 0.1;
@@ -54,6 +54,9 @@ namespace Renderer {
 			private showRepublishWarning: boolean;
 
 			private regionDrawStart: { x: number; y: number } = { x: 0, y: 0 };
+
+			// Debug
+			private raycastHelpers = new Map<string, THREE.ArrowHelper>();
 
 			private constructor(rendererOptions?: { canvas: HTMLCanvasElement }) {
 				// For JS interop; in case someone uses new Renderer.ThreeRenderer()
@@ -936,13 +939,40 @@ namespace Renderer {
 
 			private checkForHiddenEntities() {
 				for (const unit of this.entityManager.units) {
-					// TODO(nick): Need a way to to identify avatar units from NPC's
-					unit.showHud(this.isEntityInLineOfSight(unit));
-				}
-			}
+					const tempVec3 = new THREE.Vector3();
+					const tempVec2 = new THREE.Vector2();
 
-			private isEntityInLineOfSight(unit: Unit) {
-				return this.camera.isVisible(unit, this.voxels);
+					unit.getWorldPosition(tempVec3);
+
+					const entityScreenPosition = tempVec3.clone().project(this.camera.instance);
+					tempVec2.x = entityScreenPosition.x;
+					tempVec2.y = entityScreenPosition.y;
+
+					const raycaster = new THREE.Raycaster();
+					const dist = tempVec3.distanceTo(this.camera.instance.position);
+					raycaster.setFromCamera(tempVec2, this.camera.instance);
+					raycaster.far = dist * 0.9; //temporary fix for unit HUDs hidind with map bound camera when near map border
+					raycaster.near = this.camera.instance.near;
+
+					const intersects = raycaster.intersectObject(this.voxels);
+
+					if (Utils.isDebug()) {
+						if (!this.raycastHelpers.has(unit.taroId)) {
+							const helper = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, dist, 0xff0000);
+							this.raycastHelpers.set(unit.taroId, helper);
+							this.scene.add(helper);
+						}
+
+						const helper = this.raycastHelpers.get(unit.taroId);
+						helper.setColor(intersects.length > 0 ? 0xff0000 : 0x00ff00);
+						helper.position.copy(raycaster.ray.origin);
+						helper.setDirection(raycaster.ray.direction);
+						helper.setLength(dist);
+					}
+
+					// TODO(nick): Need a way to to identify avatar units from NPC's
+					unit.showHud(intersects.length === 0);
+				}
 			}
 		}
 	}
