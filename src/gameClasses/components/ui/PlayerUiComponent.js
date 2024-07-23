@@ -502,6 +502,10 @@ var PlayerUiComponent = TaroEntity.extend({
 			dialogue = getDialogueInstance(dialogue);
 			initModal();
 			showNextMessage();
+
+			if (window.STATIC_EXPORT_ENABLED) {
+				window.PokiSDK?.gameplayStop();
+			}
 		} else {
 			console.error('dialogue', dialogueId, 'not found');
 		}
@@ -510,6 +514,10 @@ var PlayerUiComponent = TaroEntity.extend({
 		window.closeDialogue && window.closeDialogue();
 		$('#modd-dialogue-container').html('');
 		this.clearListeners();
+
+		if (window.STATIC_EXPORT_ENABLED) {
+			window.PokiSDK?.gameplayStart();
+		}
 	},
 
 	clearListeners: function () {
