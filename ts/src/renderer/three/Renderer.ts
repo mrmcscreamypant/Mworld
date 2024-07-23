@@ -927,17 +927,27 @@ namespace Renderer {
 					this.sky.position.copy(this.camera.target.position);
 				}
 
+				TWEEN.update();
+				this.renderer.render(this.scene, this.camera.instance);
+
 				this.timeSinceLastRaycast += dt;
 				if (this.timeSinceLastRaycast > this.raycastIntervalSeconds) {
 					this.timeSinceLastRaycast = 0;
 					this.checkForHiddenEntities();
 				}
-
-				TWEEN.update();
-				this.renderer.render(this.scene, this.camera.instance);
 			}
 
 			private checkForHiddenEntities() {
+				if (Utils.isDebug()) {
+					for (const taroIds of this.raycastHelpers.keys()) {
+						if (!this.entityManager.units.find((unit) => unit.taroId === taroIds)) {
+							const helper = this.raycastHelpers.get(taroIds);
+							this.scene.remove(helper);
+							this.raycastHelpers.delete(taroIds);
+						}
+					}
+				}
+
 				for (const unit of this.entityManager.units) {
 					const tempVec3 = new THREE.Vector3();
 					const tempVec2 = new THREE.Vector2();
@@ -948,11 +958,20 @@ namespace Renderer {
 					tempVec2.x = entityScreenPosition.x;
 					tempVec2.y = entityScreenPosition.y;
 
+					let dist = 0;
+					if (this.camera.isPerspective) {
+						dist = tempVec3.distanceTo(this.camera.instance.position);
+					} else {
+						const direction = this.camera.instance.getWorldDirection(new THREE.Vector3());
+						const constant = -direction.dot(this.camera.instance.position);
+						const plane = new THREE.Plane(direction, constant);
+						dist = plane.distanceToPoint(tempVec3);
+					}
+
 					const raycaster = new THREE.Raycaster();
-					const dist = tempVec3.distanceTo(this.camera.instance.position);
 					raycaster.setFromCamera(tempVec2, this.camera.instance);
-					raycaster.far = dist * 0.9; //temporary fix for unit HUDs hidind with map bound camera when near map border
-					raycaster.near = this.camera.instance.near;
+					raycaster.far = dist;
+					raycaster.near = this.camera.instance.near * 2; // double to improve results when using camera collisions
 
 					const intersects = raycaster.intersectObject(this.voxels);
 
@@ -970,7 +989,6 @@ namespace Renderer {
 						helper.setLength(dist);
 					}
 
-					// TODO(nick): Need a way to to identify avatar units from NPC's
 					unit.showHud(intersects.length === 0);
 				}
 			}
