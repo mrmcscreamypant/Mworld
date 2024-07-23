@@ -30,6 +30,7 @@ namespace Renderer {
 			camera: Camera;
 			scene: THREE.Scene;
 			mode = Mode.Play;
+			voxels: Voxels;
 
 			private clock = new THREE.Clock();
 			private pointer = new THREE.Vector2();
@@ -41,7 +42,6 @@ namespace Renderer {
 			public initEntityLayer = new THREE.Group();
 
 			private sky: Skybox;
-			voxels: Voxels;
 			private particleSystem: ParticleSystem;
 
 			private raycastIntervalSeconds = 0.1;
@@ -54,6 +54,9 @@ namespace Renderer {
 			private showRepublishWarning: boolean;
 
 			private regionDrawStart: { x: number; y: number } = { x: 0, y: 0 };
+
+			// Debug
+			private raycastHelpers = new Map<string, THREE.ArrowHelper>();
 
 			private constructor(rendererOptions?: { canvas: HTMLCanvasElement }) {
 				// For JS interop; in case someone uses new Renderer.ThreeRenderer()
@@ -924,25 +927,70 @@ namespace Renderer {
 					this.sky.position.copy(this.camera.target.position);
 				}
 
+				TWEEN.update();
+				this.renderer.render(this.scene, this.camera.instance);
+
 				this.timeSinceLastRaycast += dt;
 				if (this.timeSinceLastRaycast > this.raycastIntervalSeconds) {
 					this.timeSinceLastRaycast = 0;
 					this.checkForHiddenEntities();
 				}
-
-				TWEEN.update();
-				this.renderer.render(this.scene, this.camera.instance);
 			}
 
 			private checkForHiddenEntities() {
-				for (const unit of this.entityManager.units) {
-					// TODO(nick): Need a way to to identify avatar units from NPC's
-					unit.showHud(this.isEntityInLineOfSight(unit));
+				if (Utils.isDebug()) {
+					for (const taroIds of this.raycastHelpers.keys()) {
+						if (!this.entityManager.units.find((unit) => unit.taroId === taroIds)) {
+							const helper = this.raycastHelpers.get(taroIds);
+							this.scene.remove(helper);
+							this.raycastHelpers.delete(taroIds);
+						}
+					}
 				}
-			}
 
-			private isEntityInLineOfSight(unit: Unit) {
-				return this.camera.isVisible(unit, this.voxels);
+				for (const unit of this.entityManager.units) {
+					const tempVec3 = new THREE.Vector3();
+					const tempVec2 = new THREE.Vector2();
+
+					unit.getWorldPosition(tempVec3);
+
+					const entityScreenPosition = tempVec3.clone().project(this.camera.instance);
+					tempVec2.x = entityScreenPosition.x;
+					tempVec2.y = entityScreenPosition.y;
+
+					let dist = 0;
+					if (this.camera.isPerspective) {
+						dist = tempVec3.distanceTo(this.camera.instance.position);
+					} else {
+						const direction = this.camera.instance.getWorldDirection(new THREE.Vector3());
+						const constant = -direction.dot(this.camera.instance.position);
+						const plane = new THREE.Plane(direction, constant);
+						dist = plane.distanceToPoint(tempVec3);
+					}
+
+					const raycaster = new THREE.Raycaster();
+					raycaster.setFromCamera(tempVec2, this.camera.instance);
+					raycaster.far = dist;
+					raycaster.near = this.camera.instance.near * 2; // double to improve results when using camera collisions
+
+					const intersects = raycaster.intersectObject(this.voxels);
+
+					if (Utils.isDebug()) {
+						if (!this.raycastHelpers.has(unit.taroId)) {
+							const helper = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, dist, 0xff0000);
+							this.raycastHelpers.set(unit.taroId, helper);
+							this.scene.add(helper);
+						}
+
+						const helper = this.raycastHelpers.get(unit.taroId);
+						helper.setColor(intersects.length > 0 ? 0xff0000 : 0x00ff00);
+						helper.position.copy(raycaster.ray.origin);
+						helper.setDirection(raycaster.ray.direction);
+						helper.setLength(dist);
+					}
+
+					unit.showHud(intersects.length === 0);
+				}
 			}
 		}
 	}

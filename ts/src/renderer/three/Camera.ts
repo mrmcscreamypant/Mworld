@@ -581,22 +581,6 @@ namespace Renderer {
 				}
 			}
 
-			isVisible(unit: Unit, objects: THREE.Object3D) {
-				unit.getWorldPosition(this.tempVec3);
-
-				const entityScreenPosition = this.tempVec3.clone().project(this.instance);
-				this.tempVec2.x = entityScreenPosition.x;
-				this.tempVec2.y = entityScreenPosition.y;
-
-				const dist = this.tempVec3.distanceTo(this.instance.position);
-				this.raycaster.setFromCamera(this.tempVec2, this.instance);
-				this.raycaster.far = dist * 0.9; //temporary fix for unit HUDs hidind with map bound camera when near map border
-				this.raycaster.near = this.instance.near;
-
-				const intersects = this.raycaster.intersectObject(objects);
-				return intersects.length === 0;
-			}
-
 			private switchToOrthographicCamera() {
 				this.isPerspective = false;
 				this.orthographicCamera.position.copy(this.perspectiveCamera.position);
