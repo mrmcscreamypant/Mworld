@@ -52,7 +52,6 @@ namespace Renderer {
 			constructor(params: ProgressBarParams) {
 				const config = { ...defaultConfig, ...params };
 				super(config.x, config.y, config.z, config.width, config.height);
-				this.matrixAutoUpdate = false;
 
 				this.update(config);
 			}
