@@ -837,6 +837,8 @@ var MenuUiComponent = TaroEntity.extend({
 		if (window.STATIC_EXPORT_ENABLED) {
 			$('#return-to-homepage-server').hide();
 			$('.return-to-homepage-cta').hide();
+
+			window.PokiSDK?.gameplayStop(); 
 		} else {
 			$('#return-to-homepage-server').show();
 		}
