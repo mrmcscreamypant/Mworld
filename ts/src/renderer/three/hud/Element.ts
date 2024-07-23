@@ -16,7 +16,6 @@ namespace Renderer {
 
 			constructor(x: number, y: number, z: number, width = 0, height = 0) {
 				super();
-				this.matrixAutoUpdate = false;
 
 				this.position.set(x, y, z);
 				this.unscaledWidth = width;
