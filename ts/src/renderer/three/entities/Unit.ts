@@ -159,15 +159,9 @@ namespace Renderer {
 				);
 
 				taroEntity.on('rotate', (x: number, y: number, z: number) => {
-					if (entity.body instanceof AnimatedSprite) {
-						entity.body.sprite.rotation.x = Utils.deg2rad(x);
-						entity.body.sprite.rotation.y = Utils.deg2rad(z);
-						entity.body.sprite.rotation.z = Utils.deg2rad(y);
-					} else {
-						entity.body.mesh.rotation.x = Utils.deg2rad(x);
-						entity.body.mesh.rotation.y = Utils.deg2rad(z);
-						entity.body.mesh.rotation.z = Utils.deg2rad(y);
-					}
+					entity.body.root.rotation.x = Utils.deg2rad(x);
+					entity.body.root.rotation.y = Utils.deg2rad(z);
+					entity.body.root.rotation.z = Utils.deg2rad(y);
 					entity.updateMatrix();
 				});
 

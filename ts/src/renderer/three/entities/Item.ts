@@ -51,6 +51,7 @@ namespace Renderer {
 						) {
 							return;
 						}
+
 						entity.position.x = Utils.pixelToWorld(data.x);
 						entity.position.z = Utils.pixelToWorld(data.y);
 
@@ -60,13 +61,12 @@ namespace Renderer {
 								let x = Utils.pixelToWorld(anchoredOffset.x);
 								let y = Utils.pixelToWorld(anchoredOffset.y);
 
-								// This should be a local/world coordinates flag on the entity body.
-								if (entity.taroEntity?._stats.type == 'weapon') {
-									entity.position.x += x;
-									entity.position.z += y;
-								} else if (entity.body instanceof AnimatedSprite) {
-									entity.body.position.x = x;
-									entity.body.position.z = y;
+								if (entity.body instanceof AnimatedSprite) {
+									entity.body.sprite.position.x = x;
+									entity.body.sprite.position.z = y;
+								} else {
+									entity.body.mesh.position.x = x;
+									entity.body.mesh.position.z = y;
 								}
 							}
 						} else if (
@@ -78,11 +78,11 @@ namespace Renderer {
 						}
 
 						if (entity.body instanceof AnimatedSprite) {
-							entity.body.rotation.y = -data.rotation;
+							entity.body.sprite.rotation.y = -data.rotation;
 							const flip = taroEntity._stats.flip;
 							entity.body.setFlip(flip % 2 === 1, flip > 1);
 						} else {
-							entity.body.rotation.y = -data.rotation;
+							entity.body.mesh.rotation.y = -data.rotation;
 						}
 						entity.updateMatrix();
 					},
@@ -90,15 +90,9 @@ namespace Renderer {
 				);
 
 				taroEntity.on('rotate', (x: number, y: number, z: number) => {
-					if (entity.body instanceof AnimatedSprite) {
-						entity.body.sprite.rotation.x = Utils.deg2rad(x);
-						entity.body.sprite.rotation.y = Utils.deg2rad(z);
-						entity.body.sprite.rotation.z = Utils.deg2rad(y);
-					} else {
-						entity.body.mesh.rotation.x = Utils.deg2rad(x);
-						entity.body.mesh.rotation.y = Utils.deg2rad(z);
-						entity.body.mesh.rotation.z = Utils.deg2rad(y);
-					}
+					entity.body.root.rotation.x = Utils.deg2rad(x);
+					entity.body.root.rotation.y = Utils.deg2rad(z);
+					entity.body.root.rotation.z = Utils.deg2rad(y);
 					entity.updateMatrix();
 				});
 
