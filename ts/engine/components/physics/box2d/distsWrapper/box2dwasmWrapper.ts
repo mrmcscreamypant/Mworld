@@ -231,7 +231,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		// do not spawn sensors for those entities without ai
 		if (body.fixtures[0].isSensor) {
 			const ownerEntity = taro.$(entity.ownerUnitId);
-			if (ownerEntity && ownerEntity.ai === undefined && ownerEntity._category !== 'region') {
+			if (ownerEntity && ownerEntity._category !== 'region' && ownerEntity?._stats?.ai?.enabled === false) {
 				return;
 			}
 		}
