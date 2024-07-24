@@ -443,6 +443,46 @@ var ActionComponent = TaroEntity.extend({
 						}
 						break;
 
+					case 'runScriptOnClient':
+						if (taro.isServer) {
+							var previousScriptId = self._script.currentScriptId;
+							var previousAcionBlockIdx = self._script.currentActionLineNumber;
+
+							const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
+							const localPlayer = self._script.param.getValue(action.player, vars);
+							localPlayer.streamUpdateData(
+								[{ script: { name: action.scriptName, params: localScriptParams } }],
+								localPlayer._stats.clientId
+							);
+
+							self._script.currentScriptId = previousScriptId;
+							self._script.currentActionLineNumber = previousAcionBlockIdx;
+						}
+						break;
+
+					case 'runEntityScriptOnClient':
+						if (taro.isServer) {
+							var previousScriptId = self._script.currentScriptId;
+							var previousAcionBlockIdx = self._script.currentActionLineNumber;
+
+							var entity = self._script.param.getValue(action.entity, vars);
+							if (entity) {
+								const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
+								const localPlayer = self._script.param.getValue(action.player, vars);
+								localPlayer.streamUpdateData(
+									[{ script: { name: action.scriptName, entityId: entity.id(), params: localScriptParams } }],
+									localPlayer._stats.clientId
+								);
+
+								self._script.currentScriptId = previousScriptId;
+								self._script.currentActionLineNumber = previousAcionBlockIdx;
+
+								self._script.currentScriptId = previousScriptId;
+								self._script.currentActionLineNumber = previousAcionBlockIdx;
+							}
+						}
+						break;
+
 					case 'condition':
 						if (self._script.condition.run(action.conditions, vars, `${actionPath}/condition`)) {
 							let previousAcionBlockIdx = self._script.currentActionLineNumber;
@@ -3432,7 +3472,7 @@ var ActionComponent = TaroEntity.extend({
 							};
 							if (defaultDepth) {
 								//FIXME: should remove tmpDefault and find somewhere else to store the defaultDepth
-								createdEntity.tmpDefaultDepth = defaultDepth
+								createdEntity.tmpDefaultDepth = defaultDepth;
 							}
 							taro.script.trigger('entityCreatedGlobal', { entityId: createdEntity.id() });
 							createdEntity.script.trigger('entityCreated', { thisEntityId: createdEntity.id() });

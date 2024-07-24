@@ -16,6 +16,7 @@ namespace Renderer {
 
 			constructor(x: number, y: number, z: number, width = 0, height = 0) {
 				super();
+				this.matrixAutoUpdate = false;
 
 				this.position.set(x, y, z);
 				this.unscaledWidth = width;
@@ -198,7 +199,7 @@ namespace Renderer {
 
 			protected createUpscaledTextureImage(
 				draw: (upscaledWidth: number, upscaledHeight: number, upscaleFactor: number) => void,
-				upscaleFactor = 2
+				upscaleFactor = 10
 			) {
 				let w = this.width * upscaleFactor;
 				let h = this.height * upscaleFactor;

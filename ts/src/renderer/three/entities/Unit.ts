@@ -9,10 +9,12 @@ namespace Renderer {
 
 			body: AnimatedSprite | Model;
 
-			hud = new THREE.Group();
-
-			private label = new Label({ text: '', color: 'white', bold: false, renderOnTop: true });
-			private attributes = new Attributes();
+			private hud = new THREE.Group();
+			private topHud = new THREE.Group();
+			private bottomHud = new THREE.Group();
+			private label: Label;
+			private topAttributes = new Attributes();
+			private bottomAttributes = new Attributes();
 			private chat: ChatBubble;
 
 			constructor(
@@ -37,14 +39,59 @@ namespace Renderer {
 				}
 				this.add(this.body);
 
+				this.add(this.hud);
+				this.hud.add(this.topHud);
+				this.hud.add(this.bottomHud);
+
+				this.topAttributes.position.y = Utils.pixelToWorld(8);
+				this.bottomAttributes.position.y = -Utils.pixelToWorld(8);
+
+				this.topHud.add(this.topAttributes);
+				this.bottomHud.add(this.bottomAttributes);
+
+				if (Utils.isDebug()) {
+					const originHelper1 = new THREE.AxesHelper(0.1);
+					this.topHud.add(originHelper1);
+
+					const originHelper2 = new THREE.AxesHelper(0.1);
+					this.bottomHud.add(originHelper2);
+
+					const gridHelper1 = new THREE.GridHelper(1, 1);
+					gridHelper1.rotateX(Math.PI * 0.5);
+					gridHelper1.position.y = 0.5;
+					gridHelper1.material.depthTest = false;
+					gridHelper1.scale.x = Utils.pixelToWorld(96);
+					this.topHud.add(gridHelper1);
+
+					const gridHelper2 = gridHelper1.clone();
+					gridHelper2.position.y = -0.5;
+					this.bottomHud.add(gridHelper2);
+				}
+
+				this.label = new Label({ renderOnTop: true });
 				this.label.visible = false;
+				this.label.setCenterY(1);
+				this.label.position.y = Utils.pixelToWorld(this.topAttributes.topBarsHeight + 16);
+				this.topHud.add(this.label);
 
-				this.body.attach(this.hud);
-				this.hud.add(this.label);
-				this.hud.add(this.attributes);
+				if (this.body instanceof Sprite) {
+					const size = this.body.getSize();
+					if (this.body.billboard) {
+						this.topHud.position.y = size.height;
+						this.topHud.position.z = 0;
 
-				if (this.body instanceof Model) {
-					this.hud.position.copy(this.body.getCenter());
+						this.bottomHud.position.y = 0;
+						this.bottomHud.position.z = 0;
+					} else {
+						this.topHud.position.y = 0;
+						this.topHud.position.z = -size.height * 0.5;
+
+						this.bottomHud.position.y = 0;
+						this.bottomHud.position.z = size.height * 0.5;
+					}
+				} else {
+					const size = this.body.getSize();
+					this.topHud.position.y = size.y;
 				}
 			}
 
@@ -70,8 +117,8 @@ namespace Renderer {
 
 				taroEntity.on('show-label', () => (entity.label.visible = true));
 				taroEntity.on('hide-label', () => (entity.label.visible = false));
-				taroEntity.on('render-attributes', (data) => (entity as Unit).renderAttributes(data));
-				taroEntity.on('update-attribute', (data) => (entity as Unit).attributes.update(data));
+				taroEntity.on('render-attributes', (data) => (entity as Unit).updateAttributes(data));
+				taroEntity.on('update-attribute', (data) => (entity as Unit).updateAttribute(data));
 				taroEntity.on('render-chat-bubble', (text) => (entity as Unit).renderChat(text));
 
 				if (entity.body instanceof AnimatedSprite) {
@@ -81,17 +128,24 @@ namespace Renderer {
 						(entity.body as AnimatedSprite).setBillboard(isBillboard, renderer.camera)
 					);
 				} else if (entity.body instanceof Model) {
-					taroEntity.on('depth', (depth) => {
-						entity.position.y = Utils.pixelToWorld(depth);
+					//FIXME: when the 3d physics is ready, remove this
+					taroEntity.on('temp_translation_y', (positionY) => {
+						entity.position.y = Utils.pixelToWorld(positionY);
 					});
 				}
 
 				taroEntity.on(
 					'transform',
 					(data: { x: number; y: number; rotation: number }) => {
+						if (
+							entity.position.x === Utils.pixelToWorld(data.x) &&
+							entity.position.z === Utils.pixelToWorld(data.y) &&
+							entity.body.rotation.y === -data.rotation
+						) {
+							return;
+						}
 						entity.position.x = Utils.pixelToWorld(data.x);
 						entity.position.z = Utils.pixelToWorld(data.y);
-
 						if (entity.body instanceof AnimatedSprite) {
 							entity.body.rotation.y = -data.rotation;
 							const flip = taroEntity._stats.flip;
@@ -99,20 +153,16 @@ namespace Renderer {
 						} else {
 							entity.body.rotation.y = -data.rotation;
 						}
+						entity.updateMatrix();
 					},
 					this
 				);
 
 				taroEntity.on('rotate', (x: number, y: number, z: number) => {
-					if (entity.body instanceof AnimatedSprite) {
-						entity.body.sprite.rotation.x = Utils.deg2rad(x);
-						entity.body.sprite.rotation.y = Utils.deg2rad(z);
-						entity.body.sprite.rotation.z = Utils.deg2rad(y);
-					} else {
-						entity.body.mesh.rotation.x = Utils.deg2rad(x);
-						entity.body.mesh.rotation.y = Utils.deg2rad(z);
-						entity.body.mesh.rotation.z = Utils.deg2rad(y);
-					}
+					entity.body.root.rotation.x = Utils.deg2rad(x);
+					entity.body.root.rotation.y = Utils.deg2rad(z);
+					entity.body.root.rotation.z = Utils.deg2rad(y);
+					entity.updateMatrix();
 				});
 
 				taroEntity.on(
@@ -122,6 +172,7 @@ namespace Renderer {
 						const height = Utils.pixelToWorld(data.height || 0);
 						const depth = Utils.pixelToWorld(entity.taroEntity._stats?.currentBody?.depth || 0);
 						entity.setScale(width, height, depth);
+						entity.updateMatrix();
 					},
 					this
 				);
@@ -129,7 +180,6 @@ namespace Renderer {
 				taroEntity.on('update-label', (data) => {
 					entity.label.visible = true;
 					entity.label.update({ text: data.text, color: data.color, bold: data.bold });
-					entity.updateLabelOffset();
 				});
 
 				taroEntity.on('play-animation', (id) => {
@@ -199,6 +249,17 @@ namespace Renderer {
 
 			update(dt: number) {
 				this.body.update(dt);
+
+				const camera = Three.instance().camera.instance;
+				if (this.body instanceof AnimatedSprite && this.body.billboard) {
+					this.hud.quaternion.copy(camera.quaternion);
+					this.hud.position.copy(this.body.position);
+					this.topHud.position.y = this.body.getSize().height * 0.5;
+					this.bottomHud.position.y = -this.body.getSize().height * 0.5;
+				} else {
+					this.topHud.quaternion.copy(camera.quaternion);
+					this.bottomHud.quaternion.copy(camera.quaternion);
+				}
 			}
 
 			renderChat(text: string): void {
@@ -206,20 +267,35 @@ namespace Renderer {
 					this.chat.update({ text });
 				} else {
 					this.chat = new ChatBubble({ text });
-					const labelCenter = this.label.getCenter();
-					const labelOffset = this.label.height * labelCenter.y;
-					const chatOffset = (labelOffset + this.label.height) / this.chat.height;
-					this.chat.setCenter(0.5, 1 + chatOffset);
-					this.hud.add(this.chat);
+					this.chat.position.copy(this.label.position);
+					this.chat.position.y += Utils.pixelToWorld(this.label.height + 24);
+					this.topHud.add(this.chat);
 				}
 			}
 
-			// NOTE: This whole function seems off to me. What should it being
-			// exactly? Clearly it's not a render function. Dive a little deeper
-			// into this when you have time.
-			renderAttributes(data) {
-				this.attributes.clear();
-				this.attributes.addAttributes(data);
+			updateAttributes(data) {
+				this.topAttributes.clear();
+				this.bottomAttributes.clear();
+
+				for (const attr of data.attrs) {
+					if (Mapper.ProgressBar(attr).anchorPosition != 'below') {
+						this.topAttributes.addAttribute(attr);
+					} else {
+						this.bottomAttributes.addAttribute(attr);
+					}
+				}
+
+				this.label.position.y = Utils.pixelToWorld(this.topAttributes.topBarsHeight + 16);
+			}
+
+			updateAttribute(data) {
+				// NOTE(nick): Update might add an attribute so we need to check
+				// if it's above or below.
+				if (Mapper.ProgressBar(data.attr).anchorPosition != 'below') {
+					this.topAttributes.update(data);
+				} else {
+					this.bottomAttributes.update(data);
+				}
 			}
 
 			setScale(sx: number, sy: number, sz: number) {
@@ -229,11 +305,24 @@ namespace Renderer {
 					this.body.setSize(sx, sz, sy);
 				}
 
-				this.updateAttributesOffset();
-				this.updateLabelOffset();
+				if (this.body instanceof Sprite) {
+					const size = this.body.getSize();
+					if (this.body.billboard) {
+						this.topHud.position.y = size.height;
+						this.topHud.position.z = 0;
 
-				if (this.body instanceof Model) {
-					this.hud.position.copy(this.body.getCenter());
+						this.bottomHud.position.y = 0;
+						this.bottomHud.position.z = 0;
+					} else {
+						this.topHud.position.y = 0;
+						this.topHud.position.z = -size.height * 0.5;
+
+						this.bottomHud.position.y = 0;
+						this.bottomHud.position.z = size.height * 0.5;
+					}
+				} else {
+					const size = this.body.getSize();
+					this.topHud.position.y = size.y;
 				}
 			}
 
@@ -244,7 +333,8 @@ namespace Renderer {
 							.to({ opacity: to }, 100)
 							.onUpdate(({ opacity }) => {
 								this.label.setOpacity(opacity);
-								this.attributes.setOpacity(opacity);
+								this.topAttributes.setOpacity(opacity);
+								this.bottomAttributes.setOpacity(opacity);
 							})
 							.onComplete(onComplete)
 							.start();
@@ -260,35 +350,8 @@ namespace Renderer {
 			}
 
 			setHudScale(scale: number) {
-				this.hud.scale.setScalar(scale);
-				this.updateAttributesOffset();
-				this.updateLabelOffset();
-			}
-
-			private getBodyHeightInPixels() {
-				let unitHeightPx = 0;
-				if (this.body instanceof AnimatedSprite) {
-					unitHeightPx = this.body.getSizeInPixels().height;
-				} else {
-					unitHeightPx = Utils.worldToPixel(this.body.getSize().y);
-				}
-				return unitHeightPx;
-			}
-
-			private updateAttributesOffset() {
-				const halfHeight = this.getBodyHeightInPixels() * 0.5;
-				const spacing = halfHeight + 16;
-				const scaling = 1 / this.hud.scale.y;
-				this.attributes.setMargin(spacing * scaling);
-			}
-
-			private updateLabelOffset() {
-				const halfHeight = this.getBodyHeightInPixels() * 0.5;
-				const scaling = 1 / this.hud.scale.y;
-				let topOfTopBars = (halfHeight + this.attributes.topBarsHeight) * scaling;
-				if (this.attributes.topBarsHeight > 0) topOfTopBars += 16;
-				this.label.setCenterY(1);
-				this.label.setOffsetY(16 + topOfTopBars);
+				this.topHud.scale.setScalar(scale);
+				this.bottomHud.scale.setScalar(scale);
 			}
 		}
 	}

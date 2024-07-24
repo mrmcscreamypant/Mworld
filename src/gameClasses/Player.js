@@ -645,6 +645,25 @@ var Player = TaroEntity.extend({
 								self.selectUnit(newValue);
 							}
 							break;
+
+						case 'script':
+							const scriptName = newValue.name;
+							const scriptParams = newValue.params;
+
+							let scriptComponent;
+							if (newValue.entityId) {
+								const entity = taro.$(newValue.entityId);
+								scriptComponent = entity.script;
+							} else {
+								scriptComponent = taro.script;
+							}
+							var previousScriptId = scriptComponent.currentScriptId;
+							var previousAcionBlockIdx = scriptComponent.currentActionLineNumber;
+
+							scriptComponent.runScript(scriptName, scriptParams);
+
+							scriptComponent.currentScriptId = previousScriptId;
+							scriptComponent.currentActionLineNumber = previousAcionBlockIdx;
 						default:
 							// Handle the case when attrName does not match any of the above cases.
 							break;

@@ -48,7 +48,9 @@ namespace Renderer {
 										name: taroEntity._stats.id,
 										delete: true,
 									};
-									inGameEditor.updateRegionInReact && !window.isStandalone && inGameEditor.updateRegionInReact(data, 'threejs');
+									inGameEditor.updateRegionInReact &&
+										!window.isStandalone &&
+										inGameEditor.updateRegionInReact(data, 'threejs');
 								},
 							},
 							true
@@ -58,8 +60,11 @@ namespace Renderer {
 					}
 				}
 
+				if (entity.matrixAutoUpdate && type !== 'region') {
+					entity.matrixAutoUpdate = false;
+				}
 				this.entities.push(entity);
-
+				entity.updateMatrix?.();
 				return entity;
 			}
 
@@ -71,7 +76,7 @@ namespace Renderer {
 				) {
 					renderer.entityEditor.selectEntity(null);
 				}
-				this.initEntities = this.initEntities.filter((e) => e.action.actionId !== initEntity.action.actionId)
+				this.initEntities = this.initEntities.filter((e) => e.action.actionId !== initEntity.action.actionId);
 				initEntity.destroy();
 			}
 

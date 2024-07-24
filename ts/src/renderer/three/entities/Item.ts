@@ -44,6 +44,14 @@ namespace Renderer {
 				taroEntity.on(
 					'transform',
 					(data: { x: number; y: number; rotation: number }) => {
+						if (
+							entity.position.x === Utils.pixelToWorld(data.x) &&
+							entity.position.z === Utils.pixelToWorld(data.y) &&
+							entity.body.rotation.y === -data.rotation
+						) {
+							return;
+						}
+
 						entity.position.x = Utils.pixelToWorld(data.x);
 						entity.position.z = Utils.pixelToWorld(data.y);
 
@@ -53,15 +61,12 @@ namespace Renderer {
 								let x = Utils.pixelToWorld(anchoredOffset.x);
 								let y = Utils.pixelToWorld(anchoredOffset.y);
 
-								// This should be a local/world coordinates flag on the entity body.
-								if (entity.taroEntity?._stats.type == 'weapon') {
-									entity.position.x += x;
-									entity.position.z += y;
+								if (entity.body instanceof AnimatedSprite) {
+									entity.body.sprite.position.x = x;
+									entity.body.sprite.position.z = y;
 								} else {
-									if (entity.body instanceof AnimatedSprite) {
-										entity.body.sprite.position.x = x;
-										entity.body.sprite.position.z = y;
-									}
+									entity.body.mesh.position.x = x;
+									entity.body.mesh.position.z = y;
 								}
 							}
 						} else if (
@@ -73,26 +78,22 @@ namespace Renderer {
 						}
 
 						if (entity.body instanceof AnimatedSprite) {
-							entity.body.rotation.y = -data.rotation;
+							entity.body.sprite.rotation.y = -data.rotation;
 							const flip = taroEntity._stats.flip;
 							entity.body.setFlip(flip % 2 === 1, flip > 1);
 						} else {
-							entity.body.rotation.y = -data.rotation;
+							entity.body.mesh.rotation.y = -data.rotation;
 						}
+						entity.updateMatrix();
 					},
 					this
 				);
 
 				taroEntity.on('rotate', (x: number, y: number, z: number) => {
-					if (entity.body instanceof AnimatedSprite) {
-						entity.body.sprite.rotation.x = Utils.deg2rad(x);
-						entity.body.sprite.rotation.y = Utils.deg2rad(z);
-						entity.body.sprite.rotation.z = Utils.deg2rad(y);
-					} else {
-						entity.body.mesh.rotation.x = Utils.deg2rad(x);
-						entity.body.mesh.rotation.y = Utils.deg2rad(z);
-						entity.body.mesh.rotation.z = Utils.deg2rad(y);
-					}
+					entity.body.root.rotation.x = Utils.deg2rad(x);
+					entity.body.root.rotation.y = Utils.deg2rad(z);
+					entity.body.root.rotation.z = Utils.deg2rad(y);
+					entity.updateMatrix();
 				});
 
 				taroEntity.on(
@@ -102,6 +103,7 @@ namespace Renderer {
 						const height = Utils.pixelToWorld(data.height || 0);
 						const depth = Utils.pixelToWorld(entity.taroEntity._stats?.currentBody?.depth || 0);
 						entity.setScale(width, height, depth);
+						entity.updateMatrix();
 					},
 					this
 				);
@@ -154,6 +156,10 @@ namespace Renderer {
 
 				taroEntity.on('setOwnerUnit', (unitId: string) => {
 					entity.ownerUnitId = unitId;
+				});
+
+				taroEntity.on('set-opacity', (data: { opacity: number; time?: number }) => {
+					entity.body.setOpacity(data.opacity, data.time);
 				});
 
 				return entity;

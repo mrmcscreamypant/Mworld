@@ -281,6 +281,10 @@ namespace Renderer {
 				if (value === undefined || value === null) return '';
 				return trailingZeros ? value.toFixed(decimalPlaces).toString() : toFixedWithoutZeros(value, decimalPlaces);
 			}
+
+			export function isDebug() {
+				return location.hash === '#debug';
+			}
 		}
 	}
 }

@@ -94,7 +94,7 @@ namespace Renderer {
 
 				this.instance = this.cameraO;
 
-				this.controls = new OrbitControls(this.instance, canvas);
+				this.controls = new OrbitControls(this.orthographicCamera, canvas);
 				this.controls.enableRotate = false;
 				this.controls.enableZoom = false;
 				this.controls.mouseButtons = { LEFT: '', MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
@@ -235,13 +235,16 @@ namespace Renderer {
 			}
 
 			setElevationAngle(deg: number) {
+				const min = Math.PI * 0.5 - this.controls.maxPolarAngle;
+				const max = Math.PI * 0.5 - this.controls.minPolarAngle;
+
 				let rad = Utils.deg2rad(deg);
-				if (rad < this.minElevationAngle) rad = this.minElevationAngle;
-				else if (rad > this.maxElevationAngle) rad = this.maxElevationAngle;
+				if (rad < min) rad = min;
+				else if (rad > max) rad = max;
 
 				this.elevationAngle = Utils.rad2deg(rad);
 
-				if (rad === this.minElevationAngle || rad === this.maxElevationAngle) return;
+				if (rad === min || rad === max) return;
 
 				const spherical = new THREE.Spherical(
 					this.controls.getDistance(),
@@ -573,10 +576,16 @@ namespace Renderer {
 					this.controls.enablePan = true;
 					this.controls.enableRotate = true;
 					this.controls.enableZoom = true;
+
+					this.controls.minPolarAngle = 0;
+					this.controls.maxPolarAngle = Math.PI;
 				} else {
 					this.controls.enablePan = false;
 					this.controls.enableRotate = false;
 					this.controls.enableZoom = false;
+
+					this.controls.maxPolarAngle = Math.PI * 0.5 - this.minElevationAngle;
+					this.controls.minPolarAngle = Math.PI * 0.5 - this.maxElevationAngle;
 
 					this.setElevationAngle(this.elevationAngle);
 					this.setAzimuthAngle(this.azimuthAngle);

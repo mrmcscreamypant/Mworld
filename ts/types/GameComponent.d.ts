@@ -143,6 +143,7 @@ declare class GameComponent extends TaroEntity {
 		scripts: Record<string, ScriptData>;
 		defaultData: any;
 		map: MapData;
+		defaultRenderer: string;
 		unitTypes: Record<string, EntityData>;
 		projectileTypes: Record<string, EntityData>;
 		itemTypes: Record<string, EntityData>;
@@ -174,6 +175,14 @@ declare class GameComponent extends TaroEntity {
 				bottom: string;
 				front: string;
 				back: string;
+			};
+			fog: {
+				enabled: boolean;
+				type: 'linear' | 'exp2';
+				color: string;
+				near: number;
+				far: number;
+				density: number;
 			};
 		};
 		heightBasedZIndex: boolean;

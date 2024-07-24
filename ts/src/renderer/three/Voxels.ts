@@ -14,6 +14,8 @@ namespace Renderer {
 				private sidesTileset: TextureSheet
 			) {
 				super();
+				this.matrixAutoUpdate = false;
+				this.matrixWorldAutoUpdate = false;
 				this.brushArea = new TileShape();
 			}
 
