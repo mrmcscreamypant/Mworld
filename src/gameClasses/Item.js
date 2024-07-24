@@ -425,7 +425,6 @@ var Item = TaroEntityPhysics.extend({
 									rotate: rotate,
 									translate: bulletStartPosition,
 								};
-								console.log(rotate);
 
 								// projectileStreamMode: 0 is clientside predicted
 								// projectileStreamMode: 1 is serverside streamed
