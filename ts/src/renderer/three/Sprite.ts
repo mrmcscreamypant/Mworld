@@ -16,12 +16,15 @@ namespace Renderer {
 
 				const geometry = new THREE.PlaneGeometry(1, 1);
 				geometry.rotateX(-Math.PI / 2);
-				const material = new THREE.MeshBasicMaterial({
-					map: tex,
-					transparent: true,
-					alphaTest: 0.3,
-				});
-				this.sprite = new THREE.Mesh(geometry, material);
+				this.sprite = new THREE.Mesh(
+					geometry,
+					gAssetManager.getMaterial(tex) ??
+						new THREE.MeshBasicMaterial({
+							map: tex,
+							transparent: true,
+							alphaTest: 0.3,
+						})
+				);
 				this.root.add(this.sprite);
 				this.add(this.root);
 			}
@@ -60,7 +63,12 @@ namespace Renderer {
 			}
 
 			setTexture(tex: THREE.Texture) {
-				(this.sprite.material as THREE.MeshBasicMaterial).map = tex;
+				const newMaterial = gAssetManager.getMaterial(tex);
+				if (newMaterial) {
+					(this.sprite.material as THREE.MeshBasicMaterial) = newMaterial;
+				} else {
+					(this.sprite.material as THREE.MeshBasicMaterial).map = tex;
+				}
 			}
 
 			setFlip(x: boolean, y: boolean) {
