@@ -31,7 +31,7 @@ namespace Renderer {
 					const key = taroEntity._stats.cellSheet.url;
 					const cols = taroEntity._stats.cellSheet.columnCount || 1;
 					const rows = taroEntity._stats.cellSheet.rowCount || 1;
-					const tex = gAssetManager.getTexture(key).clone();
+					const tex = gAssetManager.getTexture(key);
 					const frameWidth = tex.image.width / cols;
 					const frameHeight = tex.image.height / rows;
 					const spriteSheet = new TextureSheet(key, tex, frameWidth, frameHeight);

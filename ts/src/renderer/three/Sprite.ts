@@ -16,15 +16,7 @@ namespace Renderer {
 
 				const geometry = new THREE.PlaneGeometry(1, 1);
 				geometry.rotateX(-Math.PI / 2);
-				this.sprite = new THREE.Mesh(
-					geometry,
-					gAssetManager.getMaterial(tex) ??
-						new THREE.MeshBasicMaterial({
-							map: tex,
-							transparent: true,
-							alphaTest: 0.3,
-						})
-				);
+				this.sprite = new THREE.Mesh(geometry, gAssetManager.getMaterial(tex));
 				this.root.add(this.sprite);
 				this.add(this.root);
 			}
