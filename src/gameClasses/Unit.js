@@ -2219,7 +2219,7 @@ var Unit = TaroEntityPhysics.extend({
 			self.script.trigger(trigger.name, trigger.params);
 		});
 
-		if (taro.isServer || (taro.isClient && taro.client.selectedUnit == this)) {
+		if (taro.isServer || (taro.isClient && (taro.client.selectedUnit == this || this._stats.streamMode !== 1))) {
 			// ability component behaviour method call
 			this.ability._behaviour();
 
