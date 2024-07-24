@@ -388,7 +388,11 @@ var Item = TaroEntityPhysics.extend({
 							let bulletY = self._stats.bulletStartPosition.y || 0;
 							let bulletX = owner._stats.flip === 1 ? -1 : 1;
 
-							if (owner && self._stats.currentBody && self._stats.currentBody.jointType == 'weldJoint') {
+							if (
+								owner &&
+								self._stats.currentBody &&
+								(self._stats.currentBody.jointType == 'weldJoint' || self._stats.currentBody.type == 'none')
+							) {
 								rotate = owner._rotate.z;
 								// if we are welded to owner unit, we have to invert the start position when the item is flipped
 								// multiply bullet start position y-component by -1 if flip === 1
