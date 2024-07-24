@@ -334,7 +334,8 @@ namespace Renderer {
 				if (this.target && !this.isEditorMode) {
 					const targetWorldPos = new THREE.Vector3();
 					this.target.getWorldPosition(targetWorldPos);
-					targetWorldPos.add(this.offset);
+					const angle = this.controls.getAzimuthalAngle();
+					targetWorldPos.add(this.offset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle));
 					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z, true);
 				}
 
