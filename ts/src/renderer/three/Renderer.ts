@@ -769,11 +769,19 @@ namespace Renderer {
 			}
 
 			private forceLoadUnusedCSSFonts() {
-				const canvas = document.createElement('canvas');
-				const ctx = canvas.getContext('2d');
+				let canvas = document.createElement('canvas');
+				let ctx = canvas.getContext('2d');
 				ctx.font = 'normal 4px Verdana';
 				ctx.fillText('text', 0, 8);
+
+				canvas = document.createElement('canvas');
+				ctx = canvas.getContext('2d');
 				ctx.font = 'bold 4px Verdana';
+				ctx.fillText('text', 0, 8);
+
+				canvas = document.createElement('canvas');
+				ctx = canvas.getContext('2d');
+				ctx.font = 'italic bold 4px Verdana';
 				ctx.fillText('text', 0, 8);
 			}
 
