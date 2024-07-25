@@ -89,14 +89,14 @@ namespace Renderer {
 					}
 				}
 
-				const ambientLightSettings = taro?.game?.data?.settings?.ambientLight;
+				const ambientLightSettings = taro?.game?.data?.settings?.light?.ambient;
 				const ambientLight = new THREE.AmbientLight(
 					ambientLightSettings?.color ?? 0xffffff,
 					ambientLightSettings?.intensity ?? 3
 				);
 				this.scene.add(ambientLight);
 
-				const directionalLightSettings = taro?.game?.data?.settings?.directionalLight;
+				const directionalLightSettings = taro?.game?.data?.settings?.light?.directional;
 				const directionalLight = new THREE.DirectionalLight(
 					directionalLightSettings?.color ?? 0xffffff,
 					directionalLightSettings?.intensity ?? 0

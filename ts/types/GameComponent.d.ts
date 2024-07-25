@@ -183,17 +183,19 @@ declare class GameComponent extends TaroEntity {
 				far: number;
 				density: number;
 			};
-			ambientLight: {
-				color: string;
-				intensity: number;
-			};
-			directionalLight: {
-				color: string;
-				intensity: number;
-				position: {
-					x: number;
-					y: number;
-					z: number;
+			light: {
+				ambient: {
+					color: string;
+					intensity: number;
+				};
+				directional: {
+					color: string;
+					intensity: number;
+					position: {
+						x: number;
+						y: number;
+						z: number;
+					};
 				};
 			};
 		};
