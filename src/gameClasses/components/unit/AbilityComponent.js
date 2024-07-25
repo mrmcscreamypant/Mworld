@@ -371,7 +371,6 @@ var AbilityComponent = TaroEntity.extend({
 
 		if (Object.keys(this.abilityDurations).length > 0) {
 			for (let id in this.abilityDurations) {
-				console.log(this.abilityDurations);
 				if (this.abilityDurations[id].time <= Date.now()) {
 					if (!this.abilityDurations[id].queued) {
 						this.stopCasting(id, this.abilityDurations[id].key);
