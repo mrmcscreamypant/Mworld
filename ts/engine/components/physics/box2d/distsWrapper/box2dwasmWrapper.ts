@@ -115,7 +115,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 						ctx = canvas.add.graphics().setDepth(9999);
 						ctx.setScale(scale);
 						component.ctx = ctx;
-						debugDrawer = new Box2dDebugDrawPhaser(box2D, new Box2dHelpers(box2D), ctx, scale).constructJSDraw();
+						debugDrawer = new Box2dDebugDrawerPhaser(box2D, new Box2dHelpers(box2D), ctx, scale).constructJSDraw();
 						debugDrawer.SetFlags(flags);
 						component._world.SetDebugDraw(debugDrawer);
 					} else {
