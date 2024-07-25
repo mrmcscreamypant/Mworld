@@ -89,6 +89,25 @@ namespace Renderer {
 					}
 				}
 
+				const ambientLightSettings = taro?.game?.data?.settings?.ambientLight;
+				const ambientLight = new THREE.AmbientLight(
+					ambientLightSettings?.color ?? 0xffffff,
+					ambientLightSettings?.intensity ?? 3
+				);
+				this.scene.add(ambientLight);
+
+				const directionalLightSettings = taro?.game?.data?.settings?.directionalLight;
+				const directionalLight = new THREE.DirectionalLight(
+					directionalLightSettings?.color ?? 0xffffff,
+					directionalLightSettings?.intensity ?? 0
+				);
+				directionalLight.position.set(
+					directionalLightSettings?.position.x ?? 0,
+					directionalLightSettings?.position.z ?? 1,
+					directionalLightSettings?.position.y ?? 0
+				);
+				this.scene.add(directionalLight);
+
 				this.camera = new Camera(window.innerWidth, window.innerHeight, this.renderer.domElement);
 				this.camera.setElevationAngle(taro.game.data.settings.camera.defaultPitch);
 				if (taro.game.data.settings.camera.projectionMode !== 'orthographic') {
