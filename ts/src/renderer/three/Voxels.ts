@@ -136,12 +136,12 @@ namespace Renderer {
 				geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(voxelData.uvs), 2));
 				geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(voxelData.normals), 3));
 
-				const mat1 = new THREE.MeshBasicMaterial({
+				const mat1 = new THREE.MeshStandardMaterial({
 					map: this.sidesTileset.texture,
 					side: THREE.DoubleSide,
 					alphaTest: 0.5,
 				});
-				const mat2 = new THREE.MeshBasicMaterial({
+				const mat2 = new THREE.MeshStandardMaterial({
 					map: this.topTileset.texture,
 					side: THREE.DoubleSide,
 					alphaTest: 0.5,
