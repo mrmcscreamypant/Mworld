@@ -110,7 +110,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 				if (!component.renderer) {
 					const scale = taro.physics._scaleRatio;
 					let debugDrawer;
-					if (taro.game.data.defaultRenderer !== '3d') {
+					if (taro.game.data.defaultData.defaultRenderer !== '3d') {
 						const canvas = taro.renderer.scene.getScene('Game');
 						ctx = canvas.add.graphics().setDepth(9999);
 						ctx.setScale(scale);
