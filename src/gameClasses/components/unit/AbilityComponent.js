@@ -294,7 +294,14 @@ var AbilityComponent = TaroEntity.extend({
 			}
 		}
 
-		if (!(ability.castDuration === null || ability.castDuration === undefined || isNaN(ability.castDuration))) {
+		if (
+			!(
+				ability.castDuration === null ||
+				ability.castDuration === undefined ||
+				ability.castDuration === '' ||
+				isNaN(ability.castDuration)
+			)
+		) {
 			this.abilityDurations[abilityId] = { time: Date.now() + ability.castDuration, key: key, queued: true };
 		}
 
@@ -309,7 +316,6 @@ var AbilityComponent = TaroEntity.extend({
 		}
 
 		const ability = this._entity._stats.controls.unitAbilities[abilityId];
-
 		if (!ability) {
 			// script error log here
 			return;
