@@ -117,7 +117,7 @@ class Box2dDebugDrawerThree {
 						this.cleanMaterial(material);
 					}
 				}
-			}); 
+			});
 		});
 	}
 
