@@ -320,104 +320,105 @@ namespace Renderer {
 										break;
 									}
 									case 'add-entities': {
-										const entityData = this.entityEditor.activeEntity;
-										if (entityData) {
-											const worldPoint = this.raycastFloor(0);
-											const entity =
-												taro.game.data[entityData.entityType] && taro.game.data[entityData.entityType][entityData.id];
-											let actionType: string;
-											let height: number;
-											let width: number;
-											if (entityData.entityType === 'unitTypes') {
-												actionType = 'createEntityForPlayerAtPositionWithDimensions';
-												if (entity.bodies?.default) {
-													height = entity.bodies.default.height;
-													width = entity.bodies.default.width;
-												} else {
-													console.log('no default body for unit', entityData.id);
-													return;
+										this.entityEditor.activeEntity.forEach((entityData) => {
+											if (entityData) {
+												const worldPoint = this.raycastFloor(0);
+												const entity =
+													taro.game.data[entityData.entityType] && taro.game.data[entityData.entityType][entityData.id];
+												let actionType: string;
+												let height: number;
+												let width: number;
+												if (entityData.entityType === 'unitTypes') {
+													actionType = 'createEntityForPlayerAtPositionWithDimensions';
+													if (entity.bodies?.default) {
+														height = entity.bodies.default.height;
+														width = entity.bodies.default.width;
+													} else {
+														console.log('no default body for unit', entityData.id);
+														return;
+													}
+												} else if (entityData.entityType === 'itemTypes') {
+													actionType = 'createEntityAtPositionWithDimensions';
+													if (entity.bodies?.dropped) {
+														height = entity.bodies.dropped.height;
+														width = entity.bodies.dropped.width;
+													} else {
+														console.log('no dropped body for item', entityData.id);
+														return;
+													}
+												} else if (entityData.entityType === 'projectileTypes') {
+													actionType = 'createEntityAtPositionWithDimensions';
+													if (entity.bodies?.default) {
+														height = entity.bodies.default.height;
+														width = entity.bodies.default.width;
+													} else {
+														console.log('no default body for projectile', entityData.id);
+														return;
+													}
 												}
-											} else if (entityData.entityType === 'itemTypes') {
-												actionType = 'createEntityAtPositionWithDimensions';
-												if (entity.bodies?.dropped) {
-													height = entity.bodies.dropped.height;
-													width = entity.bodies.dropped.width;
-												} else {
-													console.log('no dropped body for item', entityData.id);
-													return;
-												}
-											} else if (entityData.entityType === 'projectileTypes') {
-												actionType = 'createEntityAtPositionWithDimensions';
-												if (entity.bodies?.default) {
-													height = entity.bodies.default.height;
-													width = entity.bodies.default.width;
-												} else {
-													console.log('no default body for projectile', entityData.id);
-													return;
-												}
-											}
 
-											const action: ActionData = {
-												type: actionType,
-												entity: entityData.id,
-												entityType: entityData.entityType,
-												position: {
-													function: 'xyCoordinate',
-													x: Math.floor(Utils.worldToPixel(worldPoint.x)),
-													y: Math.floor(Utils.worldToPixel(worldPoint.z)),
-												},
-												width: width,
-												height: height,
-												angle: 0,
-												actionId: taro.newIdHex(),
-												wasCreated: true,
-											};
-											if (entityData.action) {
-												if (entityData.action.rotation) {
-													action.rotation = entityData.action.rotation;
-												}
-												if (entityData.action.scale) {
-													action.scale = entityData.action.scale;
-												}
-											}
-											if (entityData.entityType === 'unitTypes') {
-												action.player = {
-													variableName: entityData.player,
-													function: 'getVariable',
+												const action: ActionData = {
+													type: actionType,
+													entity: entityData.id,
+													entityType: entityData.entityType,
+													position: {
+														function: 'xyCoordinate',
+														x: Math.floor(Utils.worldToPixel(worldPoint.x)),
+														y: Math.floor(Utils.worldToPixel(worldPoint.z)),
+													},
+													width: width,
+													height: height,
+													angle: 0,
+													actionId: taro.newIdHex(),
+													wasCreated: true,
 												};
+												if (entityData.action) {
+													if (entityData.action.rotation) {
+														action.rotation = entityData.action.rotation;
+													}
+													if (entityData.action.scale) {
+														action.scale = entityData.action.scale;
+													}
+												}
+												if (entityData.entityType === 'unitTypes') {
+													action.player = {
+														variableName: entityData.player,
+														function: 'getVariable',
+													};
+												}
+												const nowAction = JSON.stringify(action);
+												this.voxelEditor.commandController.addCommand(
+													{
+														func: () => {
+															const nowCommandCount = this.voxelEditor.commandController.nowInsertIndex;
+															const nowActionObj = JSON.parse(nowAction);
+															const newId = taro.newIdHex();
+															nowActionObj.actionId = newId;
+															this.createInitEntity(nowActionObj);
+															taro.network.send<any>('editInitEntity', nowActionObj);
+															setTimeout(() => {
+																this.voxelEditor.commandController.commands[
+																	nowCommandCount - this.voxelEditor.commandController.offset
+																].cache = newId;
+															}, 0);
+														},
+														undo: () => {
+															const nowCommandCount = this.voxelEditor.commandController.nowInsertIndex;
+															this.entityManager.initEntities
+																.find(
+																	(v) =>
+																		v.action.actionId ===
+																		this.voxelEditor.commandController.commands[
+																			nowCommandCount - this.voxelEditor.commandController.offset
+																		].cache
+																)
+																?.delete(false);
+														},
+													},
+													true
+												);
 											}
-											const nowAction = JSON.stringify(action);
-											this.voxelEditor.commandController.addCommand(
-												{
-													func: () => {
-														const nowCommandCount = this.voxelEditor.commandController.nowInsertIndex;
-														const nowActionObj = JSON.parse(nowAction);
-														const newId = taro.newIdHex();
-														nowActionObj.actionId = newId;
-														this.createInitEntity(nowActionObj);
-														taro.network.send<any>('editInitEntity', nowActionObj);
-														setTimeout(() => {
-															this.voxelEditor.commandController.commands[
-																nowCommandCount - this.voxelEditor.commandController.offset
-															].cache = newId;
-														}, 0);
-													},
-													undo: () => {
-														const nowCommandCount = this.voxelEditor.commandController.nowInsertIndex;
-														this.entityManager.initEntities
-															.find(
-																(v) =>
-																	v.action.actionId ===
-																	this.voxelEditor.commandController.commands[
-																		nowCommandCount - this.voxelEditor.commandController.offset
-																	].cache
-															)
-															?.delete(false);
-													},
-												},
-												true
-											);
-										}
+										});
 									}
 								}
 							} else if (
