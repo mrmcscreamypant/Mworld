@@ -755,8 +755,11 @@ var ClientNetworkEvents = {
 	},
 
 	_handlePokiSwitch: function (data) {
-		window.PokiSDK?.gameplayStop(); 
-		window.PokiSDK?.commercialBreak();
+		if (window.GAME_PLAY_STARTED) {
+			window.PokiSDK?.gameplayStop();
+			window.PokiSDK?.commercialBreak();
+			window.GAME_PLAY_STARTED = false;
+		}
 		
 		if (window.switchGameWrapper) {
 			window.switchGameWrapper(data);
@@ -768,6 +771,22 @@ var ClientNetworkEvents = {
 			if (window.STATIC_EXPORT_ENABLED) {
 				taro.client._handlePokiSwitch(data);
 			} else {
+				if (window.IS_CRAZY_GAMES_ENV) {
+					if (window.GAME_PLAY_STARTED) {
+						window.CrazyGames.SDK.game.gameplayStop();
+						window.GAME_PLAY_STARTED = false;
+					}
+					// show ads when user travel from survival to greyhold
+					if (window.gameSlug === 'wQ9ZEoME5' && data.gameSlug === 'WO8osQ6dD') {
+						const callbacks = {
+							adFinished: () => console.log("End midgame ad"),
+							adError: (error) => console.log("Error midgame ad", error),
+							adStarted: () => console.log("Start midgame ad"),
+						};
+						window.CrazyGames.SDK.ad.requestAd("midgame", callbacks);
+					}
+				}
+
 				const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
 				window.location.href = mapUrl;
 			}
@@ -779,6 +798,23 @@ var ClientNetworkEvents = {
 			if (window.STATIC_EXPORT_ENABLED) {
 				taro.client._handlePokiSwitch(data);
 			} else {
+				if (window.IS_CRAZY_GAMES_ENV) {
+					if (window.GAME_PLAY_STARTED) {
+						window.CrazyGames.SDK.game.gameplayStop();
+						window.GAME_PLAY_STARTED = false;
+					}
+
+					// show ads when user travel from survival to greyhold
+					if (window.gameSlug === 'wQ9ZEoME5' && data.gameSlug === 'WO8osQ6dD') {
+						const callbacks = {
+							adFinished: () => console.log("End midgame ad"),
+							adError: (error) => console.log("Error midgame ad", error),
+							adStarted: () => console.log("Start midgame ad"),
+						};
+						window.CrazyGames.SDK.ad.requestAd("midgame", callbacks);
+					}
+				}
+
 				const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&${data.serverId ? '&serverId=' + data.serverId : ''}`;
 				window.location.href = mapUrl;
 			}
