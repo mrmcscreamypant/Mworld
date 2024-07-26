@@ -21,7 +21,6 @@ namespace Renderer {
 
 			private assets: Map<string, Asset> = new Map();
 			private textures: Map<string, THREE.Texture> = new Map();
-			private materials: Map<string, THREE.MeshBasicMaterial> = new Map();
 			private loaders: Map<string, THREE.Loader> = new Map();
 
 			constructor() {
@@ -65,14 +64,6 @@ namespace Renderer {
 								(asset as THREE.Texture).colorSpace = THREE.SRGBColorSpace;
 								(asset as THREE.Texture).magFilter = this.filter;
 								this.textures.set(source.name, asset as THREE.Texture);
-								this.materials.set(
-									(asset as THREE.Texture).uuid,
-									new THREE.MeshBasicMaterial({
-										map: asset as THREE.Texture,
-										transparent: true,
-										alphaTest: 0.3,
-									})
-								);
 							}
 
 							if (source.type === 'gltf') {
@@ -101,10 +92,6 @@ namespace Renderer {
 			getTexture(name: string) {
 				const placeholderTex = this.textures.get('placeholderTexture');
 				return (this.textures.get(name) as THREE.Texture) || placeholderTex;
-			}
-
-			getMaterial(texture: THREE.Texture) {
-				return (this.materials.get(texture.uuid) as THREE.MeshBasicMaterial) || null;
 			}
 
 			getTextureWithoutPlaceholder(name: string) {
