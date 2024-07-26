@@ -59,8 +59,8 @@ namespace Renderer {
 				this.traverse((child) => {
 					if (child instanceof THREE.Mesh) {
 						// Convert to basic material to avoid lighting
-						const material = new THREE.MeshBasicMaterial();
-						THREE.MeshBasicMaterial.prototype.copy.call(material, child.material);
+						const material = new THREE.MeshStandardMaterial();
+						THREE.MeshStandardMaterial.prototype.copy.call(material, child.material);
 						child.material = material;
 						child.material.transparent = true;
 						child.material.opacity = opacity;
@@ -77,8 +77,8 @@ namespace Renderer {
 				this.traverse((child) => {
 					if (child instanceof THREE.Mesh) {
 						// Convert to basic material to avoid lighting
-						const material = new THREE.MeshBasicMaterial();
-						THREE.MeshBasicMaterial.prototype.copy.call(material, child.material);
+						const material = new THREE.MeshStandardMaterial();
+						THREE.MeshStandardMaterial.prototype.copy.call(material, child.material);
 						child.material = material;
 						const originalColor = child.material.color.getHex();
 						child.material.color.setHex(color);

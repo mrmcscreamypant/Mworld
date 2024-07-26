@@ -16,7 +16,7 @@ namespace Renderer {
 
 				const geometry = new THREE.PlaneGeometry(1, 1);
 				geometry.rotateX(-Math.PI / 2);
-				const material = new THREE.MeshBasicMaterial({
+				const material = new THREE.MeshStandardMaterial({
 					map: tex,
 					transparent: true,
 					alphaTest: 0.3,
