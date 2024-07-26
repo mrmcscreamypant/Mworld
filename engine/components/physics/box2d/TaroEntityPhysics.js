@@ -700,6 +700,28 @@ var TaroEntityPhysics = TaroEntity.extend({
 	},
 
 	_scaleBox2dBody: function (scale) {
+		if (isNaN(scale)) {
+			return;
+		}
+
+		body = this._stats.currentBody;
+		if (body && body.type !== 'none' && body.type !== 'spriteOnly') {
+			// Check if the entity has a box2d body attached
+			// and if so, is it updating or not
+			if ((taro.physics._world && taro.physics._world.isLocked()) || this.body == undefined) {
+				this.queueAction({
+					type: 'scaleBy',
+					scale: scale,
+				});
+			} else {
+				this.scaleBodyBy(scale);
+			}
+		}
+
+		return this;
+	},
+
+	scaleBodyBy: function (scale) {
 		var self = this;
 		var body = this._stats.currentBody;
 
