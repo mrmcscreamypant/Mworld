@@ -130,7 +130,7 @@ namespace Renderer {
 				} else if (entity.body instanceof Model) {
 					//FIXME: when the 3d physics is ready, remove this
 					taroEntity.on('temp_translation_y', (positionY) => {
-						entity.position.y = Utils.pixelToWorld(positionY);
+						entity.body.root.position.y = Utils.pixelToWorld(positionY);
 					});
 				}
 
@@ -338,7 +338,7 @@ namespace Renderer {
 
 			showHud(visible: boolean) {
 				if (visible != this.hud.visible) {
-					const fadeAnimation = (from: number, to: number, onComplete = () => {}) => {
+					const fadeAnimation = (from: number, to: number, onComplete = () => { }) => {
 						new TWEEN.Tween({ opacity: from })
 							.to({ opacity: to }, 100)
 							.onUpdate(({ opacity }) => {
