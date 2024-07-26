@@ -130,7 +130,7 @@ namespace Renderer {
 				} else if (entity.body instanceof Model) {
 					//FIXME: when the 3d physics is ready, remove this
 					taroEntity.on('temp_translation_y', (positionY) => {
-						entity.position.y = Utils.pixelToWorld(positionY);
+						entity.body.root.position.y = Utils.pixelToWorld(positionY);
 					});
 				}
 
@@ -159,6 +159,13 @@ namespace Renderer {
 				);
 
 				taroEntity.on('rotate', (x: number, y: number, z: number) => {
+					if (
+						entity.body.root.rotation.x === Utils.deg2rad(x) &&
+						entity.body.root.rotation.y === Utils.deg2rad(z) &&
+						entity.body.root.rotation.z === Utils.deg2rad(y)
+					) {
+						return;
+					}
 					entity.body.root.rotation.x = Utils.deg2rad(x);
 					entity.body.root.rotation.y = Utils.deg2rad(z);
 					entity.body.root.rotation.z = Utils.deg2rad(y);
@@ -171,6 +178,9 @@ namespace Renderer {
 						const width = Utils.pixelToWorld(data.width || 0);
 						const height = Utils.pixelToWorld(data.height || 0);
 						const depth = Utils.pixelToWorld(entity.taroEntity._stats?.currentBody?.depth || 0);
+						if (data.width === width && data.height === height) {
+							return;
+						}
 						entity.setScale(width, height, depth);
 						entity.updateMatrix();
 					},
@@ -328,7 +338,7 @@ namespace Renderer {
 
 			showHud(visible: boolean) {
 				if (visible != this.hud.visible) {
-					const fadeAnimation = (from: number, to: number, onComplete = () => {}) => {
+					const fadeAnimation = (from: number, to: number, onComplete = () => { }) => {
 						new TWEEN.Tween({ opacity: from })
 							.to({ opacity: to }, 100)
 							.onUpdate(({ opacity }) => {
