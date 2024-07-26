@@ -443,6 +443,46 @@ var ActionComponent = TaroEntity.extend({
 						}
 						break;
 
+					case 'runScriptOnClient':
+						if (taro.isServer) {
+							var previousScriptId = self._script.currentScriptId;
+							var previousAcionBlockIdx = self._script.currentActionLineNumber;
+
+							const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
+							const localPlayer = self._script.param.getValue(action.player, vars);
+							localPlayer.streamUpdateData(
+								[{ script: { name: action.scriptName, params: localScriptParams } }],
+								localPlayer._stats.clientId
+							);
+
+							self._script.currentScriptId = previousScriptId;
+							self._script.currentActionLineNumber = previousAcionBlockIdx;
+						}
+						break;
+
+					case 'runEntityScriptOnClient':
+						if (taro.isServer) {
+							var previousScriptId = self._script.currentScriptId;
+							var previousAcionBlockIdx = self._script.currentActionLineNumber;
+
+							var entity = self._script.param.getValue(action.entity, vars);
+							if (entity) {
+								const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
+								const localPlayer = self._script.param.getValue(action.player, vars);
+								localPlayer.streamUpdateData(
+									[{ script: { name: action.scriptName, entityId: entity.id(), params: localScriptParams } }],
+									localPlayer._stats.clientId
+								);
+
+								self._script.currentScriptId = previousScriptId;
+								self._script.currentActionLineNumber = previousAcionBlockIdx;
+
+								self._script.currentScriptId = previousScriptId;
+								self._script.currentActionLineNumber = previousAcionBlockIdx;
+							}
+						}
+						break;
+
 					case 'condition':
 						if (self._script.condition.run(action.conditions, vars, `${actionPath}/condition`)) {
 							let previousAcionBlockIdx = self._script.currentActionLineNumber;
@@ -2384,7 +2424,7 @@ var ActionComponent = TaroEntity.extend({
 					case 'startEmittingParticles':
 						if (taro.isClient) {
 							var particleTypeId = self._script.param.getValue(action.particleEmitter, vars);
-							var entity = self._script.param.getValue(action.entity, vars);
+							var entity = self._script.param.getValue(action.particleEmitter.entity, vars);
 							if (particleTypeId && entity) {
 								taro.client.emit('start-emitting-particles', { particleTypeId, entityId: entity.id() });
 							}
@@ -2394,7 +2434,7 @@ var ActionComponent = TaroEntity.extend({
 					case 'stopEmittingParticles':
 						if (taro.isClient) {
 							var particleTypeId = self._script.param.getValue(action.particleEmitter, vars);
-							var entity = self._script.param.getValue(action.entity, vars);
+							var entity = self._script.param.getValue(action.particleEmitter.entity, vars);
 
 							if (particleTypeId && entity) {
 								taro.client.emit('stop-emitting-particles', { particleTypeId, entityId: entity.id() });
@@ -2577,6 +2617,7 @@ var ActionComponent = TaroEntity.extend({
 
 								var projectile = new Projectile(data);
 								taro.game.lastCreatedProjectileId = projectile._id;
+								taro.script.trigger('entityCreatedGlobal', { entityId: projectile.id() });
 								projectile.script.trigger('entityCreated');
 							} else {
 								if (!projectileData) {
@@ -2704,6 +2745,7 @@ var ActionComponent = TaroEntity.extend({
 							};
 							var item = new Item(itemData);
 							taro.game.lastCreatedItemId = item._id;
+							taro.script.trigger('entityCreatedGlobal', { entityId: item.id() });
 							item.script.trigger('entityCreated');
 						} else {
 							throw new Error('invalid item type data');
@@ -2765,6 +2807,7 @@ var ActionComponent = TaroEntity.extend({
 							};
 							var item = new Item(itemData);
 							taro.game.lastCreatedItemId = item._id;
+							taro.script.trigger('entityCreatedGlobal', { entityId: item.id() });
 							item.script.trigger('entityCreated');
 						} else {
 							throw new Error('invalid item type data');
@@ -2819,6 +2862,7 @@ var ActionComponent = TaroEntity.extend({
 							};
 							var item = new Item(itemData);
 							taro.game.lastCreatedItemId = item._id;
+							taro.script.trigger('entityCreatedGlobal', { entityId: item.id() });
 							item.script.trigger('entityCreated');
 						} else {
 							throw new Error('invalid item type data');
@@ -2953,12 +2997,55 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					/* Sound */
+
 					case 'playSoundAtPosition':
 						var position = self._script.param.getValue(action.position, vars);
 						var sound = taro.game.data.sound[action.sound];
 						// if csp enable dont stream sound
 						if (sound && position) {
-							taro.network.send('sound', { id: action.sound, position: position });
+							if (taro.isServer) {
+								taro.network.send('sound', { id: action.sound, position: position });
+							} else {
+								taro.sound.run({ id: action.sound, position: position });
+							}
+						}
+						break;
+
+					case 'playSoundForPlayer':
+						var sound = taro.game.data.sound[action.sound];
+						var player = self._script.param.getValue(action.player, vars);
+						if (sound && player && player._stats.clientId) {
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'playSoundForPlayer',
+										sound: action.sound,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'playSoundForPlayer', sound: action.sound });
+							}
+						}
+						break;
+
+					case 'stopSoundForPlayer':
+						var sound = taro.game.data.sound[action.sound];
+						var player = self._script.param.getValue(action.player, vars);
+						if (sound && player && player._stats.clientId) {
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'stopSoundForPlayer',
+										sound: action.sound,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'stopSoundForPlayer', sound: action.sound });
+							}
 						}
 						break;
 
@@ -2968,58 +3055,60 @@ var ActionComponent = TaroEntity.extend({
 						var music = taro.game.data.music[action.music];
 						// if csp enable dont stream music
 						if (music) {
-							taro.network.send('sound', { cmd: 'playMusic', id: action.music });
+							if (taro.isServer) {
+								taro.network.send('sound', { cmd: 'playMusic', id: action.music });
+							} else {
+								taro.sound.run({ cmd: 'playMusic', id: action.music });
+							}
 						}
 
 						break;
 
 					case 'stopMusic':
-						taro.network.send('sound', { cmd: 'stopMusic' });
+						if (taro.isServer) {
+							taro.network.send('sound', { cmd: 'stopMusic' });
+						} else {
+							taro.sound.run({ cmd: 'stopMusic' });
+						}
 						break;
 
-					case 'playSoundForPlayer':
-						var sound = taro.game.data.sound[action.sound];
-						var player = self._script.param.getValue(action.player, vars);
-						if (sound && player && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'playSoundForPlayer',
-									sound: action.sound,
-								},
-								player._stats.clientId
-							);
-						}
-						break;
-					case 'stopSoundForPlayer':
-						var sound = taro.game.data.sound[action.sound];
-						var player = self._script.param.getValue(action.player, vars);
-						if (sound && player && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'stopSoundForPlayer',
-									sound: action.sound,
-								},
-								player._stats.clientId
-							);
-						}
-						break;
 					case 'playMusicForPlayer':
 						var music = taro.game.data.music[action.music];
 						var player = self._script.param.getValue(action.player, vars);
 
 						if (music && player && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'playMusicForPlayer',
-									music: action.music,
-								},
-								player._stats.clientId
-							);
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'playMusicForPlayer',
+										music: action.music,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'playMusicForPlayer', music: action.music });
+							}
 						}
 
+						break;
+
+					case 'stopMusicForPlayer':
+						var player = self._script.param.getValue(action.player, vars);
+
+						if (player && player._category === 'player' && player._stats.clientId) {
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'stopMusicForPlayer',
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'stopMusicForPlayer' });
+							}
+						}
 						break;
 
 					case 'playMusicForPlayerAtTime':
@@ -3028,15 +3117,19 @@ var ActionComponent = TaroEntity.extend({
 						var player = self._script.param.getValue(action.player, vars);
 
 						if (music && player && time && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'playMusicForPlayerAtTime',
-									music: action.music,
-									time: action.time,
-								},
-								player._stats.clientId
-							);
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'playMusicForPlayerAtTime',
+										music: action.music,
+										time: action.time,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'playMusicForPlayerAtTime', music: action.music, time: time });
+							}
 						}
 
 						break;
@@ -3045,17 +3138,22 @@ var ActionComponent = TaroEntity.extend({
 						var music = taro.game.data.music[action.music];
 						var player = self._script.param.getValue(action.player, vars);
 						if (music && player && player._category == 'player' && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'playMusicForPlayerRepeatedly',
-									music: action.music,
-								},
-								player._stats.clientId
-							);
+							if (taro.isServer) {
+								taro.network.send(
+									'sound',
+									{
+										cmd: 'playMusicForPlayerRepeatedly',
+										music: action.music,
+									},
+									player._stats.clientId
+								);
+							} else if (player._stats.clientId === taro.network.id()) {
+								taro.sound.run({ cmd: 'playMusicForPlayerRepeatedly', music: action.music });
+							}
 						}
 
 						break;
+
 					case 'showMenuAndSelectCurrentServer':
 						var player = self._script.param.getValue(action.player, vars);
 						if (player && player._stats && player._category == 'player' && player._stats.clientId) {
@@ -3076,20 +3174,6 @@ var ActionComponent = TaroEntity.extend({
 								'ui',
 								{
 									command: 'showMenuAndSelectBestServer',
-								},
-								player._stats.clientId
-							);
-						}
-						break;
-
-					case 'stopMusicForPlayer':
-						var player = self._script.param.getValue(action.player, vars);
-
-						if (player && player._category === 'player' && player._stats.clientId) {
-							taro.network.send(
-								'sound',
-								{
-									cmd: 'stopMusicForPlayer',
 								},
 								player._stats.clientId
 							);
@@ -3238,6 +3322,7 @@ var ActionComponent = TaroEntity.extend({
 						let entityType = self._script.param.getValue(action.entityType, vars);
 						let entityToCreate = self._script.param.getValue(action.entity, vars);
 						var position = self._script.param.getValue(action.position, vars);
+						const defaultDepth = position.z;
 						var rotation = self._script.param.getValue(action.rotation, vars);
 						var scale = self._script.param.getValue(action.scale, vars);
 						var height = self._script.param.getValue(action.height, vars) || 100;
@@ -3260,12 +3345,20 @@ var ActionComponent = TaroEntity.extend({
 									angle = parseFloat(360 - (angle % 360));
 								}
 								if (!isNaN(scale?.x)) {
-									width = parseFloat(scale.x * entityTypeData.bodies.default?.width);
+									if (entityType === 'itemTypes') {
+										width = parseFloat(scale.x * entityTypeData.bodies.dropped?.width);
+									} else {
+										width = parseFloat(scale.x * entityTypeData.bodies.default?.width);
+									}
 								} else {
 									width = parseFloat(width);
 								}
 								if (!isNaN(scale?.y)) {
-									height = parseFloat(scale.y * entityTypeData.bodies.default?.height);
+									if (entityType === 'itemTypes') {
+										height = parseFloat(scale.y * entityTypeData.bodies.dropped?.height);
+									} else {
+										height = parseFloat(scale.y * entityTypeData.bodies.default?.height);
+									}
 								} else {
 									height = parseFloat(height);
 								}
@@ -3377,7 +3470,11 @@ var ActionComponent = TaroEntity.extend({
 								height: height,
 								width: width,
 							};
-
+							if (defaultDepth) {
+								//FIXME: should remove tmpDefault and find somewhere else to store the defaultDepth
+								createdEntity.tmpDefaultDepth = defaultDepth;
+							}
+							taro.script.trigger('entityCreatedGlobal', { entityId: createdEntity.id() });
 							createdEntity.script.trigger('entityCreated', { thisEntityId: createdEntity.id() });
 						}
 						break;

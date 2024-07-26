@@ -73,10 +73,11 @@ namespace Renderer {
 									function: 'vector3',
 								};
 							} else if (control.object.body instanceof Model) {
+								console.log(control.object.body.getSize());
 								editedAction['scale'] = {
 									x: Utils.worldToPixel(control.object.body.getSize().x / control.object.defaultWidth),
-									y: Utils.worldToPixel(control.object.body.getSize().y / control.object.defaultHeight),
-									z: Utils.worldToPixel(control.object.body.getSize().z / control.object.defaultDepth),
+									y: Utils.worldToPixel(control.object.body.getSize().z / control.object.defaultHeight),
+									z: Utils.worldToPixel(control.object.body.getSize().y / control.object.defaultDepth),
 									function: 'vector3',
 								};
 							}
@@ -108,6 +109,7 @@ namespace Renderer {
 				const currentCamera = (this.currentCamera = renderer.camera.instance);
 				const orbit = renderer.camera.controls;
 				const control = (this.control = new TransformControls(currentCamera, renderer.renderer.domElement));
+				control.matrixAutoUpdate = false;
 				this.undoAction = {};
 				control.addEventListener(
 					'dragging-changed',

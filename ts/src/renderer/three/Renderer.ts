@@ -12,8 +12,8 @@ namespace Renderer {
 			return Renderer.instance();
 		}
 
-		export function reset() {
-			return Renderer.reset();
+		export function reset(rendererOptions) {
+			return Renderer.reset(rendererOptions);
 		}
 
 		export function getPointer() {
@@ -32,6 +32,7 @@ namespace Renderer {
 			mode = Mode.Play;
 			selectionBox: SelectionBox;
 			selectionHelper: SelectionHelper;
+			voxels: Voxels;
 			private clock = new THREE.Clock();
 			private pointer = new THREE.Vector2();
 			private initLoadingManager = new THREE.LoadingManager();
@@ -42,7 +43,6 @@ namespace Renderer {
 			public initEntityLayer = new THREE.Group();
 
 			private sky: Skybox;
-			private voxels: Voxels;
 			private particleSystem: ParticleSystem;
 
 			private raycastIntervalSeconds = 0.1;
@@ -56,7 +56,10 @@ namespace Renderer {
 
 			private regionDrawStart: { x: number; y: number } = { x: 0, y: 0 };
 
-			private constructor() {
+			// Debug
+			private raycastHelpers = new Map<string, THREE.ArrowHelper>();
+
+			private constructor(rendererOptions?: { canvas: HTMLCanvasElement }) {
 				// For JS interop; in case someone uses new Renderer.ThreeRenderer()
 				if (!Renderer._instance) {
 					Renderer._instance = this;
@@ -70,10 +73,41 @@ namespace Renderer {
 				//@ts-ignore
 				THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 				THREE.Mesh.prototype.raycast = acceleratedRaycast;
-				const renderer = new THREE.WebGLRenderer();
+				const renderer = new THREE.WebGLRenderer(rendererOptions);
 				renderer.setSize(window.innerWidth, window.innerHeight);
 				document.querySelector('#game-div')?.appendChild(renderer.domElement);
 				this.renderer = renderer;
+
+				this.scene = new THREE.Scene();
+				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
+
+				if (taro?.game?.data?.settings?.fog?.enabled) {
+					const fog = taro.game.data.settings.fog;
+					if (taro.game.data.settings.fog.type === 'exp2') {
+						this.scene.fog = new THREE.FogExp2(fog.color, fog.density);
+					} else {
+						this.scene.fog = new THREE.Fog(fog.color, fog.near, fog.far);
+					}
+				}
+
+				const ambientLightSettings = taro?.game?.data?.settings?.light?.ambient;
+				const ambientLight = new THREE.AmbientLight(
+					ambientLightSettings?.color ?? 0xffffff,
+					ambientLightSettings?.intensity ?? 3
+				);
+				this.scene.add(ambientLight);
+
+				const directionalLightSettings = taro?.game?.data?.settings?.light?.directional;
+				const directionalLight = new THREE.DirectionalLight(
+					directionalLightSettings?.color ?? 0xffffff,
+					directionalLightSettings?.intensity ?? 0
+				);
+				directionalLight.position.set(
+					directionalLightSettings?.position.x ?? 0,
+					directionalLightSettings?.position.z ?? 1,
+					directionalLightSettings?.position.y ?? 0
+				);
+				this.scene.add(directionalLight);
 
 				this.camera = new Camera(window.innerWidth, window.innerHeight, this.renderer.domElement);
 				this.camera.setElevationAngle(taro.game.data.settings.camera.defaultPitch);
@@ -81,10 +115,8 @@ namespace Renderer {
 					this.camera.setProjection(taro.game.data.settings.camera.projectionMode);
 				}
 
-				this.scene = new THREE.Scene();
-				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
 				this.selectionBox = new SelectionBox(this.camera.instance, this.scene);
-				this.selectionHelper = new SelectionHelper(this.renderer, 'selectBox')
+				this.selectionHelper = new SelectionHelper(this.renderer, 'selectBox');
 				window.addEventListener('resize', () => {
 					this.camera.resize(window.innerWidth, window.innerHeight);
 					renderer.setSize(window.innerWidth, window.innerHeight);
@@ -110,8 +142,9 @@ namespace Renderer {
 								if (this.selectionHelper.isDown) {
 									this.selectionBox.endPoint.set(
 										(event.clientX / window.innerWidth) * 2 - 1,
-										- (event.clientY / window.innerHeight) * 2 + 1,
-										0.5);
+										-(event.clientY / window.innerHeight) * 2 + 1,
+										0.5
+									);
 
 									const allSelected = this.selectionBox.select();
 
@@ -122,8 +155,7 @@ namespace Renderer {
 												this.entityEditor.selectEntity(e.entity, 'addOrRemove');
 											}
 										}
-									})
-
+									});
 								}
 								break;
 							}
@@ -183,8 +215,9 @@ namespace Renderer {
 										this.selectionHelper.enabled = true;
 										this.selectionBox.startPoint.set(
 											(event.clientX / window.innerWidth) * 2 - 1,
-											- (event.clientY / window.innerHeight) * 2 + 1,
-											0.5);
+											-(event.clientY / window.innerHeight) * 2 + 1,
+											0.5
+										);
 										const raycaster = new THREE.Raycaster();
 										raycaster.setFromCamera(this.pointer, this.camera.instance);
 
@@ -203,6 +236,11 @@ namespace Renderer {
 											}
 											if (initEntity) {
 												this.entityEditor.selectEntity(initEntity, event.shiftKey ? 'addOrRemove' : 'select');
+												taro.client.emit(
+													'block-scale',
+													!(initEntity.action.scale || initEntity.action.height || initEntity.action.width)
+												);
+
 												taro.client.emit('block-rotation', !!initEntity.isBillboard);
 											} else if (clickDelay < 350) {
 												console.log('showing script for entity', initEntity.action.actionId);
@@ -434,17 +472,20 @@ namespace Renderer {
 				window.addEventListener('mouseup', (event: MouseEvent) => {
 					const developerMode = taro.developerMode;
 					this.voxelEditor.leftButtonDown = false;
-					if (developerMode.active &&
+					if (
+						developerMode.active &&
 						developerMode.activeTab === 'map' &&
 						Utils.isRightButton(event.button) &&
-						(developerMode.activeButton === 'cursor')) {
+						developerMode.activeButton === 'cursor'
+					) {
 						this.selectionBox.endPoint.set(
 							(event.clientX / window.innerWidth) * 2 - 1,
-							- (event.clientY / window.innerHeight) * 2 + 1,
-							0.5);
+							-(event.clientY / window.innerHeight) * 2 + 1,
+							0.5
+						);
 
 						const allSelected = this.selectionBox.select();
-						console.log(allSelected)
+						console.log(allSelected);
 					}
 					if (developerMode.regionTool) {
 						developerMode.regionTool = false;
@@ -558,7 +599,7 @@ namespace Renderer {
 				return this._instance;
 			}
 
-			static reset() {
+			static reset(rendererOptions) {
 				// event listeners are being removed in be-next while switching the game
 				// https://github.com/moddio/be-next/blob/master/src/pages/index.static-export.jsx#L173-L179
 
@@ -566,7 +607,7 @@ namespace Renderer {
 				window.lastRequestAnimationFrameId = null;
 
 				this._instance = null; // renderer only reinitialize if instance not available.
-				this._instance = new Renderer();
+				this._instance = new Renderer(rendererOptions);
 
 				return this._instance;
 			}
@@ -715,9 +756,9 @@ namespace Renderer {
 				});
 			}
 
-			private onEnterEntitiesMode() { }
+			private onEnterEntitiesMode() {}
 
-			private onExitEntitiesMode() { }
+			private onExitEntitiesMode() {}
 
 			private showEntities() {
 				this.setEntitiesVisible(true);
@@ -772,11 +813,19 @@ namespace Renderer {
 			}
 
 			private forceLoadUnusedCSSFonts() {
-				const canvas = document.createElement('canvas');
-				const ctx = canvas.getContext('2d');
+				let canvas = document.createElement('canvas');
+				let ctx = canvas.getContext('2d');
 				ctx.font = 'normal 4px Verdana';
 				ctx.fillText('text', 0, 8);
+
+				canvas = document.createElement('canvas');
+				ctx = canvas.getContext('2d');
 				ctx.font = 'bold 4px Verdana';
+				ctx.fillText('text', 0, 8);
+
+				canvas = document.createElement('canvas');
+				ctx = canvas.getContext('2d');
+				ctx.font = 'italic bold 4px Verdana';
 				ctx.fillText('text', 0, 8);
 			}
 
@@ -939,30 +988,80 @@ namespace Renderer {
 				this.particleSystem.update(dt, time, this.camera.instance);
 				this.camera.update();
 				this.voxelEditor.update();
+				this.initEntityLayer.children.forEach((child) => {
+					if (child instanceof InitEntity) {
+						child.update();
+					}
+				});
 
 				if (this.camera.target) {
 					this.sky.position.copy(this.camera.target.position);
 				}
+
+				TWEEN.update();
+				this.renderer.render(this.scene, this.camera.instance);
 
 				this.timeSinceLastRaycast += dt;
 				if (this.timeSinceLastRaycast > this.raycastIntervalSeconds) {
 					this.timeSinceLastRaycast = 0;
 					this.checkForHiddenEntities();
 				}
-
-				TWEEN.update();
-				this.renderer.render(this.scene, this.camera.instance);
 			}
 
 			private checkForHiddenEntities() {
-				for (const unit of this.entityManager.units) {
-					// TODO(nick): Need a way to to identify avatar units from NPC's
-					unit.showHud(this.isEntityInLineOfSight(unit));
+				if (Utils.isDebug()) {
+					for (const taroIds of this.raycastHelpers.keys()) {
+						if (!this.entityManager.units.find((unit) => unit.taroId === taroIds)) {
+							const helper = this.raycastHelpers.get(taroIds);
+							this.scene.remove(helper);
+							this.raycastHelpers.delete(taroIds);
+						}
+					}
 				}
-			}
 
-			private isEntityInLineOfSight(unit: Unit) {
-				return this.camera.isVisible(unit, this.voxels);
+				for (const unit of this.entityManager.units) {
+					const tempVec3 = new THREE.Vector3();
+					const tempVec2 = new THREE.Vector2();
+
+					unit.getWorldPosition(tempVec3);
+
+					const entityScreenPosition = tempVec3.clone().project(this.camera.instance);
+					tempVec2.x = entityScreenPosition.x;
+					tempVec2.y = entityScreenPosition.y;
+
+					let dist = 0;
+					if (this.camera.isPerspective) {
+						dist = tempVec3.distanceTo(this.camera.instance.position);
+					} else {
+						const direction = this.camera.instance.getWorldDirection(new THREE.Vector3());
+						const constant = -direction.dot(this.camera.instance.position);
+						const plane = new THREE.Plane(direction, constant);
+						dist = plane.distanceToPoint(tempVec3);
+					}
+
+					const raycaster = new THREE.Raycaster();
+					raycaster.setFromCamera(tempVec2, this.camera.instance);
+					raycaster.far = dist;
+					raycaster.near = this.camera.instance.near * 2; // double to improve results when using camera collisions
+
+					const intersects = raycaster.intersectObject(this.voxels);
+
+					if (Utils.isDebug()) {
+						if (!this.raycastHelpers.has(unit.taroId)) {
+							const helper = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, dist, 0xff0000);
+							this.raycastHelpers.set(unit.taroId, helper);
+							this.scene.add(helper);
+						}
+
+						const helper = this.raycastHelpers.get(unit.taroId);
+						helper.setColor(intersects.length > 0 ? 0xff0000 : 0x00ff00);
+						helper.position.copy(raycaster.ray.origin);
+						helper.setDirection(raycaster.ray.direction);
+						helper.setLength(dist);
+					}
+
+					unit.showHud(intersects.length === 0);
+				}
 			}
 		}
 	}

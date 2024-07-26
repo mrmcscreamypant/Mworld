@@ -872,6 +872,15 @@ var ParameterComponent = TaroEntity.extend({
 
 						break;
 
+					case 'tan':
+						var angle = self.getValue(text.angle, vars);
+
+						if (angle !== undefined) {
+							returnValue = Math.tan(angle);
+						}
+
+						break;
+
 					case 'stringToNumber':
 						var value = self.getValue(text.value, vars);
 						var parsedValue = Number(value);
@@ -2761,6 +2770,12 @@ var ParameterComponent = TaroEntity.extend({
 				}
 			},
 
+			localPlayer: function (text, vars) {
+				if (taro.isClient) {
+					return taro.client.myPlayer;
+				}
+			},
+
 			playerIsControlledByHuman: function (text, vars) {
 				var player = self.getValue(text.player, vars);
 				return player && player._stats.controlledBy == 'human';
@@ -2810,6 +2825,13 @@ var ParameterComponent = TaroEntity.extend({
 			computerPlayer: function (text, vars) {
 				var number = self.getValue(text.number, vars);
 				return taro.game.getComputerPlayerByNumber(number);
+			},
+
+			getTriggeringEntity: function (text, vars) {
+				if (vars && vars.triggeredBy && vars.triggeredBy.entityId) {
+					var id = vars.triggeredBy.entityId;
+					return taro.$(id);
+				}
 			},
 
 			/* unit */
@@ -3192,7 +3214,7 @@ var ParameterComponent = TaroEntity.extend({
 				if (player) {
 					return player._stats.invitedUsersCount || 0;
 				}
-			}
+			},
 		};
 	},
 });

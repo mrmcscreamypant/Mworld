@@ -81,9 +81,17 @@ var PlayerUiComponent = TaroEntity.extend({
 			$('#player-input-modal').modal('hide');
 		});
 
-		$(document).on('click', '.trigger', function () {
+		// replaced using pointer down
+		// $(document).on('click', '.trigger', function () {
+		// 	taro.network.send('htmlUiClick', { id: $(this).attr('id') });
+		// 	//support for local htmlUiClick trigger
+		// 	taro.client.myPlayer.lastHtmlUiClickData = { id: $(this).attr('id') };
+		// 	taro.script.trigger('htmlUiClick', { playerId: taro.client.myPlayer.id() });
+		// });
+
+		$(document).on('pointerdown', '.trigger', function () {
 			taro.network.send('htmlUiClick', { id: $(this).attr('id') });
-			//support for local htmlUiClick trigger
+			// Support for local htmlUiClick trigger
 			taro.client.myPlayer.lastHtmlUiClickData = { id: $(this).attr('id') };
 			taro.script.trigger('htmlUiClick', { playerId: taro.client.myPlayer.id() });
 		});
@@ -189,7 +197,7 @@ var PlayerUiComponent = TaroEntity.extend({
 			this.updatePlayerAttributesDiv(attributes);
 		} else if (taro.shop.isItemShopOpen) {
 			taro.shop.openItemShop();
-		};
+		}
 	},
 
 	shouldRenderAttribute: function (attribute) {
@@ -494,6 +502,16 @@ var PlayerUiComponent = TaroEntity.extend({
 			dialogue = getDialogueInstance(dialogue);
 			initModal();
 			showNextMessage();
+
+			if (window.GAME_PLAY_STARTED) {
+				if (window.STATIC_EXPORT_ENABLED) {
+					window.PokiSDK?.gameplayStop();
+				}
+				if (window.IS_CRAZY_GAMES_ENV) {
+					window.CrazyGames.SDK.game.gameplayStop();
+				}
+				window.GAME_PLAY_STARTED = false;
+			}
 		} else {
 			console.error('dialogue', dialogueId, 'not found');
 		}
@@ -502,6 +520,16 @@ var PlayerUiComponent = TaroEntity.extend({
 		window.closeDialogue && window.closeDialogue();
 		$('#modd-dialogue-container').html('');
 		this.clearListeners();
+
+		if (!window.GAME_PLAY_STARTED) {
+			if (window.STATIC_EXPORT_ENABLED) {
+				window.PokiSDK?.gameplayStart();
+			}
+			if (window.IS_CRAZY_GAMES_ENV) {
+				window.CrazyGames.SDK.game.gameplayStart();
+			}
+			window.GAME_PLAY_STARTED = true;
+		}
 	},
 
 	clearListeners: function () {

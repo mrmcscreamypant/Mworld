@@ -67,8 +67,8 @@ var TaroEntityPhysics = TaroEntity.extend({
 			return;
 		}
 
-		this.width(parseFloat(body.width) * this._scale.x);
-		this.height(parseFloat(body.height) * this._scale.y);
+		this.width(parseFloat(body.width * (this._stats.scaleBody || 1)));
+		this.height(parseFloat(body.height * (this._stats.scaleBody || 1)));
 
 		var shapeData =
 			body.fixtures && body.fixtures[0] && body.fixtures[0].shape && body.fixtures[0].shape.data
@@ -700,6 +700,28 @@ var TaroEntityPhysics = TaroEntity.extend({
 	},
 
 	_scaleBox2dBody: function (scale) {
+		if (isNaN(scale)) {
+			return;
+		}
+
+		body = this._stats.currentBody;
+		if (body && body.type !== 'none' && body.type !== 'spriteOnly') {
+			// Check if the entity has a box2d body attached
+			// and if so, is it updating or not
+			if ((taro.physics._world && taro.physics._world.isLocked()) || this.body == undefined) {
+				this.queueAction({
+					type: 'scaleBy',
+					scale: scale,
+				});
+			} else {
+				this.scaleBodyBy(scale);
+			}
+		}
+
+		return this;
+	},
+
+	scaleBodyBy: function (scale) {
 		var self = this;
 		var body = this._stats.currentBody;
 
@@ -717,9 +739,11 @@ var TaroEntityPhysics = TaroEntity.extend({
 				break;
 			}
 			case 'rectangle': {
-				var normalizer = 0.45;
-				shapeData.width = body.width * scale * normalizer;
-				shapeData.height = body.height * scale * normalizer;
+				// this should be unnecessary now that shapeData w/h are converted to halfW/H in updateBody()
+				// var normalizer = 0.45;
+				shapeData.width = body.width * scale;
+				shapeData.height = body.height * scale;
+
 				break;
 			}
 		}

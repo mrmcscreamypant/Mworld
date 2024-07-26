@@ -6,7 +6,7 @@
  * License evidence: https://github.com/kripken/box2d.js/blob/master/README.markdown#box2djs
  *   "box2d.js is zlib licensed, just like Box2D."
  */
-class Box2dDebugDraw {
+class Box2dDebugDrawerPhaser {
 	constructor(
 		private readonly box2D: typeof Box2D & EmscriptenModule,
 		private readonly helpers: Box2dHelpers,
@@ -107,12 +107,11 @@ class Box2dDebugDraw {
 		this.context.translateCanvas(pos.get_x(), pos.get_y());
 		this.context.setScale(0.5, 0.5);
 		this.context.rotateCanvas(rot.GetAngle());
-		Box2dDebugDraw.drawAxes(this.context);
+		Box2dDebugDrawerPhaser.drawAxes(this.context);
 		this.context.restore();
 	};
 
 	constructJSDraw = (): Box2D.JSDraw => {
-		console.log(this.box2D, this.context);
 		const { JSDraw, b2Vec2, getPointer } = this.box2D;
 		const debugDraw = Object.assign(new JSDraw(), {
 			DrawSegment: (vert1_p: number, vert2_p: number, color_p: number): void => {
@@ -149,5 +148,5 @@ class Box2dDebugDraw {
 }
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-	module.exports = Box2dDebugDraw;
+	module.exports = Box2dDebugDrawerPhaser;
 }

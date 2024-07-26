@@ -18,7 +18,7 @@ var Unit = TaroEntityPhysics.extend({
 		self.isMoving = false;
 		self.angleToTarget = undefined;
 		self.angleToTargetRelative = 0;
-
+		self.isTabInactive = true;
 		// merge various data into one _stats variable
 		var unitData = {};
 		if (!data.hasOwnProperty('equipmentAllowed')) {
@@ -154,6 +154,7 @@ var Unit = TaroEntityPhysics.extend({
 		self.scaleDimensions(self._stats.width, self._stats.height);
 
 		if (taro.isClient) {
+			taro.script.trigger('entityCreatedGlobal', { entityId: this.id() });
 			this.script.trigger('entityCreated');
 		}
 	},
@@ -1237,6 +1238,7 @@ var Unit = TaroEntityPhysics.extend({
 					item = new Item(itemData);
 					// don't trigger entityCreated if item is loaded from persisted data
 					if (!persistedItem) {
+						taro.script.trigger('entityCreatedGlobal', { entityId: item.id() });
 						item.script.trigger('entityCreated');
 					}
 				}
@@ -1248,20 +1250,17 @@ var Unit = TaroEntityPhysics.extend({
 			} else {
 				// if designated item slot is already occupied, unit cannot get this item
 				var availableSlot = self.inventory.getFirstAvailableSlotForItem(itemData);
-
 				// Check if the item can merge
-				if (!!itemData.controls?.canMerge) {
+				if (itemData.controls?.canMerge) {
 					// insert/merge itemData's quantity into matching items in the inventory
 					var totalInventorySize = this.inventory.getTotalInventorySize();
 					for (var i = equipRequirementMet ? 0 : this._stats.inventorySize; i < totalInventorySize; i++) {
 						var currentItemId = self._stats.itemIds[i];
 						if (currentItemId) {
 							var currentItem = taro.$(currentItemId);
-
 							// if a matching item found in the inventory, try merging them
 							if (currentItem && currentItem._stats.itemTypeId == itemTypeId) {
 								var matchingItem = currentItem;
-
 								// lastCreatedItem is used to track the last item created by the server.
 								// This is necessary in case item isn't a new instance, but an existing item getting quantity updated
 								taro.game.lastCreatedItemId = matchingItem.id();
@@ -1277,11 +1276,13 @@ var Unit = TaroEntityPhysics.extend({
 								}
 
 								// the new item can fit in, because the matching item isn't full or has infinite quantity. Increase matching item's quantity only.
-								if (itemData.quantity > 0 && matchingItem._stats.maxQuantity - matchingItem._stats.quantity > 0) {
-									if (matchingItem._stats.maxQuantity != undefined) {
+								let maxQuantity = matchingItem._stats.maxQuantity || Infinity;
+
+								if (itemData.quantity > 0 && maxQuantity - matchingItem._stats.quantity > 0) {
+									if (matchingItem._stats.maxQuantity !== undefined) {
 										var quantityToBeTakenFromItem = Math.min(
 											itemData.quantity,
-											matchingItem._stats.maxQuantity - matchingItem._stats.quantity
+											maxQuantity - matchingItem._stats.quantity
 										);
 									} else {
 										// var quantityToBeTakenFromItem = itemData.quantity;
@@ -1338,6 +1339,7 @@ var Unit = TaroEntityPhysics.extend({
 						// itemData.stateId = (availableSlot-1 == this._stats.currentItemIndex) ? 'selected' : 'unselected';
 						item = new Item(itemData);
 						taro.game.lastCreatedItemId = item._id;
+						taro.script.trigger('entityCreatedGlobal', { entityId: item.id() });
 						item.script.trigger('entityCreated');
 					}
 
@@ -1811,6 +1813,9 @@ var Unit = TaroEntityPhysics.extend({
 							// changing body dimensions
 							self._scaleBox2dBody(newValue);
 						} else if (taro.isClient) {
+							if (taro.physics) {
+								self._scaleBox2dBody(newValue);
+							}
 							self._stats.scale = newValue;
 							self._scaleTexture();
 						}
@@ -1973,10 +1978,21 @@ var Unit = TaroEntityPhysics.extend({
 		var self = this;
 		var owner = self.getOwner();
 		var persistedData = rfdc()(owner.persistedData);
+
 		if (persistedData && persistedData.data && persistedData.data.unit) {
 			TaroEntity.prototype.loadPersistentData.call(this, persistedData.data.unit);
 
 			var persistedInventoryItems = persistedData.data.unit.inventoryItems;
+			// destroy items given to unit as defaultItems if there is inventory to load
+			if (persistedInventoryItems.length > 0) {
+				this._stats.itemIds.forEach((itemId, i) => {
+					if (itemId) {
+						taro.$(itemId).destroy();
+						this._stats.itemIds[i] = null;
+					}
+				});
+			}
+			// now inventory should be empty and we can load in items to the slotIndex saved
 			for (var i = 0; i < persistedInventoryItems.length; i++) {
 				var persistedItem = persistedInventoryItems[i];
 				if (persistedItem) {
@@ -1988,6 +2004,7 @@ var Unit = TaroEntityPhysics.extend({
 							var givenItem = taro.$(taro.game.lastCreatedItemId);
 							if (givenItem && givenItem.getOwnerUnit() == this) {
 								givenItem.loadPersistentData(persistedItem);
+								taro.script.trigger('entityCreatedGlobal', { givenItem: this.id() });
 								givenItem.script.trigger('entityCreated');
 							}
 						}
@@ -2202,7 +2219,7 @@ var Unit = TaroEntityPhysics.extend({
 			self.script.trigger(trigger.name, trigger.params);
 		});
 
-		if (taro.isServer || (taro.isClient && taro.client.selectedUnit == this)) {
+		if (taro.isServer || (taro.isClient && (taro.client.selectedUnit == this || this._stats.streamMode !== 1))) {
 			// ability component behaviour method call
 			this.ability._behaviour();
 
@@ -2314,10 +2331,7 @@ var Unit = TaroEntityPhysics.extend({
 		// if entity (unit/item/player/projectile) has attribute, run regenerate
 		if (
 			taro.isServer ||
-			(taro.physics &&
-				taro.isClient &&
-				taro.client.selectedUnit == this &&
-				this._stats.controls?.clientPredictedMovement)
+			(taro.physics && taro.isClient && taro.client.selectedUnit == this && this._stats.controls?.cspMode) // client-side prediction is enabled (cspMode either 1 or 2)
 		) {
 			if (this._stats.buffs && this._stats.buffs.length > 0) {
 				for (let i = 0; i < this._stats.buffs.length; i++) {

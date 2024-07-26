@@ -105,6 +105,7 @@ const Client = TaroEventingClass.extend({
 		this.scaleMode = 0; //old comment => 'none'
 		this.renderBuffer = 66; // this is later updated again in gameComponent.js
 		this.isActiveTab = true;
+		this.tabBecameActiveAt = Date.now();
 		this.sendNextPingAt = 0;
 
 		this.isZooming = false;
@@ -149,9 +150,11 @@ const Client = TaroEventingClass.extend({
 			//old comment => 'apply entities' merged stats saved during inactive tab
 			if (!document.hidden) {
 				// this.applyInactiveTabEntityStream();
+				self.tabBecameActiveAt = Date.now();
+				console.log('tab became active at', self.tabBecameActiveAt);
 			}
 
-			this.isActiveTab = !document.hidden;
+			self.isActiveTab = !document.hidden;
 		});
 
 		//go fetch
@@ -212,23 +215,23 @@ const Client = TaroEventingClass.extend({
 				}
 
 				this.initializeConfigurationFields();
-				
+
 				await this.configureEngine();
 				taro.addComponent(TaroInputComponent);
 
 				taro.entitiesToRender = new EntitiesToRender();
 
+				taro.developerMode = new DeveloperMode();
+
 				if (taro.game.data.defaultData.defaultRenderer === '3d') {
 					if (options?.resetRenderer) {
-						taro.renderer = Renderer.Three.reset(); // reset renderer
+						taro.renderer = Renderer.Three.reset(options.rendererOptions); // reset renderer
 					} else {
 						taro.renderer = Renderer.Three.instance();
 					}
 				} else {
 					taro.renderer = new PhaserRenderer();
 				}
-
-				taro.developerMode = new DeveloperMode();
 
 				if (!window.isStandalone) {
 					this.servers = this.getServersArray();
@@ -427,8 +430,8 @@ const Client = TaroEventingClass.extend({
 			);
 
 			taro.client.emit('camera-instant-move', [
-				(taro.map.data.width * tileWidth) / 2,
-				(taro.map.data.height * tileHeight) / 2,
+				gameData.settings.camera?.mapPreviewPos?.x ?? (taro.map.data.width * tileWidth) / 2,
+				gameData.settings.camera?.mapPreviewPos?.y ?? (taro.map.data.height * tileHeight) / 2,
 			]);
 
 			taro.addComponent(AdComponent);
@@ -538,11 +541,7 @@ const Client = TaroEventingClass.extend({
 		for (let server of validServers) {
 			const capacity = server.playerCount / server.maxPlayers;
 
-			if (
-				capacity < overloadCriteria &&
-				server.playerCount > maxPlayersInUnderLoadedServer &&
-				server.acceptingPlayers
-			) {
+			if (capacity < overloadCriteria && server.playerCount > maxPlayersInUnderLoadedServer) {
 				firstChoice = server;
 				maxPlayersInUnderLoadedServer = server.playerCount;
 			}
@@ -592,10 +591,6 @@ const Client = TaroEventingClass.extend({
 			}
 
 			$(self.getCachedElementById('loading-container')).addClass('slider-out');
-
-			if (window.STATIC_EXPORT_ENABLED) {
-				window.PokiSDK?.gameplayStart();
-			}
 
 			console.log('connected to ', taro.client.server.url, 'clientId ', taro.network.id()); // idk if this needs to be in production
 

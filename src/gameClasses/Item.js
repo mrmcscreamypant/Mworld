@@ -116,6 +116,7 @@ var Item = TaroEntityPhysics.extend({
 		this.scaleDimensions(this._stats.width, this._stats.height);
 
 		if (taro.isClient) {
+			taro.script.trigger('entityCreatedGlobal', { entityId: this.id() });
 			this.script.trigger('entityCreated');
 		}
 	},
@@ -352,7 +353,7 @@ var Item = TaroEntityPhysics.extend({
 		if (self.hasQuantityRemaining()) {
 			taro.game.lastUsedItemId = self.id();
 
-			if (self._stats.lastUsed + self._stats.fireRate < taro.now || self._stats.type == 'consumable') {
+			if (self._stats.lastUsed + self._stats.fireRate < taro.now) {
 				if (!self.canAffordItemCost()) {
 					taro.devLog('cannot afford item cost');
 					return;
@@ -387,7 +388,11 @@ var Item = TaroEntityPhysics.extend({
 							let bulletY = self._stats.bulletStartPosition.y || 0;
 							let bulletX = owner._stats.flip === 1 ? -1 : 1;
 
-							if (owner && self._stats.currentBody && self._stats.currentBody.jointType == 'weldJoint') {
+							if (
+								owner &&
+								self._stats.currentBody &&
+								(self._stats.currentBody.jointType == 'weldJoint' || self._stats.currentBody.type == 'none')
+							) {
 								rotate = owner._rotate.z;
 								// if we are welded to owner unit, we have to invert the start position when the item is flipped
 								// multiply bullet start position y-component by -1 if flip === 1
@@ -451,6 +456,7 @@ var Item = TaroEntityPhysics.extend({
 											streamMode: this._stats.projectileStreamMode || 0, // editor incorrectly sets streamMode to undefined when item CSP is on
 										});
 										var projectile = new Projectile(projectileData);
+										taro.script.trigger('entityCreatedGlobal', { entityId: projectile.id() });
 										projectile.script.trigger('entityCreated');
 										taro.game.lastCreatedProjectileId = projectile.id();
 									}
@@ -967,10 +973,13 @@ var Item = TaroEntityPhysics.extend({
 			self.script.trigger('thisItemChangesInventorySlot', triggerParams); // this entity (item) (need to rename rename 'itemIsUsed' -> 'thisItemIsUsed')
 			owner.script.trigger('thisUnitMovesItemInInventory', triggerParams); // this entity (unit)
 
-			if (this._stats.slotIndex >= owner._stats.inventorySize) {
+			if (index >= owner._stats.inventorySize) {
 				this.hide();
-			} else if (this._stats.slotIndex < owner._stats.inventorySize) {
+				// show if there is a body
+			} else if (this._stats.currentBody) {
 				this.show();
+			} else {
+				this.hide();
 			}
 		}
 	},
@@ -1172,6 +1181,9 @@ var Item = TaroEntityPhysics.extend({
 					case 'scaleBody':
 						this._stats[attrName] = newValue;
 						if (taro.isClient) {
+							if (taro.physics) {
+								self._scaleBox2dBody(newValue);
+							}
 							self._stats.scale = newValue;
 							self._scaleTexture();
 						} else {
@@ -1303,6 +1315,11 @@ var Item = TaroEntityPhysics.extend({
 			var y = ownerUnit._translate.y + self.anchoredOffset.y;
 
 			if (taro.isServer) {
+				if (ownerUnit.body) {
+					// on server, add anchoredOffset to the position of the physics body, not Unit._translate
+					x = ownerUnit.body.getPosition().x * ownerUnit._b2dRef._scaleRatio + self.anchoredOffset.x;
+					y = ownerUnit.body.getPosition().y * ownerUnit._b2dRef._scaleRatio + self.anchoredOffset.y;
+				}
 				// for client-side, translate+rotate is handled in entitiesToRender.ts
 				self.translateTo(x, y);
 				self.rotateTo(0, 0, rotate);

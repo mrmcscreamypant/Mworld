@@ -166,6 +166,7 @@ declare class GameComponent extends TaroEntity {
 				};
 				projectionMode: 'orthographic' | 'perspective';
 				defaultPitch: number;
+				collisions: boolean;
 			};
 			skybox: {
 				left: string;
@@ -174,6 +175,29 @@ declare class GameComponent extends TaroEntity {
 				bottom: string;
 				front: string;
 				back: string;
+			};
+			fog: {
+				enabled: boolean;
+				type: 'linear' | 'exp2';
+				color: string;
+				near: number;
+				far: number;
+				density: number;
+			};
+			light: {
+				ambient: {
+					color: string;
+					intensity: number;
+				};
+				directional: {
+					color: string;
+					intensity: number;
+					position: {
+						x: number;
+						y: number;
+						z: number;
+					};
+				};
 			};
 		};
 		heightBasedZIndex: boolean;

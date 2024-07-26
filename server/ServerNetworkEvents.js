@@ -28,7 +28,7 @@ var ServerNetworkEvents = {
 		taro.server.testerId = clientId;
 	},
 
-	_onClientDisconnect: function ({ clientId, reason }) {
+	_onClientDisconnect: function ({ clientId, userId, guestUserId, kickUserRequestId, reason }) {
 		var self = this;
 
 		if (!reason) {
@@ -50,15 +50,15 @@ var ServerNetworkEvents = {
 			if (player) {
 				console.log(`_onclientDisconnect ${clientId} (${player._stats.name}) ${Date.now() - client.lastEventAt}`);
 				player.updatePlayerHighscore();
-
-				if (player._stats.userId) {
-					taro.workerComponent.saveLastPlayedTime(player._stats.userId);
-				}
 			}
 		}
 
 		if (player) {
 			player.remove();
+		}
+
+		if (userId || guestUserId) {
+			taro.workerComponent.saveLastPlayedTime(userId, guestUserId, kickUserRequestId);
 		}
 	},
 
@@ -415,16 +415,14 @@ var ServerNetworkEvents = {
 							fromItem._stats.controls.permittedInventorySlots == undefined ||
 							fromItem._stats.controls.permittedInventorySlots.length == 0 ||
 							fromItem._stats.controls.permittedInventorySlots.includes(data.to + 1) ||
-							(data.to + 1 > unit._stats.inventorySize &&
-								(fromItem._stats.controls.backpackAllowed !== false))) // any item can be moved into backpack slots if the backpackAllowed property is true
-						&& (data.from < unit.inventory.getTotalInventorySize() || (!toItem._stats.controls.undroppable &&
-							!toItem._stats.controls.untradable)) &&
+							(data.to + 1 > unit._stats.inventorySize && fromItem._stats.controls.backpackAllowed !== false)) && // any item can be moved into backpack slots if the backpackAllowed property is true
+						(data.from < unit.inventory.getTotalInventorySize() ||
+							(!toItem._stats.controls.undroppable && !toItem._stats.controls.untradable)) &&
 						(toItem._stats.controls == undefined ||
 							toItem._stats.controls.permittedInventorySlots == undefined ||
 							toItem._stats.controls.permittedInventorySlots.length == 0 ||
 							toItem._stats.controls.permittedInventorySlots.includes(data.from + 1) ||
-							(data.from + 1 > unit._stats.inventorySize &&
-								(toItem._stats.controls.backpackAllowed !== false))) // any item can be moved into backpack slots if the backpackAllowed property is true
+							(data.from + 1 > unit._stats.inventorySize && toItem._stats.controls.backpackAllowed !== false)) // any item can be moved into backpack slots if the backpackAllowed property is true
 					) {
 						fromItem.changeSlotIndex(parseInt(data.to));
 						toItem.changeSlotIndex(parseInt(data.from));
@@ -632,7 +630,15 @@ var ServerNetworkEvents = {
 		if (player) {
 			var unit = player.getSelectedUnit();
 			if (unit) {
-				unit.clientStreamedPosition = position;
+				unit.clientStreamedKeyFrame = [Date.now(), position];
+
+				// this player returned to the game's tab and began sending msg
+				if (!player.isTabActive) {
+					player.tabBecameActiveAt = Date.now();
+					player.isTabActive = true;
+				}
+
+				// console.log(position);
 			}
 		}
 	},
@@ -650,14 +656,14 @@ var ServerNetworkEvents = {
 		if (player && data) {
 			player.lastClientReceivedData = data.data
 				? Object.keys(data.data).reduce((result, key) => {
-					if (['boolean', 'number'].includes(typeof data.data[key])) {
-						result[key] = data.data[key];
-					} else if (typeof data.data[key] === 'string') {
-						result[key] = taro.sanitizer(data.data[key]);
-					}
+						if (['boolean', 'number'].includes(typeof data.data[key])) {
+							result[key] = data.data[key];
+						} else if (typeof data.data[key] === 'string') {
+							result[key] = taro.sanitizer(data.data[key]);
+						}
 
-					return result;
-				}, {})
+						return result;
+					}, {})
 				: {};
 			taro.script.trigger('whenDataReceivedFromClient', { playerId: player.id() });
 		}

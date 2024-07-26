@@ -65,7 +65,7 @@ var TaroEntity = TaroObject.extend({
 
 		this._keyFrames = [];
 		this.nextKeyFrame = [taro._currentTime + 50, [this._translate.x, this._translate.y, this._rotate.z]];
-
+		this.clientStreamedKeyFrame = this.nextKeyFrame;
 		this._isTransforming = true;
 		this.lastTransformedAt = 0;
 		this.latestTimeStamp = 0;
@@ -249,6 +249,12 @@ var TaroEntity = TaroObject.extend({
 			}
 
 			self.billboard(!!body['isBillboard']);
+
+			if (!body.rotate) body.rotate = { x: 0, y: 0, z: 0 };
+			body.rotate.x ||= 0;
+			body.rotate.y ||= 0;
+			body.rotate.z ||= 0;
+			self.rotate3d(body.rotate.x, body.rotate.y, body.rotate.z);
 		}
 	},
 
@@ -3245,8 +3251,10 @@ var TaroEntity = TaroObject.extend({
 				this.translateColliderTo(x, y);
 			}
 		} else if (taro.isClient) {
-			if (this === taro.client.selectedUnit && taro.physics && this._stats.controls?.clientPredictedMovement) {
-				taro.client.myUnitStreamedPosition = {
+			// client-side prediction is enabled (cspMode either 1 or 2)
+			let myUnit = taro.client.selectedUnit;
+			if (this === myUnit && taro.physics && this._stats.controls?.cspMode) {
+				myUnit.serverStreamedPosition = {
 					x: x,
 					y: y,
 					rotation: rotate,
@@ -4360,6 +4368,12 @@ var TaroEntity = TaroObject.extend({
 							}
 							break;
 						case 'quests':
+							break;
+						//FIXME: when the 3d physics is ready, remove this
+						case 'temp_translation_y':
+							if (taro.isClient) {
+								this.emit('temp_translation_y', [data.temp_translation_y]);
+							}
 							break;
 						case 'depth':
 							this._stats[attrName] = newValue;

@@ -203,6 +203,16 @@ var MenuUiComponent = TaroEntity.extend({
 			$('.open-menu-button').on('click', function () {
 				self.toggleMenu();
 				$('.open-menu-button').hide();
+				
+				if (window.GAME_PLAY_STARTED) {
+					if (window.STATIC_EXPORT_ENABLED) {
+						window.PokiSDK?.gameplayStop();
+					}
+					if (window.IS_CRAZY_GAMES_ENV) {
+						window.CrazyGames.SDK.game.gameplayStop();
+					}
+					window.GAME_PLAY_STARTED = false;
+				}
 			});
 
 			$('#change-server').on('click', function () {
@@ -829,7 +839,25 @@ var MenuUiComponent = TaroEntity.extend({
 		}
 
 		$('#server-disconnect-modal .modal-body').html(message || defaultContent);
-		$('#return-to-homepage-server').show();
+
+		if (window.STATIC_EXPORT_ENABLED || window.IS_CRAZY_GAMES_ENV) {
+			$('#return-to-homepage-server').hide();
+			$('.return-to-homepage-cta').hide();
+		} else {
+			$('#return-to-homepage-server').show();
+		}
+		
+		if (window.GAME_PLAY_STARTED) {
+			if (window.STATIC_EXPORT_ENABLED) {
+				window.PokiSDK?.gameplayStop();
+			}
+
+			if (window.IS_CRAZY_GAMES_ENV) {
+				window.CrazyGames.SDK.game.gameplayStop();
+			}
+			window.GAME_PLAY_STARTED = false;
+		}
+		
 		$('#join-another-server').hide();
 
 		$('#server-disconnect-modal').modal('show');
