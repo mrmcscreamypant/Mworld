@@ -776,8 +776,8 @@ var ClientNetworkEvents = {
 						window.CrazyGames.SDK.game.gameplayStop();
 						window.GAME_PLAY_STARTED = false;
 					}
-					// show ads when user travel from survival to greyhold
-					if (window.gameSlug === 'wQ9ZEoME5' && data.gameSlug === 'WO8osQ6dD') {
+					// show ads when user travel from survival mode or survival portal to greyhold
+					if ((window.gameSlug === 'wQ9ZEoME5' || window.gameSlug === 'y1kYJHfzk') && data.gameSlug === 'WO8osQ6dD') {
 						const callbacks = {
 							adFinished: () => console.log("End midgame ad"),
 							adError: (error) => console.log("Error midgame ad", error),
@@ -804,8 +804,8 @@ var ClientNetworkEvents = {
 						window.GAME_PLAY_STARTED = false;
 					}
 
-					// show ads when user travel from survival to greyhold
-					if (window.gameSlug === 'wQ9ZEoME5' && data.gameSlug === 'WO8osQ6dD') {
+					// show ads when user travel from survival mode or survival portal to greyhold
+					if ((window.gameSlug === 'wQ9ZEoME5' || window.gameSlug === 'y1kYJHfzk') && data.gameSlug === 'WO8osQ6dD') {
 						const callbacks = {
 							adFinished: () => console.log("End midgame ad"),
 							adError: (error) => console.log("Error midgame ad", error),
