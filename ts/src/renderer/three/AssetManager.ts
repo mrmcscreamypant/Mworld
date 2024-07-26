@@ -104,18 +104,7 @@ namespace Renderer {
 			}
 
 			getMaterial(texture: THREE.Texture) {
-				if (!this.materials.get(texture.uuid)) {
-					this.materials.set(
-						texture.uuid,
-						new THREE.MeshBasicMaterial({
-							map: texture,
-							transparent: true,
-							alphaTest: 0.3,
-						})
-					);
-				} else {
-				}
-				return this.materials.get(texture.uuid) as THREE.MeshBasicMaterial;
+				return (this.materials.get(texture.uuid) as THREE.MeshBasicMaterial) || null;
 			}
 
 			getTextureWithoutPlaceholder(name: string) {
