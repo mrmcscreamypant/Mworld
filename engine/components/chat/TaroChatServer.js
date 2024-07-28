@@ -135,6 +135,11 @@ var TaroChatServer = {
 
 	// added by Jaeyun to prevent spammers
 	isSpamming: function (from, message) {
+
+		// if from is undefined, it means the message is from the server
+		if (from == undefined) {
+			return false;
+		}
 		now = new Date();
 
 		// if this is the user's first message. init
