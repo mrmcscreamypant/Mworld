@@ -112,6 +112,10 @@ namespace Renderer {
 				const placeholderModel = this.assets.get('placeholderModel') as GLTF;
 				return (this.assets.get(name) as GLTF) || placeholderModel;
 			}
+
+			getModelWithoutPlaceholder(name: string) {
+				return this.assets.get(name) as GLTF;
+			}
 		}
 
 		export const gAssetManager = new AssetManager();

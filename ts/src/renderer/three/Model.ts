@@ -15,6 +15,7 @@ namespace Renderer {
 			private mixer: THREE.AnimationMixer;
 			private clips: THREE.AnimationClip[];
 			private center = new THREE.Vector3();
+			private meshSize = new THREE.Vector3();
 
 			constructor(name: string) {
 				super();
@@ -35,6 +36,22 @@ namespace Renderer {
 				this.aabb.setFromObject(this.mesh);
 			}
 
+			setModel(model: GLTF) {
+				const newMesh = SkeletonUtils.clone(model.scene);
+				this.root.remove(this.mesh);
+				this.mesh = newMesh;
+				this.root.add(this.mesh);
+
+				this.originalSize.copy(this.getSize());
+				this.originalScale.copy(this.mesh.scale);
+				this.aabb.setFromObject(this.mesh);
+
+				this.mixer = new THREE.AnimationMixer(this.mesh);
+				this.clips = model.animations;
+
+				this.setSize(this.meshSize.x, this.meshSize.y, this.meshSize.z);
+			}
+
 			getSize() {
 				if (this.firstTime) {
 					this.aabb.setFromObject(this.mesh, true);
@@ -50,6 +67,7 @@ namespace Renderer {
 			}
 
 			setSize(x: number, y: number, z: number) {
+				this.meshSize.set(x, y, z);
 				this.mesh.scale.x = this.originalScale.x * (x / this.originalSize.x);
 				this.mesh.scale.y = this.originalScale.y * (y / this.originalSize.y);
 				this.mesh.scale.z = this.originalScale.z * (z / this.originalSize.z);
