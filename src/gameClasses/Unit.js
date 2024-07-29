@@ -2281,15 +2281,18 @@ var Unit = TaroEntityPhysics.extend({
 					self.ai.targetPosition = undefined;
 					self.ai.targetUnitId = undefined;
 
-					// moving diagonally should reduce speed
-					if (self.direction.x != 0 && self.direction.y != 0) {
-						speed = speed / 1.41421356237;
-					}
+					// ignore client-side movement input if cspMode is 2 (client-authoritative), this unit's position is now dictated by the position streamed by its owner
+					if (taro.isClient || this._stats.controls?.cspMode != 2) {
+						// moving diagonally should reduce speed
+						if (self.direction.x != 0 && self.direction.y != 0) {
+							speed = speed / 1.41421356237;
+						}
 
-					self.vector = {
-						x: self.direction.x * speed,
-						y: self.direction.y * speed,
-					};
+						self.vector = {
+							x: self.direction.x * speed,
+							y: self.direction.y * speed,
+						};
+					}
 				}
 
 				// update AI
@@ -2307,6 +2310,7 @@ var Unit = TaroEntityPhysics.extend({
 				if (ownerPlayer._stats.controlledBy == 'human' && !this._stats.aiEnabled) {
 					// toggle effects when unit starts/stops moving
 					if (!this.isMoving && (self.direction.x != 0 || self.direction.y != 0)) {
+						// ownerPlayer.control.lastInputSent = Date.now();
 						this.startMoving();
 					} else if (this.isMoving && self.direction.x === 0 && self.direction.y === 0) {
 						this.stopMoving();

@@ -228,13 +228,14 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			return;
 		}
 
+		// FIXME
 		// do not spawn sensors for those entities without ai
-		if (body.fixtures[0].isSensor) {
-			const ownerEntity = taro.$(entity.ownerUnitId);
-			if (ownerEntity && ownerEntity._category !== 'region' && ownerEntity?._stats?.ai?.enabled === false) {
-				return;
-			}
-		}
+		// if (body.fixtures[0].isSensor) {
+		// 	const ownerEntity = taro.$(entity.ownerUnitId);
+		// 	if (ownerEntity && ownerEntity._category !== 'region' && ownerEntity?._stats?.ai?.enabled === false && ownerEntity?._stats?.ai?.forceToCreateSensor !== true) {
+		// 		return;
+		// 	}
+		// }
 
 		// if there's already a body, destroy it first
 		if (entity.body) {
