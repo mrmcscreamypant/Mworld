@@ -755,10 +755,10 @@ var PhysicsComponent = TaroEventingClass.extend({
 										// client msg was received within 200ms,
 										// also ignore client msg if client just recently became active again (<2s)
 										// as the client's position isn't as reliable. for the next 3s, the client's position will be dictated by the server stream
-										if (now - clientStreamReceivedAt < 200 && now - player.tabBecameActiveAt > 2000) {
+										if (now - clientStreamReceivedAt < 200 && now - player.tabBecameActiveAt > 1000) {
 											let clientStreamedPosition = entity.clientStreamedKeyFrame[1];
-											x += (clientStreamedPosition[0] - x) / 2;
-											y += (clientStreamedPosition[1] - y) / 2;
+											x += (clientStreamedPosition[0] - x) / 3;
+											y += (clientStreamedPosition[1] - y) / 3;
 											angle = clientStreamedPosition[2];
 										}
 									}
@@ -778,7 +778,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 										if (entity == myUnit) {
 											if (
 												entity._stats.controls?.cspMode == 2 &&
-												now - taro.client.tabBecameActiveAt < 2000 // it hasn't passed 4 sec since the tab became active
+												now - taro.client.tabBecameActiveAt < 1000 // it hasn't passed 2 sec since the tab became active
 											) {
 												x = myUnit.serverStreamedPosition.x;
 												y = myUnit.serverStreamedPosition.y;
