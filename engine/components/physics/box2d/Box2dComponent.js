@@ -743,7 +743,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 									// if client-authoritative csp mode is enabled, and the client msg was received within 100ms,
 									// then use the client's msg to update this unit's position
-									if (entity._stats.controls?.cspMode == 2) {
+									if (taro.game.data.defaultData.clientPhysicsEngine && entity._stats.controls?.cspMode == 2) {
 										let clientStreamReceivedAt = entity.clientStreamedKeyFrame[0];
 										let player = entity.getOwner();
 

@@ -368,7 +368,7 @@ var ControlComponent = TaroEntity.extend({
 					self.lastInputSent = now;
 
 					// if my unit has cspMode == 2 (client-authoritative), send its position to the server every 66ms
-					if (unit._stats.controls?.cspMode == 2) {
+					if (taro.game.data.defaultData.clientPhysicsEngine && unit._stats.controls?.cspMode == 2) {
 						// if the current tab just became active, wait at least 2 seconds before sending my unit's position to the server
 						if (now - self.tabBecameActiveAt < 1000) {
 							return;
