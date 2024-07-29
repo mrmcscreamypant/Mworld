@@ -35,7 +35,43 @@ namespace Renderer {
 
 				if (entity.body instanceof AnimatedSprite) {
 					taroEntity.on('depth', (depth) => (entity.body as AnimatedSprite).setDepth(depth));
-					taroEntity.on('flip', (flip) => (entity.body as AnimatedSprite).setFlip(flip % 2 === 1, flip > 1));
+					taroEntity.on('flip', (flip) => {
+						// TODO: This is a hack to fix the flip of the item when
+						// it is owned by a unit, should rethink solution.
+						// Probably copy position/rotatation/flip from the unit.
+						if (entity.ownerUnit) {
+							const anchoredOffset = entity.taroEntity?.anchoredOffset;
+
+							if (anchoredOffset) {
+								entity.body.root.position.x = Utils.pixelToWorld(anchoredOffset.unitAnchor.x);
+								entity.body.root.position.z = Utils.pixelToWorld(anchoredOffset.unitAnchor.y);
+
+								let x = Utils.pixelToWorld(anchoredOffset.itemAnchor.x);
+								let y = Utils.pixelToWorld(anchoredOffset.itemAnchor.y);
+
+								if (entity.body instanceof AnimatedSprite) {
+									entity.body.sprite.position.x = x;
+									entity.body.sprite.position.z = y;
+								} else {
+									entity.body.mesh.position.x = x;
+									entity.body.mesh.position.z = y;
+								}
+							}
+						} else if (
+							entity.body instanceof AnimatedSprite &&
+							(entity.body.sprite.position.x != 0 || entity.body.sprite.position.z != 0)
+						) {
+							entity.body.sprite.position.x = 0;
+							entity.body.sprite.position.z = 0;
+						}
+
+						if (entity.body instanceof AnimatedSprite) {
+							const flip = taroEntity._stats.flip;
+							entity.body.setFlip(flip % 2 === 1, flip > 1);
+						}
+
+						entity.updateMatrix();
+					});
 					taroEntity.on('billboard', (isBillboard) =>
 						(entity.body as AnimatedSprite).setBillboard(isBillboard, Three.instance().camera)
 					);
@@ -57,9 +93,13 @@ namespace Renderer {
 
 						if (entity.ownerUnit) {
 							const anchoredOffset = entity.taroEntity?.anchoredOffset;
+
 							if (anchoredOffset) {
-								let x = Utils.pixelToWorld(anchoredOffset.x);
-								let y = Utils.pixelToWorld(anchoredOffset.y);
+								entity.body.root.position.x = Utils.pixelToWorld(anchoredOffset.unitAnchor.x);
+								entity.body.root.position.z = Utils.pixelToWorld(anchoredOffset.unitAnchor.y);
+
+								let x = Utils.pixelToWorld(anchoredOffset.itemAnchor.x);
+								let y = Utils.pixelToWorld(anchoredOffset.itemAnchor.y);
 
 								if (entity.body instanceof AnimatedSprite) {
 									entity.body.sprite.position.x = x;
