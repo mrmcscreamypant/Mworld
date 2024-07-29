@@ -55,6 +55,10 @@ namespace Renderer {
 
 			private regionDrawStart: { x: number; y: number } = { x: 0, y: 0 };
 
+			// Environment
+			private ambientLight: THREE.AmbientLight;
+			private directionalLight: THREE.DirectionalLight;
+
 			// Debug
 			private raycastHelpers = new Map<string, THREE.ArrowHelper>();
 
@@ -90,23 +94,23 @@ namespace Renderer {
 				}
 
 				const ambientLightSettings = taro?.game?.data?.settings?.light?.ambient;
-				const ambientLight = new THREE.AmbientLight(
+				this.ambientLight = new THREE.AmbientLight(
 					ambientLightSettings?.color ?? 0xffffff,
 					ambientLightSettings?.intensity ?? 3
 				);
-				this.scene.add(ambientLight);
+				this.scene.add(this.ambientLight);
 
 				const directionalLightSettings = taro?.game?.data?.settings?.light?.directional;
-				const directionalLight = new THREE.DirectionalLight(
+				this.directionalLight = new THREE.DirectionalLight(
 					directionalLightSettings?.color ?? 0xffffff,
 					directionalLightSettings?.intensity ?? 0
 				);
-				directionalLight.position.set(
+				this.directionalLight.position.set(
 					directionalLightSettings?.position.x ?? 0,
 					directionalLightSettings?.position.z ?? 1,
 					directionalLightSettings?.position.y ?? 0
 				);
-				this.scene.add(directionalLight);
+				this.scene.add(this.directionalLight);
 
 				this.camera = new Camera(window.innerWidth, window.innerHeight, this.renderer.domElement);
 				this.camera.setElevationAngle(taro.game.data.settings.camera.defaultPitch);
@@ -663,10 +667,14 @@ namespace Renderer {
 
 			private onEnterPlayMode() {
 				this.camera.setEditorMode(false);
+
+				this.showEnvironment();
 			}
 
 			private onExitPlayMode() {
 				this.camera.setEditorMode(true);
+
+				this.hideEnvironment();
 			}
 
 			private onEnterMapMode() {
@@ -722,6 +730,41 @@ namespace Renderer {
 
 			private hideEntities() {
 				this.setEntitiesVisible(false);
+			}
+
+			private showEnvironment() {
+				// Lighting
+				const ambientLightSettings = taro?.game?.data?.settings?.light?.ambient;
+				this.ambientLight.intensity = ambientLightSettings?.intensity ?? 3;
+				const directionalLightSettings = taro?.game?.data?.settings?.light?.directional;
+				this.directionalLight.intensity = directionalLightSettings?.intensity ?? 0;
+
+				// Fog
+				if (taro?.game?.data?.settings?.fog?.enabled) {
+					const fog = taro.game.data.settings.fog;
+					if (this.scene.fog instanceof THREE.Fog) {
+						this.scene.fog.near = fog.near;
+						this.scene.fog.far = fog.far;
+					} else if (this.scene.fog instanceof THREE.FogExp2) {
+						this.scene.fog.density = fog.density;
+					}
+				}
+			}
+
+			private hideEnvironment() {
+				// Lighting
+				this.ambientLight.intensity = 3;
+				this.directionalLight.intensity = 0;
+
+				// Fog
+				if (taro?.game?.data?.settings?.fog?.enabled) {
+					if (this.scene.fog instanceof THREE.Fog) {
+						this.scene.fog.near = 100000;
+						this.scene.fog.far = 100000;
+					} else if (this.scene.fog instanceof THREE.FogExp2) {
+						this.scene.fog.density = 0;
+					}
+				}
 			}
 
 			private setEntitiesVisible(visible: boolean) {
