@@ -69,7 +69,6 @@ namespace Renderer {
 							if (source.type === 'gltf') {
 								(asset as GLTF).scene.traverse((child) => {
 									if (child instanceof THREE.Mesh) {
-										// Convert to basic material to avoid lighting
 										const material = new THREE.MeshStandardMaterial();
 										THREE.MeshStandardMaterial.prototype.copy.call(material, child.material);
 
