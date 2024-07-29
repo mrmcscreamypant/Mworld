@@ -896,7 +896,7 @@ var Item = TaroEntityPhysics.extend({
 	 */
 	getAnchoredOffset: function (rotate = 0) {
 		var self = this;
-		var offset = { x: 0, y: 0, rotate: 0 };
+		var offset = { x: 0, y: 0, rotate: 0, unitAnchor: { x: 0, y: 0 }, itemAnchor: { x: 0, y: 0 } };
 		var ownerUnit = this.getOwnerUnit();
 
 		if (ownerUnit && this._stats.stateId != 'dropped') {
@@ -924,11 +924,13 @@ var Item = TaroEntityPhysics.extend({
 					if (ownerUnit._stats.flip == 1) {
 						var unitAnchorOffsetX = -self._stats.currentBody.unitAnchor.x || 0;
 						var itemAnchorOffsetX = -self._stats.currentBody.itemAnchor?.x || 0;
+						var itemAnchorOffsetX = 0;
 
 						rotate -= unitAnchorOffsetRotate;
 					} else {
 						var unitAnchorOffsetX = self._stats.currentBody.unitAnchor.x || 0;
 						var itemAnchorOffsetX = self._stats.currentBody.itemAnchor?.x || 0;
+						var itemAnchorOffsetX = 0;
 
 						rotate += unitAnchorOffsetRotate;
 					}
@@ -937,6 +939,12 @@ var Item = TaroEntityPhysics.extend({
 						x: unitAnchorOffsetX * Math.cos(unitRotate) + unitAnchorOffsetY * Math.sin(unitRotate),
 						y: unitAnchorOffsetX * Math.sin(unitRotate) - unitAnchorOffsetY * Math.cos(unitRotate),
 					};
+
+					offset.unitAnchor.x = unitAnchoredPosition.x;
+					offset.unitAnchor.y = unitAnchoredPosition.y;
+
+					offset.itemAnchor.x = itemAnchorOffsetX * Math.cos(rotate) + itemAnchorOffsetY * Math.sin(rotate);
+					offset.itemAnchor.y = itemAnchorOffsetX * Math.sin(rotate) - itemAnchorOffsetY * Math.cos(rotate);
 
 					(offset.x =
 						unitAnchoredPosition.x + itemAnchorOffsetX * Math.cos(rotate) + itemAnchorOffsetY * Math.sin(rotate)),
