@@ -762,18 +762,12 @@ var ClientNetworkEvents = {
 			if (window.PokiSDK?.commercialBreak) {
 				window.PokiSDK?.commercialBreak(() => {
 					// you can pause any background music or other audio here
-					if (taro.sound.musicCurrentlyPlaying) {
-						taro.sound.stopMusic();
-					}
 					window.taro.network._io.disconnect('switching_map');
 					$('body').addClass('playing-ad');
 				}).then(() => {
 					console.log("Commercial break finished, proceeding to game");
 					// if the audio was paused you can resume it here (keep in mind that the function above to pause it might not always get called)
 					// continue your game here
-					if (taro.sound.musicCurrentlyPlaying) {
-						taro.sound.startMusic();
-					}
 					$('body').removeClass('playing-ad');
 					if (window.switchGameWrapper) {
 						window.switchGameWrapper(data);
@@ -787,6 +781,11 @@ var ClientNetworkEvents = {
 
 	_onSendPlayerToMap: function (data) {
 		if (data && data.type == 'sendPlayerToMap') {
+			// always stop music before sending user to another map
+			if (taro.sound.musicCurrentlyPlaying) {
+				taro.sound.stopMusic();
+			}
+
 			if (window.STATIC_EXPORT_ENABLED) {
 				taro.client._handlePokiSwitch(data);
 			} else {
@@ -814,10 +813,6 @@ var ClientNetworkEvents = {
 								window.location.href = mapUrl;
 							},
 						};
-						
-						if (taro.sound.musicCurrentlyPlaying) {
-							taro.sound.stopMusic();
-						}
 
 						$('body').addClass('playing-ad');
 						window.CrazyGames.SDK.ad.requestAd("midgame", callbacks);
