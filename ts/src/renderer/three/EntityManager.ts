@@ -95,6 +95,7 @@ namespace Renderer {
 
 				if (this.items.includes(entity as Item)) {
 					this.items.splice(this.items.indexOf(entity as Item, 0), 1);
+					this.unownedItems.delete(entity.taroId);
 				}
 
 				if (this.projectiles.includes(entity as Unit)) {
