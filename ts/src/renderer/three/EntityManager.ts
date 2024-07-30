@@ -110,12 +110,6 @@ namespace Renderer {
 				for (const sprite of this.animatedSprites) {
 					sprite.update(dt);
 				}
-
-				if (this.unownedItems.size > 0) {
-					for (const unit of this.units) {
-						this.maybeAddUnownedItemsToUnit(unit);
-					}
-				}
 			}
 
 			scaleGui(scale: number) {
