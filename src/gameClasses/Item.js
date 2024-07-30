@@ -924,13 +924,11 @@ var Item = TaroEntityPhysics.extend({
 					if (ownerUnit._stats.flip == 1) {
 						var unitAnchorOffsetX = -self._stats.currentBody.unitAnchor.x || 0;
 						var itemAnchorOffsetX = -self._stats.currentBody.itemAnchor?.x || 0;
-						var itemAnchorOffsetX = 0;
 
 						rotate -= unitAnchorOffsetRotate;
 					} else {
 						var unitAnchorOffsetX = self._stats.currentBody.unitAnchor.x || 0;
 						var itemAnchorOffsetX = self._stats.currentBody.itemAnchor?.x || 0;
-						var itemAnchorOffsetX = 0;
 
 						rotate += unitAnchorOffsetRotate;
 					}
