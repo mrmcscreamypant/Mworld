@@ -224,10 +224,15 @@ const Client = TaroEventingClass.extend({
 				taro.developerMode = new DeveloperMode();
 
 				if (taro.game.data.defaultData.defaultRenderer === '3d') {
-					if (options?.resetRenderer) {
-						taro.renderer = Renderer.Three.reset(options.rendererOptions); // reset renderer
+					const supportWebGL2 = document.createElement('canvas').getContext('webgl2');
+					if (supportWebGL2) {
+						if (options?.resetRenderer) {
+							taro.renderer = Renderer.Three.reset(options.rendererOptions); // reset renderer
+						} else {
+							taro.renderer = Renderer.Three.instance();
+						}
 					} else {
-						taro.renderer = Renderer.Three.instance();
+						window.showWebGLLoadFailedModal?.();
 					}
 				} else {
 					taro.renderer = new PhaserRenderer();
