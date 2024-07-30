@@ -757,12 +757,31 @@ var ClientNetworkEvents = {
 	_handlePokiSwitch: function (data) {
 		if (window.GAME_PLAY_STARTED) {
 			window.PokiSDK?.gameplayStop();
-			window.PokiSDK?.commercialBreak();
 			window.GAME_PLAY_STARTED = false;
-		}
-		
-		if (window.switchGameWrapper) {
-			window.switchGameWrapper(data);
+
+			if (window.PokiSDK?.commercialBreak) {
+				window.PokiSDK?.commercialBreak(() => {
+					// you can pause any background music or other audio here
+					if (taro.sound.musicCurrentlyPlaying) {
+						taro.sound.stopMusic();
+					}
+					window.taro.network._io.disconnect('switching_map');
+					$('body').addClass('playing-ad');
+				}).then(() => {
+					console.log("Commercial break finished, proceeding to game");
+					// if the audio was paused you can resume it here (keep in mind that the function above to pause it might not always get called)
+					// continue your game here
+					if (taro.sound.musicCurrentlyPlaying) {
+						taro.sound.startMusic();
+					}
+					$('body').removeClass('playing-ad');
+					if (window.switchGameWrapper) {
+						window.switchGameWrapper(data);
+					}
+				});
+			} else if (window.switchGameWrapper) {
+				window.switchGameWrapper(data);
+			}
 		}
 	},
 
