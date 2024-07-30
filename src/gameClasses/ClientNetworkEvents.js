@@ -809,8 +809,6 @@ var ClientNetworkEvents = {
 							},
 							adStarted: () => {
 								console.log("Start midgame ad");
-								const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
-								window.location.href = mapUrl;
 							},
 						};
 
