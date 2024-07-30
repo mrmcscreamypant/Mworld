@@ -798,16 +798,33 @@ var ClientNetworkEvents = {
 					// show ads when user travel from survival mode or survival portal to greyhold
 					if ((window.gameSlug === 'wQ9ZEoME5' || window.gameSlug === 'y1kYJHfzk') && data.gameSlug === 'WO8osQ6dD') {
 						const callbacks = {
-							adFinished: () => console.log("End midgame ad"),
-							adError: (error) => console.log("Error midgame ad", error),
-							adStarted: () => console.log("Start midgame ad"),
+							adFinished: () => {
+								console.log("End midgame ad");
+								const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
+								window.location.href = mapUrl;
+							},
+							adError: (error) => {
+								console.log("Error midgame ad", error);
+								const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
+								window.location.href = mapUrl;
+							},
+							adStarted: () => {
+								console.log("Start midgame ad");
+								const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
+								window.location.href = mapUrl;
+							},
 						};
+						if (taro.sound.musicCurrentlyPlaying) {
+							taro.sound.stopMusic();
+						}
+						$('body').addClass('playing-ad');
 						window.CrazyGames.SDK.ad.requestAd("midgame", callbacks);
+						window.taro.network._io.disconnect('switching_map');
 					}
+				} else {
+					const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
+					window.location.href = mapUrl;
 				}
-
-				const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
-				window.location.href = mapUrl;
 			}
 		}
 	},
