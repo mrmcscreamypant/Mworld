@@ -814,17 +814,20 @@ var ClientNetworkEvents = {
 								window.location.href = mapUrl;
 							},
 						};
+						
 						if (taro.sound.musicCurrentlyPlaying) {
 							taro.sound.stopMusic();
 						}
+
 						$('body').addClass('playing-ad');
 						window.CrazyGames.SDK.ad.requestAd("midgame", callbacks);
 						window.taro.network._io.disconnect('switching_map');
+						return;
 					}
-				} else {
-					const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
-					window.location.href = mapUrl;
 				}
+
+				const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
+				window.location.href = mapUrl;
 			}
 		}
 	},
