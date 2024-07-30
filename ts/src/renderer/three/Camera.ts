@@ -352,13 +352,20 @@ namespace Renderer {
 					const top = this.bounds.y + viewHalfHeight;
 					const bottom = this.bounds.y + this.bounds.height - viewHalfHeight;
 
+					const boundsHalfWidth = this.bounds.width / 2;
+					const boundsHalfHeight = this.bounds.height / 2;
+
 					let x = this.controls.target.x;
-					if (x < left) x = left;
-					else if (x > right) x = right;
+					if (viewHalfWidth < boundsHalfWidth) {
+						if (x < left) x = left;
+						else if (x > right) x = right;
+					}
 
 					let z = this.controls.target.z;
-					if (z < top) z = top;
-					else if (z > bottom) z = bottom;
+					if (viewHalfHeight < boundsHalfHeight) {
+						if (z < top) z = top;
+						else if (z > bottom) z = bottom;
+					}
 
 					this.setPosition(x, this.controls.target.y, z);
 				}
