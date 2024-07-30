@@ -110,7 +110,7 @@ namespace Renderer {
 										entityType: action.entityType,
 										action: action,
 										is3DObject: e.isObject3D,
-										offset: e.offset,
+										offset: e.position,
 									};
 								})
 								.filter((e) => e !== null);

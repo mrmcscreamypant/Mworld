@@ -372,6 +372,12 @@ namespace Renderer {
 													actionId: taro.newIdHex(),
 													wasCreated: true,
 												};
+												if(entityData.offset) {
+													action.position.x += Utils.worldToPixel(entityData.offset.x)
+													action.position.y += Utils.worldToPixel(entityData.offset.y)
+													action.position.z += Utils.worldToPixel(entityData.offset.z)
+													console.log(entityData.offset)
+												}
 												if (entityData.action) {
 													if (entityData.action.rotation) {
 														action.rotation = entityData.action.rotation;
