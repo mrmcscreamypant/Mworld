@@ -139,27 +139,27 @@ namespace Renderer {
 				renderer.domElement.addEventListener('mousemove', (event: MouseEvent) => {
 					if (this.mode === Mode.Map) {
 						if (this.entityEditor.gizmo.control.dragging) {
+							this.selectionHelper.enabled = false;
+							this.selectionBox.enable = false;
 							return;
 						}
 						switch (taro.developerMode.activeButton) {
 							case 'cursor': {
-								if (this.selectionHelper.isDown) {
+								if (this.selectionHelper.isDown && this.selectionHelper.enabled) {
 									this.selectionBox.endPoint.set(
 										(event.clientX / window.innerWidth) * 2 - 1,
 										-(event.clientY / window.innerHeight) * 2 + 1,
 										0.5
 									);
-
+									this.entityEditor.selectEntity(null);
 									const allSelected = this.selectionBox.select();
-
-									allSelected.forEach((e) => {
-										if (e.entity instanceof InitEntity) {
-											this.entityEditor.showOrHideOutline(e.entity, true);
-											if (!this.entityEditor.selectedEntities.includes(e.entity)) {
-												this.entityEditor.selectEntity(e.entity, 'addOrRemove');
+									if (allSelected) {
+										allSelected.forEach((e) => {
+											if (e.entity instanceof InitEntity) {
+												this.entityEditor.showOrHideOutline(e.entity, true);
 											}
-										}
-									});
+										});
+									}
 								}
 								break;
 							}
@@ -217,6 +217,7 @@ namespace Renderer {
 											return;
 										}
 										this.selectionHelper.enabled = true;
+										this.selectionBox.enable = true;
 										this.selectionBox.startPoint.set(
 											(event.clientX / window.innerWidth) * 2 - 1,
 											-(event.clientY / window.innerHeight) * 2 + 1,
@@ -324,6 +325,7 @@ namespace Renderer {
 										break;
 									}
 									case 'add-entities': {
+										let uuid = taro.newIdHex();
 										this.entityEditor.activeEntity.forEach((entityData) => {
 											if (entityData) {
 												const worldPoint = this.raycastFloor(0);
@@ -376,10 +378,10 @@ namespace Renderer {
 													actionId: taro.newIdHex(),
 													wasCreated: true,
 												};
-												if(entityData.offset) {
+												if (entityData.offset) {
 													action.position.x += Utils.worldToPixel(entityData.offset.x)
-													action.position.y += Utils.worldToPixel(entityData.offset.y)
-													action.position.z += Utils.worldToPixel(entityData.offset.z)
+													action.position.z += Utils.worldToPixel(entityData.offset.y)
+													action.position.y += Utils.worldToPixel(entityData.offset.z)
 													console.log(entityData.offset)
 												}
 												if (entityData.action) {
@@ -424,6 +426,7 @@ namespace Renderer {
 																)
 																?.delete(false);
 														},
+														mergedUuid: uuid
 													},
 													true
 												);
@@ -481,13 +484,17 @@ namespace Renderer {
 				});
 
 				window.addEventListener('mouseup', (event: MouseEvent) => {
+					if (event.button === 1) {
+						return;
+					}
 					const developerMode = taro.developerMode;
 					this.voxelEditor.leftButtonDown = false;
 					if (
 						developerMode.active &&
 						developerMode.activeTab === 'map' &&
-						Utils.isRightButton(event.button) &&
-						developerMode.activeButton === 'cursor'
+						event.button === 0 &&
+						developerMode.activeButton === 'cursor' &&
+						!this.entityEditor.gizmo.control.dragging
 					) {
 						this.selectionBox.endPoint.set(
 							(event.clientX / window.innerWidth) * 2 - 1,
@@ -496,7 +503,16 @@ namespace Renderer {
 						);
 
 						const allSelected = this.selectionBox.select();
-						console.log(allSelected);
+						if (allSelected) {
+							allSelected.forEach((e) => {
+								if (e.entity instanceof InitEntity) {
+									this.entityEditor.showOrHideOutline(e.entity, true);
+									if (!this.entityEditor.selectedEntities.includes(e.entity)) {
+										this.entityEditor.selectEntity(e.entity, 'addOrRemove');
+									}
+								}
+							});
+						}
 					}
 					if (developerMode.regionTool) {
 						developerMode.regionTool = false;
@@ -771,9 +787,9 @@ namespace Renderer {
 				});
 			}
 
-			private onEnterEntitiesMode() {}
+			private onEnterEntitiesMode() { }
 
-			private onExitEntitiesMode() {}
+			private onExitEntitiesMode() { }
 
 			private showEntities() {
 				this.setEntitiesVisible(true);

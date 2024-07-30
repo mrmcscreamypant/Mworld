@@ -99,7 +99,6 @@ namespace Renderer {
 					}
 					if (event.key === 'c' && event.ctrlKey && this.selectedEntities.some((e) => e instanceof InitEntity)) {
 						setTimeout(() => {
-							console.log(this.selectedEntities);
 							this.activeEntity = this.selectedEntities
 								.filter((e) => e instanceof InitEntity)
 								.map((e: InitEntity) => {
@@ -110,11 +109,10 @@ namespace Renderer {
 										entityType: action.entityType,
 										action: action,
 										is3DObject: e.isObject3D,
-										offset: e.position,
+										offset: e.position.clone(),
 									};
 								})
 								.filter((e) => e !== null);
-							console.log(this.activeEntity);
 							this.selectEntity(null);
 							this.activatePlacement(true);
 							this.updatePreview();
@@ -320,9 +318,16 @@ namespace Renderer {
 					}
 				}
 			}
+
 			selectEntity(entity: InitEntity | Region, mode: 'addOrRemove' | 'select' = 'select'): void {
 				const renderer = Renderer.Three.instance();
 				if (entity === null) {
+					this.selectedEntities.forEach(e => {
+						console.log(e.parent)
+						Utils.removeFromParentAndRecalcTransform(e)
+					})
+					console.log(this.selectedGroup.children)
+					this.selectedGroup.position.set(0, 0, 0)
 					this.selectedEntities = [];
 					this.gizmo.control.detach();
 					renderer.initEntityLayer.children.forEach((e) => {

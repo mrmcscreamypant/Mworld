@@ -130,7 +130,9 @@ namespace Renderer {
 					this.action.wasEdited = true;
 					action.wasEdited = true;
 				}
-				this.offset.copy(offset);
+				if (offset) {
+					this.offset.copy(offset);
+				}
 				taro.network.send<any>('editInitEntity', { ...action, offset });
 			}
 
@@ -166,10 +168,10 @@ namespace Renderer {
 						this.mergedTemplate
 					);
 				}
+				this.debounceUpdateAction?.({ data: [action] });
 				if (action.wasCreated) {
 					return;
 				}
-				this.debounceUpdateAction?.({ data: [action] });
 				if (action.wasEdited) this.action.wasEdited = true;
 				if (
 					this.action.position &&
