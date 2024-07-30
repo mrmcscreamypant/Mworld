@@ -677,6 +677,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 							// ) {
 							// 	var angle = Math.atan2(tempBod.m_linearVelocity.y, tempBod.m_linearVelocity.x) + Math.PI / 2;
 							// } else {
+
 							var angle = this.engine === 'BOX2DWASM' ? self.recordLeak(tempBod.getAngle()) : tempBod.getAngle();
 							// }
 
@@ -757,9 +758,14 @@ var PhysicsComponent = TaroEventingClass.extend({
 										// as the client's position isn't as reliable. for the next 3s, the client's position will be dictated by the server stream
 										if (now - clientStreamReceivedAt < 200 && now - player.tabBecameActiveAt > 1000) {
 											let clientStreamedPosition = entity.clientStreamedKeyFrame[1];
-											x += (clientStreamedPosition[0] - x) / 3;
-											y += (clientStreamedPosition[1] - y) / 3;
+											x += clientStreamedPosition[0] - x;
+											y += clientStreamedPosition[1] - y;
 											angle = clientStreamedPosition[2];
+
+											if (!isNaN(clientStreamedPosition[3]) && !isNaN(clientStreamedPosition[4])) {
+												// console.log(clientStreamedPosition[3], clientStreamedPosition[4]);
+												entity.setLinearVelocity(clientStreamedPosition[3], clientStreamedPosition[4]);
+											}
 										}
 									}
 								} else if (taro.isClient) {
@@ -814,14 +820,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 										entity.prevKeyFrame = entity.nextKeyFrame;
 										entity.nextKeyFrame = [taro._currentTime + taro.client.renderBuffer, [x, y, angle]];
-
-										// keep track of units' position history for CSP reconciliation
-										if (entity == taro.client.selectedUnit) {
-											entity.posHistory.push([taro._currentTime, [x, y, angle]]);
-											if (entity.posHistory.length > taro._physicsTickRate) {
-												entity.posHistory.shift();
-											}
-										}
 									} else {
 										// update server-streamed entities' body position
 										// for items, client-side physics body is updated by setting entity.nextKeyFrame in item._behaviour()
@@ -844,6 +842,18 @@ var PhysicsComponent = TaroEventingClass.extend({
 									) {
 										// console.log("is moving", entity.prevKeyFrame[1][0], entity.nextKeyFrame[1][0], entity.prevKeyFrame[1][1], entity.nextKeyFrame[1][1], entity.prevKeyFrame[1][2], entity.nextKeyFrame[1][2])
 										entity.isTransforming(true);
+									}
+								}
+
+								// keep track of units' position history for CSP reconciliation
+								if (
+									entity._category == 'unit' &&
+									((taro.isClient && entity == taro.client.selectedUnit) ||
+										(taro.isServer && entity._stats.controls?.cspMode == 2))
+								) {
+									entity.posHistory.push([taro._currentTime, [x, y, angle]]);
+									if (entity.posHistory.length > taro._physicsTickRate) {
+										entity.posHistory.shift();
 									}
 								}
 							}

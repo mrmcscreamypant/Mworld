@@ -362,7 +362,7 @@ var ControlComponent = TaroEntity.extend({
 				var now = Date.now();
 
 				// check if sending player input is due (every 100ms)
-				if (now - self.lastInputSent > 66) {
+				if (now - self.lastInputSent > 100) {
 					self.sendMobileInput = true;
 					self.sendMouseMovement = true;
 					self.lastInputSent = now;
@@ -373,7 +373,14 @@ var ControlComponent = TaroEntity.extend({
 						if (now - self.tabBecameActiveAt < 1000) {
 							return;
 						}
-						taro.network.send('playerUnitMoved', [unit._translate.x, unit._translate.y, unit._rotate.z]);
+						let velocity = unit.body?.getLinearVelocity();
+						taro.network.send('playerUnitMoved', [
+							parseFloat(unit._translate.x).toFixed(2),
+							parseFloat(unit._translate.y).toFixed(2),
+							parseFloat(unit._rotate.z).toFixed(4),
+							velocity?.get_x()?.toFixed(2),
+							velocity?.get_y()?.toFixed(2),
+						]);
 					}
 				}
 
