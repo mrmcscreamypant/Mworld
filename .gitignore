@@ -152,6 +152,9 @@ src/utils/Colors.js.map
 src/helpers/merge-game-json.js
 src/helpers/merge-game-json.js.map
 
+src/helpers/tiers.js
+src/helpers/tiers.js.map
+
 engine/components/physics/*.js
 engine/components/physics/*.js.map
 src/utils/*.js

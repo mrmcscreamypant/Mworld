@@ -520,6 +520,8 @@ var Server = TaroClass.extend({
 			}
 
 			taro.mergeGameJson = mergeGameJson;
+			taro.tierFeaturesToggle = tierFeaturesToggle;
+
 			promise
 				.then((game) => {
 					if (game?.gameJson && game?.worldJson) {
