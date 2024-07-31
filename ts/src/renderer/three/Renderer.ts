@@ -1066,7 +1066,7 @@ namespace Renderer {
 
 				this.entityManager.update(dt);
 				this.particleSystem.update(dt, time, this.camera.instance);
-				this.camera.update();
+				this.camera.update(dt);
 				this.voxelEditor.update();
 				this.initEntityLayer.children.forEach((child) => {
 					if (child instanceof InitEntity) {
