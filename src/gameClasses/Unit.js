@@ -2281,8 +2281,12 @@ var Unit = TaroEntityPhysics.extend({
 					self.ai.targetPosition = undefined;
 					self.ai.targetUnitId = undefined;
 
-					// ignore client-side movement input if cspMode is 2 (client-authoritative), this unit's position is now dictated by the position streamed by its owner
-					if (taro.isClient || this._stats.controls?.cspMode != 2) {
+					// ignore client-side movement input if cspMode is 2 (client-authoritative),
+					// this unit's position is now dictated by the position streamed by its owner
+					if (
+						!taro.game.data.defaultData.clientPhysicsEngine ||
+						!(taro.isServer && self._stats.controls?.cspMode == 2)
+					) {
 						// moving diagonally should reduce speed
 						if (self.direction.x != 0 && self.direction.y != 0) {
 							speed = speed / 1.41421356237;
