@@ -1,6 +1,7 @@
 interface CommandEmitterProps {
 	func: () => void;
 	undo: () => void;
+	allFinished?: () => void;
 	cache?: any;
 	mergedUuid?: string;
 }
@@ -70,6 +71,8 @@ class CommandController implements CommandControllerProps {
 			this.commands[this.nowInsertIndex].undo();
 			if (this.commands[this.nowInsertIndex - 1]?.mergedUuid !== undefined && this.commands[this.nowInsertIndex - 1].mergedUuid === this.commands[this.nowInsertIndex].mergedUuid) {
 				this.undo();
+			} else {
+				this.commands[this.nowInsertIndex].allFinished?.();
 			}
 		}
 	}
@@ -78,9 +81,10 @@ class CommandController implements CommandControllerProps {
 		if (this.commands[this.nowInsertIndex]) {
 			this.commands[this.nowInsertIndex].func();
 			this.nowInsertIndex += 1;
-			if (this.commands[this.nowInsertIndex + 1]?.mergedUuid !== undefined && this.commands[this.nowInsertIndex + 1].mergedUuid === this.commands[this.nowInsertIndex].mergedUuid) {
+			if (this.commands[this.nowInsertIndex]?.mergedUuid !== undefined && this.commands[this.nowInsertIndex - 1].mergedUuid === this.commands[this.nowInsertIndex].mergedUuid) {
 				this.redo();
 			}
+			this.commands[this.nowInsertIndex - 1].allFinished?.();
 		}
 	}
 }

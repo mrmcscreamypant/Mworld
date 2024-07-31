@@ -137,6 +137,9 @@ namespace Renderer {
 				let height: number;
 
 				renderer.domElement.addEventListener('mousemove', (event: MouseEvent) => {
+					if (event.button === 1) {
+						return;
+					}
 					if (this.mode === Mode.Map) {
 						if (this.entityEditor.gizmo.control.dragging) {
 							this.selectionHelper.enabled = false;
@@ -151,9 +154,9 @@ namespace Renderer {
 										-(event.clientY / window.innerHeight) * 2 + 1,
 										0.5
 									);
-									this.entityEditor.selectEntity(null);
 									const allSelected = this.selectionBox.select();
 									if (allSelected) {
+										if (allSelected.filter((e) => e.entity instanceof InitEntity).length > 0) { this.entityEditor.selectEntity(null); }
 										allSelected.forEach((e) => {
 											if (e.entity instanceof InitEntity) {
 												this.entityEditor.showOrHideOutline(e.entity, true);
@@ -188,8 +191,18 @@ namespace Renderer {
 				let lastTime = 0;
 
 				renderer.domElement.addEventListener('mousedown', (event: MouseEvent) => {
+					if (event.button === 1) {
+						return;
+					}
 					if (this.mode === Mode.Map) {
 						const developerMode = taro.developerMode;
+						if (developerMode.activeButton !== 'cursor') {
+							this.selectionHelper.enabled = false;
+							this.selectionBox.enable = false;
+						} else {
+							this.selectionHelper.enabled = true;
+							this.selectionBox.enable = true;
+						}
 						if (developerMode.regionTool) {
 							const worldPoint = this.camera.getWorldPoint(this.pointer);
 							this.regionDrawStart = {
@@ -213,7 +226,6 @@ namespace Renderer {
 								switch (developerMode.activeButton) {
 									case 'cursor': {
 										if (this.entityEditor.gizmo.control.dragging) {
-											this.selectionHelper.enabled = false;
 											return;
 										}
 										this.selectionHelper.enabled = true;
@@ -240,7 +252,7 @@ namespace Renderer {
 												initEntity = (parent as Renderer.Three.Model & { entity: InitEntity }).entity;
 											}
 											if (initEntity) {
-												this.entityEditor.selectEntity(initEntity, event.shiftKey ? 'addOrRemove' : 'select');
+												this.entityEditor.selectEntity(initEntity, event.ctrlKey ? 'addOrRemove' : 'select');
 												taro.client.emit(
 													'block-scale',
 													!(initEntity.action.scale || initEntity.action.height || initEntity.action.width)
@@ -382,7 +394,6 @@ namespace Renderer {
 													action.position.x += Utils.worldToPixel(entityData.offset.x)
 													action.position.z += Utils.worldToPixel(entityData.offset.y)
 													action.position.y += Utils.worldToPixel(entityData.offset.z)
-													console.log(entityData.offset)
 												}
 												if (entityData.action) {
 													if (entityData.action.rotation) {
@@ -708,6 +719,9 @@ namespace Renderer {
 						else {
 							this.showRepublishWarning = true;
 						}
+					}
+					if (inGameEditor && inGameEditor.updateAction && !window.isStandalone) {
+						inGameEditor.updateAction(action);
 					}
 				}
 			}

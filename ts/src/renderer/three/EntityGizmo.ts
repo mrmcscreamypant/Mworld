@@ -4,7 +4,7 @@ namespace Renderer {
 			currentCamera: THREE.PerspectiveCamera | THREE.OrthographicCamera;
 			control: TransformControls;
 			dimension: '2d' | '3d' = '3d';
-			prev_rotation: number;
+			prevRotation: number;
 			undoAction: Record<string, any> = {};
 			constructor() {
 				this.init();
@@ -73,7 +73,6 @@ namespace Renderer {
 									function: 'vector3',
 								};
 							} else if (control.object.body instanceof Model) {
-								console.log(control.object.body.getSize());
 								editedAction['scale'] = {
 									x: Utils.worldToPixel(control.object.body.getSize().x / control.object.defaultWidth),
 									y: Utils.worldToPixel(control.object.body.getSize().z / control.object.defaultHeight),
@@ -112,10 +111,25 @@ namespace Renderer {
 				control.matrixAutoUpdate = false;
 				this.undoAction = {};
 				control.addEventListener(
+					'nonePosition-changed',
+					function (event) {
+						if ((control.object as any)?.tag === Three.EntityEditor.TAG) {
+							control.object.children.forEach((e: THREE.Object3D) => {
+								// FIXME: handle the rotation and scale
+								// e.rotation.z += control.object.rotation.z
+							})
+							control.object.rotation.set(0, 0, 0);
+							control.object.scale.set(1, 1, 1);
+							control.reset();
+						}
+					}
+				)
+				control.addEventListener(
 					'dragging-changed',
 					function (event) {
 						if (event.value) {
-							this.prev_rotation = control.object.rotation.y;
+							this.prevRotation = control.object.rotation.y;
+							this.prevSelectedGroupPosition = renderer.entityEditor.selectedGroup.position.clone();
 						}
 						orbit.enabled = !event.value;
 						if (!event.value) {
@@ -126,12 +140,16 @@ namespace Renderer {
 								if (editedAction && e instanceof InitEntity) {
 									const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction[idx]));
 									const nowEntity = e;
+									const nowSelectedGroupPosition = renderer.entityEditor.selectedGroup.position.clone();
+									const prevSelectedGroupPosition = this.prevSelectedGroupPosition.clone();
 									renderer.voxelEditor.commandController.addCommand(
 										{
 											func: () => {
+												renderer.entityEditor.selectedGroup.position.copy(nowSelectedGroupPosition);
 												(nowEntity as InitEntity).edit(editedAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
 											},
 											undo: () => {
+												renderer.entityEditor.selectedGroup.position.copy(prevSelectedGroupPosition);
 												(nowEntity as InitEntity).edit(nowUndoAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
 											},
 											mergedUuid: uuid,
@@ -161,7 +179,7 @@ namespace Renderer {
 										true
 									);
 
-									this.undoAction = {};
+									this.undoAction = [];
 								}
 							})
 

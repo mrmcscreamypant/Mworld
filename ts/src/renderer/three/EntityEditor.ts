@@ -122,7 +122,9 @@ namespace Renderer {
 					if (event.key === 'a' && event.ctrlKey) {
 						this.selectedEntities = [];
 						renderer.initEntityLayer.children.slice().forEach((e) => {
-							this.selectEntity(e as any, 'addOrRemove');
+							if (e instanceof Three.InitEntity) {
+								this.selectEntity(e as any, 'addOrRemove');
+							}
 						});
 					}
 					if (event.key === 'G' && event.shiftKey) {
@@ -158,7 +160,6 @@ namespace Renderer {
 				}
 
 				this.activeEntity.forEach((entityData) => {
-					console.log(entityData);
 					if (entityData !== null) {
 						const entity =
 							taro.game.data[entityData.entityType] && taro.game.data[entityData.entityType][entityData.id];
@@ -270,6 +271,7 @@ namespace Renderer {
 						this.selectedGroup.add(e);
 					}
 				});
+				this.selectedGroup.position.copy(positions.center);
 				return positions;
 			}
 
@@ -323,10 +325,8 @@ namespace Renderer {
 				const renderer = Renderer.Three.instance();
 				if (entity === null) {
 					this.selectedEntities.forEach(e => {
-						console.log(e.parent)
 						Utils.removeFromParentAndRecalcTransform(e)
 					})
-					console.log(this.selectedGroup.children)
 					this.selectedGroup.position.set(0, 0, 0)
 					this.selectedEntities = [];
 					this.gizmo.control.detach();
@@ -340,16 +340,20 @@ namespace Renderer {
 				switch (mode) {
 					case 'select': {
 						if ((entity.parent as any)?.tag !== Three.EntityEditor.TAG) {
+							this.selectedEntities.forEach((e) => {
+								Utils.removeFromParentAndRecalcTransform(e);
+								this.showOrHideOutline(e, false);
+							});
 							this.selectedEntities = [entity];
 							this.gizmo.attach(entity);
 							this.showOrHideOutline(entity, true);
 						} else {
-							this.selectedEntities = entity.parent.children as any;
-							this.selectedGroup = entity.parent as any;
-							this.selectedEntities.forEach((e) => {
-								this.showOrHideOutline(e, true);
-							});
-							this.gizmo.attach(entity.parent);
+							// this.selectedEntities = entity.parent.children as any;
+							// this.selectedGroup = entity.parent as any;
+							// this.selectedEntities.forEach((e) => {
+							// 	this.showOrHideOutline(e, true);
+							// });
+							// this.gizmo.attach(entity.parent);
 						}
 						break;
 					}
@@ -359,6 +363,7 @@ namespace Renderer {
 							this.selectedEntities.push(entity);
 						} else {
 							remove = true;
+							entity.position.add(this.selectedGroup.position);
 							this.selectedEntities = this.selectedEntities.filter((e) => e.uuid !== entity.uuid);
 							this.selectedGroup.remove(entity);
 							renderer.initEntityLayer.add(entity);
@@ -366,13 +371,6 @@ namespace Renderer {
 						const minMaxPos = this.calcMinMaxPosition();
 						if (remove) {
 							this.showOrHideOutline(entity, false);
-							entity.position.add(this.selectedGroup.position);
-							entity.scale.multiply(this.selectedGroup.scale);
-							entity.rotation.set(
-								this.selectedGroup.rotation.x + entity.rotation.x,
-								this.selectedGroup.rotation.y + entity.rotation.y,
-								this.selectedGroup.rotation.z + entity.rotation.z
-							);
 						}
 						if (this.selectedEntities.length === 0) {
 							this.gizmo.control.detach();
@@ -384,15 +382,22 @@ namespace Renderer {
 						break;
 					}
 				}
+				setTimeout(() => {
+					if (this.selectedEntities.length > 1) {
+						taro.client.emit('block-scale', true)
+						taro.client.emit('block-rotation', true)
+					}
+				})
 			}
 
 			deleteEntity(): void {
+				const uuid = taro.newIdHex();
 				this.selectedEntities.forEach((e) => {
 					if ((e as any).tag === Three.EntityEditor.TAG) {
 						e.children.forEach((e_child: any) => e_child.delete());
 					}
 					if (e instanceof InitEntity) {
-						e.delete();
+						e.delete(true, uuid);
 					} else {
 						if (e instanceof Region) {
 							const data = {
@@ -424,6 +429,7 @@ namespace Renderer {
 												create: true,
 											});
 									},
+									mergedUuid: uuid,
 								},
 								true
 							);

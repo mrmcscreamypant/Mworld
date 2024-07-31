@@ -287,7 +287,7 @@ namespace Renderer {
 				this.visible = false;
 			}
 
-			delete(history = true): void {
+			delete(history = true, uuid = undefined): void {
 				let editedAction: ActionData = { actionId: this.action.actionId, wasDeleted: true };
 				const nowDeleteAction = JSON.stringify(editedAction);
 				const nowAction = JSON.stringify(this.action);
@@ -325,6 +325,7 @@ namespace Renderer {
 								].cache = { newId, oldId };
 							}, 0);
 						},
+						mergedUuid: uuid
 					},
 					history
 				);

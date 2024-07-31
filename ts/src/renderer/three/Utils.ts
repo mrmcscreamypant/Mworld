@@ -290,17 +290,11 @@ namespace Renderer {
 				if (o.parent && (o.parent as any).tag === Three.EntityEditor.TAG) {
 					const renderer = Renderer.Three.instance();
 					const parent_position = o.parent.position.clone();
-					const parent_rotation = o.parent.rotation.clone();
 					const parent_scale = o.parent.scale.clone();
 					o.removeFromParent();
 					renderer.initEntityLayer.add(o);
-					// FIXME: handle it when dragging
 					o.position.divide(parent_scale);
 					o.position.add(parent_position);
-					o.scale.divide(parent_scale);
-					o.rotation.x += parent_rotation.x;
-					o.rotation.y += parent_rotation.y;
-					o.rotation.z += parent_rotation.z;
 				}
 			}
 		}
