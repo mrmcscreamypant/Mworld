@@ -42,7 +42,7 @@ var TaroEngine = TaroEntity.extend({
 					},
 					iOS: function () {
 						return (
-							/iPad|iPhone|iPod/.test(navigator.platform) ||
+							navigator.userAgent.match(/iPhone|iPad|iPod/i) ||
 							(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 						);
 					},
@@ -66,6 +66,7 @@ var TaroEngine = TaroEntity.extend({
 						);
 					},
 				};
+
 				return isMobile.any() != null;
 			})();
 
