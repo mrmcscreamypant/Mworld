@@ -2921,7 +2921,7 @@ var ActionComponent = TaroEntity.extend({
 					/* Ads */
 
 					case 'playAdForEveryone':
-						if (tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].ads) {
+						if (taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].ads) {
 							if (!taro.ad.lastPlayedAd || Date.now() - taro.ad.lastPlayedAd >= 60000) {
 								taro.ad.play({ type: 'preroll' });
 								taro.ad.lastPlayedAd = Date.now();
@@ -2932,7 +2932,7 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'playAdForPlayer':
-						if (action.entity && tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].ads) {
+						if (action.entity && taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].ads) {
 							var unit = self._script.param.getValue(action.entity, vars);
 							if (unit && unit._stats && unit._stats.clientId) {
 								if (!taro.ad.lastPlayedAd || Date.now() - taro.ad.lastPlayedAd >= 60000) {
@@ -4386,7 +4386,7 @@ var ActionComponent = TaroEntity.extend({
 							entityId &&
 							player &&
 							shopId &&
-							tierFeaturesToggle[taro.game.data?.defaultData?.tier || '1'].coinItemPurchase
+							taro.tierFeaturesToggle[taro.game.data?.defaultData?.tier || '1'].coinItemPurchase
 						) {
 							player._stats.lastOpenedShop = action.shop;
 							taro.network.send(
@@ -4404,7 +4404,7 @@ var ActionComponent = TaroEntity.extend({
 
 					case 'openSkinShop':
 						var player = self._script.param.getValue(action.player, vars);
-						if (player && tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].skinShop) {
+						if (player && taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].skinShop) {
 							taro.network.send(
 								'ui',
 								{
@@ -4418,7 +4418,7 @@ var ActionComponent = TaroEntity.extend({
 
 					case 'openSkinSubmissionPage':
 						var player = self._script.param.getValue(action.player, vars);
-						if (player && tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].skinShop) {
+						if (player && taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].skinShop) {
 							taro.network.send(
 								'ui',
 								{

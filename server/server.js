@@ -882,7 +882,7 @@ var Server = TaroClass.extend({
 	consumeCoinFromUser: function (player, coins, boughtItemId) {
 		var self = this;
 		coins = Math.floor(coins);
-		if (player && coins && taro.game.data.defaultData.tier >= 2) {
+		if (player && coins && taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].coinItemPurchase) {
 			if (taro.game.data.defaultData.owner != player._stats.userId) {
 				if (!self.coinUpdate[player._stats.clientId]) {
 					self.coinUpdate[player._stats.clientId] = {
