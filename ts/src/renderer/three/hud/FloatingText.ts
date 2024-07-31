@@ -5,7 +5,6 @@ namespace Renderer {
 				super();
 
 				const label = new Label({ x, y, z, text, color, renderOnTop: true });
-				label.matrixAutoUpdate = true;
 				const xOffsetInLabelWidthUnits = offsetX / label.width;
 				const yOffsetInLabelHeightUnits = offsetY / label.height;
 				label.setCenter(xOffsetInLabelWidthUnits, yOffsetInLabelHeightUnits);
