@@ -153,7 +153,6 @@ namespace Renderer {
 						} else {
 							entity.body.rotation.y = -data.rotation;
 						}
-						entity.updateMatrix();
 					},
 					this
 				);
@@ -169,7 +168,6 @@ namespace Renderer {
 					entity.body.root.rotation.x = Utils.deg2rad(x);
 					entity.body.root.rotation.y = Utils.deg2rad(z);
 					entity.body.root.rotation.z = Utils.deg2rad(y);
-					entity.updateMatrix();
 				});
 
 				taroEntity.on(
@@ -182,7 +180,6 @@ namespace Renderer {
 							return;
 						}
 						entity.setScale(width, height, depth);
-						entity.updateMatrix();
 					},
 					this
 				);
