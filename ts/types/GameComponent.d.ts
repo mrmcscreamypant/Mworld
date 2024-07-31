@@ -59,6 +59,7 @@ interface ActionData {
 		variableName: string;
 		function: string;
 	};
+	offset?: THREE.Vector3;
 	disabled?: boolean;
 	unitType?: string;
 	itemType?: string;
