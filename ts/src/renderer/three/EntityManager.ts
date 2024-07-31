@@ -95,6 +95,7 @@ namespace Renderer {
 
 				if (this.items.includes(entity as Item)) {
 					this.items.splice(this.items.indexOf(entity as Item, 0), 1);
+					this.unownedItems.delete(entity.taroId);
 				}
 
 				if (this.projectiles.includes(entity as Unit)) {
@@ -109,12 +110,6 @@ namespace Renderer {
 			update(dt: number) {
 				for (const sprite of this.animatedSprites) {
 					sprite.update(dt);
-				}
-
-				if (this.unownedItems.size > 0) {
-					for (const unit of this.units) {
-						this.maybeAddUnownedItemsToUnit(unit);
-					}
 				}
 			}
 

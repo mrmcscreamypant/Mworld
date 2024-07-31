@@ -27,7 +27,6 @@ namespace Renderer {
 			constructor(params: LabelParams) {
 				const config = { ...defaultConfig, ...params };
 				super(config.x, config.y, config.z);
-				this.matrixAutoUpdate = false;
 
 				this.update(config);
 			}

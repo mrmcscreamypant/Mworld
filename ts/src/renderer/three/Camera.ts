@@ -351,7 +351,8 @@ namespace Renderer {
 				if (this.target && !this.isEditorMode) {
 					const targetWorldPos = new THREE.Vector3();
 					this.target.getWorldPosition(targetWorldPos);
-					targetWorldPos.add(this.offset);
+					const angle = this.controls.getAzimuthalAngle();
+					targetWorldPos.add(this.offset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle));
 					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z, true);
 				}
 
@@ -368,13 +369,20 @@ namespace Renderer {
 					const top = this.bounds.y + viewHalfHeight;
 					const bottom = this.bounds.y + this.bounds.height - viewHalfHeight;
 
+					const boundsHalfWidth = this.bounds.width / 2;
+					const boundsHalfHeight = this.bounds.height / 2;
+
 					let x = this.controls.target.x;
-					if (x < left) x = left;
-					else if (x > right) x = right;
+					if (viewHalfWidth < boundsHalfWidth) {
+						if (x < left) x = left;
+						else if (x > right) x = right;
+					}
 
 					let z = this.controls.target.z;
-					if (z < top) z = top;
-					else if (z > bottom) z = bottom;
+					if (viewHalfHeight < boundsHalfHeight) {
+						if (z < top) z = top;
+						else if (z > bottom) z = bottom;
+					}
 
 					this.setPosition(x, this.controls.target.y, z);
 				}
@@ -597,22 +605,6 @@ namespace Renderer {
 						this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z);
 					}
 				}
-			}
-
-			isVisible(unit: Unit, objects: THREE.Object3D) {
-				unit.getWorldPosition(this.tempVec3);
-
-				const entityScreenPosition = this.tempVec3.clone().project(this.instance);
-				this.tempVec2.x = entityScreenPosition.x;
-				this.tempVec2.y = entityScreenPosition.y;
-
-				const dist = this.tempVec3.distanceTo(this.instance.position);
-				this.raycaster.setFromCamera(this.tempVec2, this.instance);
-				this.raycaster.far = dist * 0.9; //temporary fix for unit HUDs hidind with map bound camera when near map border
-				this.raycaster.near = this.instance.near;
-
-				const intersects = this.raycaster.intersectObject(objects);
-				return intersects.length === 0;
 			}
 
 			private switchToOrthographicCamera() {

@@ -83,7 +83,7 @@ var TaroChatServer = {
 				// mute spammers
 				sender._stats.banChat = true;
 				(msg.text = 'You have been muted for spamming.'), taro.network.send('taroChatMsg', msg);
-				taro.workerComponent.banChat({
+				taro.workerComponent?.banChat({
 					gameId: gameData._id,
 					userId: sender._stats.userId,
 				});
@@ -135,6 +135,11 @@ var TaroChatServer = {
 
 	// added by Jaeyun to prevent spammers
 	isSpamming: function (from, message) {
+
+		// if from is undefined, it means the message is from the server
+		if (from == undefined) {
+			return false;
+		}
 		now = new Date();
 
 		// if this is the user's first message. init

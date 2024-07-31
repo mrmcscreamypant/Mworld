@@ -110,12 +110,12 @@ const box2dwasmWrapper: PhysicsDistProps = {
 				if (!component.renderer) {
 					const scale = taro.physics._scaleRatio;
 					let debugDrawer;
-					if (taro.game.data.defaultRenderer !== '3d') {
+					if (taro.game.data.defaultData.defaultRenderer !== '3d') {
 						const canvas = taro.renderer.scene.getScene('Game');
 						ctx = canvas.add.graphics().setDepth(9999);
 						ctx.setScale(scale);
 						component.ctx = ctx;
-						debugDrawer = new Box2dDebugDrawPhaser(box2D, new Box2dHelpers(box2D), ctx, scale).constructJSDraw();
+						debugDrawer = new Box2dDebugDrawerPhaser(box2D, new Box2dHelpers(box2D), ctx, scale).constructJSDraw();
 						debugDrawer.SetFlags(flags);
 						component._world.SetDebugDraw(debugDrawer);
 					} else {
@@ -228,13 +228,14 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			return;
 		}
 
+		// FIXME
 		// do not spawn sensors for those entities without ai
-		if (body.fixtures[0].isSensor) {
-			const ownerEntity = taro.$(entity.ownerUnitId);
-			if (ownerEntity && ownerEntity.ai === undefined && ownerEntity._category !== 'region') {
-				return;
-			}
-		}
+		// if (body.fixtures[0].isSensor) {
+		// 	const ownerEntity = taro.$(entity.ownerUnitId);
+		// 	if (ownerEntity && ownerEntity._category !== 'region' && ownerEntity?._stats?.ai?.enabled === false && ownerEntity?._stats?.ai?.forceToCreateSensor !== true) {
+		// 		return;
+		// 	}
+		// }
 
 		// if there's already a body, destroy it first
 		if (entity.body) {

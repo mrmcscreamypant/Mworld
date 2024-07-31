@@ -130,7 +130,7 @@ namespace Renderer {
 				} else if (entity.body instanceof Model) {
 					//FIXME: when the 3d physics is ready, remove this
 					taroEntity.on('temp_translation_y', (positionY) => {
-						entity.position.y = Utils.pixelToWorld(positionY);
+						entity.body.root.position.y = Utils.pixelToWorld(positionY);
 					});
 				}
 
@@ -159,6 +159,13 @@ namespace Renderer {
 				);
 
 				taroEntity.on('rotate', (x: number, y: number, z: number) => {
+					if (
+						entity.body.root.rotation.x === Utils.deg2rad(x) &&
+						entity.body.root.rotation.y === Utils.deg2rad(z) &&
+						entity.body.root.rotation.z === Utils.deg2rad(y)
+					) {
+						return;
+					}
 					entity.body.root.rotation.x = Utils.deg2rad(x);
 					entity.body.root.rotation.y = Utils.deg2rad(z);
 					entity.body.root.rotation.z = Utils.deg2rad(y);
@@ -171,6 +178,9 @@ namespace Renderer {
 						const width = Utils.pixelToWorld(data.width || 0);
 						const height = Utils.pixelToWorld(data.height || 0);
 						const depth = Utils.pixelToWorld(entity.taroEntity._stats?.currentBody?.depth || 0);
+						if (data.width === width && data.height === height) {
+							return;
+						}
 						entity.setScale(width, height, depth);
 						entity.updateMatrix();
 					},
@@ -197,34 +207,45 @@ namespace Renderer {
 				});
 
 				taroEntity.on('update-texture', (data) => {
-					if (!(entity.body instanceof AnimatedSprite)) return;
-
 					const key = taroEntity._stats.cellSheet.url;
-					const cols = taroEntity._stats.cellSheet.columnCount || 1;
-					const rows = taroEntity._stats.cellSheet.rowCount || 1;
-					const tex = gAssetManager.getTextureWithoutPlaceholder(key);
 
-					const replaceTexture = (spriteSheet: TextureSheet) => {
-						(entity.body as AnimatedSprite).setTextureSheet(spriteSheet);
-						const bounds = taroEntity._bounds2d;
-						entity.setScale(Utils.pixelToWorld(bounds.x), Utils.pixelToWorld(bounds.y), 1);
-					};
+					if (entity.body instanceof Model) {
+						const model = gAssetManager.getModelWithoutPlaceholder(key);
 
-					if (tex) {
-						const frameWidth = tex.image.width / cols;
-						const frameHeight = tex.image.height / rows;
-						const sheet = new TextureSheet(key, tex.clone(), frameWidth, frameHeight);
-						replaceTexture(sheet);
-					} else {
-						const animationMgr = AnimationManager.instance();
-						gAssetManager.load([{ name: key, type: 'texture', src: Utils.patchAssetUrl(key) }], null, () => {
-							const tex = gAssetManager.getTexture(key);
-							animationMgr.createAnimationsFromTaroData(key, taroEntity._stats as unknown as EntityData);
+						if (model) {
+							(entity.body as Model).setModel(model);
+						} else {
+							gAssetManager.load([{ name: key, type: 'gltf', src: Utils.patchAssetUrl(key) }], null, () => {
+								(entity.body as Model).setModel(gAssetManager.getModel(key));
+							});
+						}
+					} else if (entity.body instanceof Sprite) {
+						const cols = taroEntity._stats.cellSheet.columnCount || 1;
+						const rows = taroEntity._stats.cellSheet.rowCount || 1;
+						const tex = gAssetManager.getTextureWithoutPlaceholder(key);
+
+						const replaceTexture = (spriteSheet: TextureSheet) => {
+							(entity.body as AnimatedSprite).setTextureSheet(spriteSheet);
+							const bounds = taroEntity._bounds2d;
+							entity.setScale(Utils.pixelToWorld(bounds.x), Utils.pixelToWorld(bounds.y), 1);
+						};
+
+						if (tex) {
 							const frameWidth = tex.image.width / cols;
 							const frameHeight = tex.image.height / rows;
 							const sheet = new TextureSheet(key, tex.clone(), frameWidth, frameHeight);
 							replaceTexture(sheet);
-						});
+						} else {
+							const animationMgr = AnimationManager.instance();
+							gAssetManager.load([{ name: key, type: 'texture', src: Utils.patchAssetUrl(key) }], null, () => {
+								const tex = gAssetManager.getTexture(key);
+								animationMgr.createAnimationsFromTaroData(key, taroEntity._stats as unknown as EntityData);
+								const frameWidth = tex.image.width / cols;
+								const frameHeight = tex.image.height / rows;
+								const sheet = new TextureSheet(key, tex.clone(), frameWidth, frameHeight);
+								replaceTexture(sheet);
+							});
+						}
 					}
 				});
 

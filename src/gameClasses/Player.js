@@ -940,8 +940,14 @@ var Player = TaroEntity.extend({
 				$('.open-menu-button').show();
 			}
 
-			if (window.STATIC_EXPORT_ENABLED) {
-				window.PokiSDK?.gameplayStart();
+			if (!window.GAME_PLAY_STARTED) {
+				if (window.STATIC_EXPORT_ENABLED) {
+					window.PokiSDK?.gameplayStart();
+				}
+				if (window.IS_CRAZY_GAMES_ENV) {
+					window.CrazyGames.SDK.game.gameplayStart();
+				}
+				window.GAME_PLAY_STARTED = true;
 			}
 
 			window.reactApp && window.reactApp.playerJoinedGame && window.reactApp.playerJoinedGame();

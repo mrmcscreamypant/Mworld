@@ -21,8 +21,23 @@ var ClientNetworkEvents = {
 				var stats = data[entityId];
 
 				for (key in stats) {
-					var value = stats[key];
-					taro.client.entityUpdateQueue[entityId][key] = value; // overwrite the value if the same key already exists
+					if (
+						[
+							'attributes',
+							'attributesMin',
+							'attributesMax',
+							'attributesRegenerateRate',
+							'variables',
+							'quests',
+						].includes(key)
+					) {
+						value = stats[key];
+						// without this, these keys will have their values overwritten by every subsequent stream data msg on this engine step
+						taro.client.entityUpdateQueue[entityId][key] = _.merge(taro.client.entityUpdateQueue[entityId][key], value);
+					} else {
+						value = stats[key];
+						taro.client.entityUpdateQueue[entityId][key] = value; // overwrite the value if the same key already exists
+					}
 				}
 			}
 		});
@@ -755,19 +770,70 @@ var ClientNetworkEvents = {
 	},
 
 	_handlePokiSwitch: function (data) {
-		window.PokiSDK?.gameplayStop(); 
-		window.PokiSDK?.commercialBreak();
-		
-		if (window.switchGameWrapper) {
-			window.switchGameWrapper(data);
+		if (window.GAME_PLAY_STARTED) {
+			window.PokiSDK?.gameplayStop();
+			window.GAME_PLAY_STARTED = false;
+
+			if (window.PokiSDK?.commercialBreak) {
+				window.PokiSDK?.commercialBreak(() => {
+					// you can pause any background music or other audio here
+					window.taro.network._io.disconnect('switching_map');
+					$('body').addClass('playing-ad');
+				}).then(() => {
+					console.log('Commercial break finished, proceeding to game');
+					// if the audio was paused you can resume it here (keep in mind that the function above to pause it might not always get called)
+					// continue your game here
+					$('body').removeClass('playing-ad');
+					if (window.switchGameWrapper) {
+						window.switchGameWrapper(data);
+					}
+				});
+			} else if (window.switchGameWrapper) {
+				window.switchGameWrapper(data);
+			}
 		}
 	},
 
 	_onSendPlayerToMap: function (data) {
 		if (data && data.type == 'sendPlayerToMap') {
+			// always stop music before sending user to another map
+			if (taro.sound.musicCurrentlyPlaying) {
+				taro.sound.stopMusic();
+			}
+
 			if (window.STATIC_EXPORT_ENABLED) {
 				taro.client._handlePokiSwitch(data);
 			} else {
+				if (window.IS_CRAZY_GAMES_ENV) {
+					if (window.GAME_PLAY_STARTED) {
+						window.CrazyGames.SDK.game.gameplayStop();
+						window.GAME_PLAY_STARTED = false;
+					}
+					// show ads when user travel from survival mode or survival portal to greyhold
+					if ((window.gameSlug === 'wQ9ZEoME5' || window.gameSlug === 'y1kYJHfzk') && data.gameSlug === 'WO8osQ6dD') {
+						const callbacks = {
+							adFinished: () => {
+								console.log('End midgame ad');
+								const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
+								window.location.href = mapUrl;
+							},
+							adError: (error) => {
+								console.log('Error midgame ad', error);
+								const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
+								window.location.href = mapUrl;
+							},
+							adStarted: () => {
+								console.log('Start midgame ad');
+							},
+						};
+
+						$('body').addClass('playing-ad');
+						window.CrazyGames.SDK.ad.requestAd('midgame', callbacks);
+						window.taro.network._io.disconnect('switching_map');
+						return;
+					}
+				}
+
 				const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
 				window.location.href = mapUrl;
 			}
@@ -779,6 +845,23 @@ var ClientNetworkEvents = {
 			if (window.STATIC_EXPORT_ENABLED) {
 				taro.client._handlePokiSwitch(data);
 			} else {
+				if (window.IS_CRAZY_GAMES_ENV) {
+					if (window.GAME_PLAY_STARTED) {
+						window.CrazyGames.SDK.game.gameplayStop();
+						window.GAME_PLAY_STARTED = false;
+					}
+
+					// show ads when user travel from survival mode or survival portal to greyhold
+					if ((window.gameSlug === 'wQ9ZEoME5' || window.gameSlug === 'y1kYJHfzk') && data.gameSlug === 'WO8osQ6dD') {
+						const callbacks = {
+							adFinished: () => console.log('End midgame ad'),
+							adError: (error) => console.log('Error midgame ad', error),
+							adStarted: () => console.log('Start midgame ad'),
+						};
+						window.CrazyGames.SDK.ad.requestAd('midgame', callbacks);
+					}
+				}
+
 				const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&${data.serverId ? '&serverId=' + data.serverId : ''}`;
 				window.location.href = mapUrl;
 			}
