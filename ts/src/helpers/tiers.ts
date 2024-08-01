@@ -5,11 +5,11 @@ interface TierFeatures {
 	skinShop?: boolean;
 	coinItemPurchase?: boolean;
 	ads?: boolean;
-	titleCardImage?: boolean;
+	coverImage?: boolean;
 	editPlayerData?: boolean;
 	postRequests?: boolean;
 	lobby?: boolean;
-	sellGameSubscriptions?: boolean;
+	gameSubscription?: boolean;
 	removeModdioBranding?: boolean; // todo
 	customLoadingScreen?: boolean; // todo
 	idleMode?: boolean;
@@ -22,7 +22,7 @@ const advancedTierPerms: TierFeatures = {
 	skinShop: true,
 	coinItemPurchase: true,
 	ads: true,
-	titleCardImage: true,
+	coverImage: true,
 	editPlayerData: true,
 	postRequests: true,
 	lobby: true,
@@ -30,7 +30,7 @@ const advancedTierPerms: TierFeatures = {
 
 const tier6Perms: TierFeatures = {
 	...advancedTierPerms,
-	sellGameSubscriptions: true,
+	gameSubscription: true,
 	idleMode: true,
 };
 
