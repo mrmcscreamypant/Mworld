@@ -4495,15 +4495,18 @@ var ActionComponent = TaroEntity.extend({
 
 					case 'sendDataFromServerToClient': {
 						if (taro.isServer) {
-							const player = self._script.param.getValue(action.player, vars);
+							const player = self._script.param.getValue(action.client, vars);
 							const data = self._script.param.getValue(action.data, vars);
 
 							if (player && player._stats.clientId) {
 								const clientId = player._stats.clientId;
-								taro.network.send('sendDataFromServer', {
-									data,
-									clientId,
-								});
+								taro.network.send(
+									'sendDataFromServer',
+									{
+										data,
+									},
+									clientId
+								);
 							}
 						}
 						break;
