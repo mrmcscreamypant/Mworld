@@ -7,6 +7,9 @@ var Sensor = TaroEntityPhysics.extend({
 		self.ownerUnitId = ownerUnit.id();
 		TaroEntityPhysics.prototype.init.call(this, {});
 		this.updateRadius(radius);
+		if (radius === null) {
+			radius = 0;
+		}
 		if (taro.isServer) {
 			this.streamMode(0);
 		}
@@ -16,6 +19,14 @@ var Sensor = TaroEntityPhysics.extend({
 
 	getOwnerUnit: function () {
 		return taro.$(this.ownerUnitId);
+	},
+
+	getRadius: function () {
+		if (this._stats?.currentBody?.width) {
+			return this._stats?.currentBody?.width / 2;
+		} else {
+			return 0;
+		}
 	},
 
 	updateRadius: function (radius) {
