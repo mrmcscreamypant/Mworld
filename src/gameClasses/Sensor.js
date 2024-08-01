@@ -18,6 +18,10 @@ var Sensor = TaroEntityPhysics.extend({
 		return taro.$(this.ownerUnitId);
 	},
 
+	getRadius: function () {
+		return this._stats.currentBody.width / 2;
+	},
+
 	updateRadius: function (radius) {
 		if (radius > 0) {
 			// console.log("updatingRadius to", radius)
