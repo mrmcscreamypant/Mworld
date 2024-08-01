@@ -201,7 +201,7 @@ namespace Renderer {
 							this.selectionBox.enable = false;
 						} else {
 							this.selectionHelper.enabled = true;
-							this.selectionBox.enable = true;
+							this.selectionBox.enabled = true;
 						}
 						if (developerMode.regionTool) {
 							const worldPoint = this.camera.getWorldPoint(this.pointer);
@@ -229,7 +229,7 @@ namespace Renderer {
 											return;
 										}
 										this.selectionHelper.enabled = true;
-										this.selectionBox.enable = true;
+										this.selectionBox.enabled = true;
 										this.selectionBox.startPoint.set(
 											(event.clientX / window.innerWidth) * 2 - 1,
 											-(event.clientY / window.innerHeight) * 2 + 1,
@@ -788,6 +788,8 @@ namespace Renderer {
 
 			private onExitMapMode() {
 				this.showEntities();
+				this.selectionHelper.enabled = false;
+				this.selectionBox.enable = false;
 				this.entityManager.regions.forEach((r) => r.setMode(RegionMode.Normal));
 				this.voxelEditor.voxels.updateLayer(new Map(), this.voxelEditor.currentLayerIndex);
 				this.voxelEditor.showAllLayers();
