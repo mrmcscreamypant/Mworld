@@ -780,7 +780,8 @@ namespace Renderer {
 				}
 
 				taro.network.send<any>('updateClientInitEntities', true);
-
+				this.selectionHelper.enabled = true;
+				this.selectionBox.enable = true;
 				this.entityManager.initEntities.forEach((initEntity) => {
 					initEntity.body.visible = true;
 				});

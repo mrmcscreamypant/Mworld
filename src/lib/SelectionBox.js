@@ -36,7 +36,7 @@ class SelectionBox {
 		this.endPoint = new THREE.Vector3();
 		this.collection = [];
 		this.instances = {};
-		this.enabled = true;
+		this.enabled = false;
 		this.deep = deep;
 
 	}
