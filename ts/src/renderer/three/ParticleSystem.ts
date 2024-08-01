@@ -311,13 +311,13 @@ namespace Renderer {
 				}
 			}
 
-			updateEmitters(delta: number) {
+			updateEmitters(dt: number) {
 				for (let n = 0; n < this.emitters.length; n++) {
 					const emitter = this.emitters[n] as EmitterInternal;
 
 					if (!emitter.emitting) continue;
 
-					emitter.accumulator += delta;
+					emitter.accumulator += dt;
 
 					if (emitter.addInterval > 0) {
 						// NOTE(nick): Avoids spawning to particles too fast; it has to be seen
@@ -325,10 +325,10 @@ namespace Renderer {
 						const addInterval = emitter.addInterval < 0.0001 ? 0.0001 : emitter.addInterval;
 						while (emitter.accumulator >= addInterval) {
 							emitter.accumulator -= addInterval;
-							this.emitterEmit(emitter, delta);
+							this.emitterEmit(emitter);
 						}
 					} else {
-						this.emitterEmit(emitter, delta);
+						this.emitterEmit(emitter);
 					}
 				}
 
@@ -337,7 +337,7 @@ namespace Renderer {
 					const particle = this.particles[n];
 
 					if (particle.live > 0) {
-						particle.live -= delta;
+						particle.live -= dt;
 
 						// NOTE(nick): Decreases opacity during particle's lifetime, this is how
 						// it currently works in the Phaser renderer. We might want to add more
@@ -351,19 +351,19 @@ namespace Renderer {
 							particle.color[0] = p.color_from[0] + (p.color_to[0] - p.color_from[0]) * p.color_t;
 							particle.color[1] = p.color_from[1] + (p.color_to[1] - p.color_from[1]) * p.color_t;
 							particle.color[2] = p.color_from[2] + (p.color_to[2] - p.color_from[2]) * p.color_t;
-							particle.color_t += delta * particle.color_speed;
+							particle.color_t += particle.color_speed * dt;
 						} else {
 							particle.color[0] = particle.color_to[0];
 							particle.color[1] = particle.color_to[1];
 							particle.color[2] = particle.color_to[2];
 						}
 
-						particle.offset[0] += particle.velocity[0];
-						particle.offset[1] += particle.velocity[1];
-						particle.offset[2] += particle.velocity[2];
+						particle.offset[0] += particle.velocity[0] * dt;
+						particle.offset[1] += particle.velocity[1] * dt;
+						particle.offset[2] += particle.velocity[2] * dt;
 
-						particle.scale[0] += particle.scale_increase;
-						particle.scale[1] += particle.scale_increase;
+						particle.scale[0] += particle.scale_increase * dt;
+						particle.scale[1] += particle.scale_increase * dt;
 
 						this.particles[i] = particle;
 
@@ -374,7 +374,7 @@ namespace Renderer {
 				this.particles.length = i;
 			}
 
-			emitterEmit(emitter: Emitter, dt: number) {
+			emitterEmit(emitter: Emitter) {
 				this.forward.set(emitter.direction.x, emitter.direction.y, emitter.direction.z).normalize();
 				this.right.crossVectors({ x: 0, y: 1, z: 0 } as THREE.Vector3, this.forward).normalize();
 				if (this.forward.x <= Number.EPSILON && this.forward.z <= Number.EPSILON) {
@@ -386,7 +386,7 @@ namespace Renderer {
 				const randAzimuth = Utils.lerp(emitter.azimuth.min, emitter.azimuth.max, Math.random());
 				const randElevation = Utils.lerp(emitter.elevation.min, emitter.elevation.max, Math.random());
 				const angleOffset = Math.PI * 0.5;
-				const speed = Utils.lerp(emitter.speed.min, emitter.speed.max, Math.random()) * dt;
+				const speed = Utils.lerp(emitter.speed.min, emitter.speed.max, Math.random());
 
 				this.velocity
 					.setFromSphericalCoords(1, angleOffset - randElevation, -randAzimuth)
