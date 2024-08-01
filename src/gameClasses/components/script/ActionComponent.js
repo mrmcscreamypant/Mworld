@@ -1996,6 +1996,12 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'changeSensorRadius':
+						if (action.sensor.unit) {
+							var unit = self._script.param.getValue(action.sensor.unit, vars);
+							if (unit.sensor === undefined) {
+								unit.sensor = new Sensor(unit, unit._stats.ai.sensorRadius);
+							}
+						}
 						var sensor = self._script.param.getValue(action.sensor, vars);
 						var radius = self._script.param.getValue(action.radius, vars);
 						// console.log("changeSensorRadius", sensor.id(), radius)
