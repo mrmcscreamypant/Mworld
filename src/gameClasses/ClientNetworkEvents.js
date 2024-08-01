@@ -656,7 +656,7 @@ var ClientNetworkEvents = {
 						if (['boolean', 'number'].includes(typeof data.data[key])) {
 							result[key] = data.data[key];
 						} else if (typeof data.data[key] === 'string') {
-							result[key] = taro.sanitizer(data.data[key]);
+							result[key] = taro.clientSanitizer(data.data[key]);
 						}
 
 						return result;
