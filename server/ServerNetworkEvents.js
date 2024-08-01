@@ -350,11 +350,15 @@ var ServerNetworkEvents = {
 		if (player) {
 			var unit = player.getSelectedUnit();
 			if (unit) {
-				await unit.buyItem(id, token);
-				taro.script.trigger('playerPurchasesItem', {
-					itemId: taro.game.lastCreatedItemId,
-					playerId: player.id(),
-				});
+				try {
+					await unit.buyItem(id, token);
+					taro.script.trigger('playerPurchasesItem', {
+						itemId: taro.game.lastCreatedItemId,
+						playerId: player.id(),
+					});
+				} catch (e) {
+					console.log('playerPurchasesItem trigger not fired');
+				}
 			}
 		}
 	},
