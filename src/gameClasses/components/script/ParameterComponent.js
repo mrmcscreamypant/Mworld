@@ -3200,6 +3200,12 @@ var ParameterComponent = TaroEntity.extend({
 				}
 			},
 
+			getServerReceivedData: function () {
+				if (taro.isClient) {
+					return taro.client.myPlayer.lastServerReceivedData || {};
+				}
+			},
+
 			getClientReceivedData: function (text, vars) {
 				if (taro.isServer) {
 					var player = self.getValue(text.player, vars);
