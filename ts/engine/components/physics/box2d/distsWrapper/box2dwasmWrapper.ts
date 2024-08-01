@@ -176,13 +176,13 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		if (preSolve !== undefined) {
 			contactListener.PreSolve = preSolve;
 		} else {
-			contactListener.PreSolve = () => {};
+			contactListener.PreSolve = () => { };
 		}
 
 		if (postSolve !== undefined) {
 			contactListener.PostSolve = postSolve;
 		} else {
-			contactListener.PostSolve = () => {};
+			contactListener.PostSolve = () => { };
 		}
 		self._world.SetContactListener(contactListener);
 
@@ -228,14 +228,12 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			return;
 		}
 
-		// FIXME
-		// do not spawn sensors for those entities without ai
-		// if (body.fixtures[0].isSensor) {
-		// 	const ownerEntity = taro.$(entity.ownerUnitId);
-		// 	if (ownerEntity && ownerEntity._category !== 'region' && ownerEntity?._stats?.ai?.enabled === false && ownerEntity?._stats?.ai?.forceToCreateSensor !== true) {
-		// 		return;
-		// 	}
-		// }
+		if (body.fixtures[0].isSensor) {
+			const ownerEntity = taro.$(entity.ownerUnitId);
+			if (ownerEntity && ownerEntity.sensor && ownerEntity.sensor.getRadius() > 0) {
+				return;
+			}
+		}
 
 		// if there's already a body, destroy it first
 		if (entity.body) {

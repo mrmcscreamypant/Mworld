@@ -198,11 +198,9 @@ namespace Renderer {
 						const developerMode = taro.developerMode;
 						if (developerMode.activeButton !== 'cursor') {
 							this.selectionHelper.enabled = false;
-
 							this.selectionBox.enabled = false;
 						} else {
 							this.selectionHelper.enabled = true;
-							
 							this.selectionBox.enabled = true;
 						}
 						if (developerMode.regionTool) {
