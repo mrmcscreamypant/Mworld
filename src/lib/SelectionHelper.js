@@ -15,7 +15,7 @@ class SelectionHelper {
 		this.pointBottomRight = new THREE.Vector2();
 
 		this.isDown = false;
-		this.enabled = true;
+		this.enabled = false;
 
 		this.onPointerDown = function (event) {
 
