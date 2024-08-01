@@ -16,7 +16,7 @@ var AIComponent = TaroEntity.extend({
 		// sensor needs to be enabled regardless of AI to process sensor collision triggers
 		// for example, in cell-eater, items are consumed via sensors
 		if (unit._stats.ai) {
-			if ((unit._stats.ai.sensorRadius > 0) && unit.sensor == undefined) {
+			if (unit._stats.ai.sensorRadius > 0 && unit.sensor == undefined) {
 				unit.sensor = new Sensor(unit, unit._stats.ai.sensorRadius);
 			}
 
