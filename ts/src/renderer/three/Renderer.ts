@@ -143,7 +143,7 @@ namespace Renderer {
 					if (this.mode === Mode.Map) {
 						if (this.entityEditor.gizmo.control.dragging) {
 							this.selectionHelper.enabled = false;
-							this.selectionBox.enable = false;
+							this.selectionBox.enabled = false;
 							return;
 						}
 						switch (taro.developerMode.activeButton) {
@@ -198,9 +198,11 @@ namespace Renderer {
 						const developerMode = taro.developerMode;
 						if (developerMode.activeButton !== 'cursor') {
 							this.selectionHelper.enabled = false;
-							this.selectionBox.enable = false;
+
+							this.selectionBox.enabled = false;
 						} else {
 							this.selectionHelper.enabled = true;
+							
 							this.selectionBox.enabled = true;
 						}
 						if (developerMode.regionTool) {
@@ -229,6 +231,7 @@ namespace Renderer {
 											return;
 										}
 										this.selectionHelper.enabled = true;
+
 										this.selectionBox.enabled = true;
 										this.selectionBox.startPoint.set(
 											(event.clientX / window.innerWidth) * 2 - 1,
@@ -524,6 +527,9 @@ namespace Renderer {
 								}
 							});
 						}
+						this.selectionHelper.enabled = false;
+
+						this.selectionBox.enabled = false;
 					}
 					if (developerMode.regionTool) {
 						developerMode.regionTool = false;
@@ -781,7 +787,7 @@ namespace Renderer {
 
 				taro.network.send<any>('updateClientInitEntities', true);
 				this.selectionHelper.enabled = true;
-				this.selectionBox.enable = true;
+				this.selectionBox.enabled = true;
 				this.entityManager.initEntities.forEach((initEntity) => {
 					initEntity.body.visible = true;
 				});
@@ -790,7 +796,8 @@ namespace Renderer {
 			private onExitMapMode() {
 				this.showEntities();
 				this.selectionHelper.enabled = false;
-				this.selectionBox.enable = false;
+
+				this.selectionBox.enabled = false;
 				this.entityManager.regions.forEach((r) => r.setMode(RegionMode.Normal));
 				this.voxelEditor.voxels.updateLayer(new Map(), this.voxelEditor.currentLayerIndex);
 				this.voxelEditor.showAllLayers();
