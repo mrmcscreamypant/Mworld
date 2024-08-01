@@ -29,7 +29,6 @@ const _scale = new THREE.Vector3();
 class SelectionBox {
 
 	constructor(camera, scene, deep = Number.MAX_VALUE) {
-
 		this.camera = camera;
 		this.scene = scene;
 		this.startPoint = new THREE.Vector3();
@@ -38,11 +37,10 @@ class SelectionBox {
 		this.instances = {};
 		this.enabled = false;
 		this.deep = deep;
-
 	}
 
 	select(startPoint, endPoint) {
-		if (this.enable === false) {
+		if (this.enabled === false) {
 			return;
 		}
 		this.startPoint = startPoint || this.startPoint;
