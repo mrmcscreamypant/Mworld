@@ -566,7 +566,7 @@ NetIo.Socket = NetIo.EventingClass.extend({
 
 		// to trace unexpected close events.
 		// console.trace();
-		console.log('socket.close (code:', code, '):', reason);
+		console.log('socket.close (code:', code, '):', reason, 'readyState', this._socket.readyState);
 		// for backward compatibility
 		// if reason is valid numeric code and code is falsey
 		// use reason as code
@@ -981,6 +981,7 @@ NetIo.Server = NetIo.EventingClass.extend({
 						delete self._userIds[socket._token.userId];
 					}, taro.game.data.settings.idleGameTimeLimit);
 				} else {
+					console.log('started reconnect grace period of 5s', socket._token?.userId);
 					self._socketsById[socket.id].gracePeriod = setTimeout(() => {
 						delete self._socketsById[socket.id];
 
