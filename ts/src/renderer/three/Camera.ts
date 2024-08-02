@@ -682,6 +682,17 @@ namespace Renderer {
 			}
 
 			onTouchMove(event) {
+				console.log(event.target.tagName.toLowerCase());
+
+				if (event.target.tagName.toLowerCase() === 'canvas') {
+					console.log('Touch move event is happening on the canvas element.');
+					// Your logic here
+				} else {
+					console.log('Touch move event is not on the canvas element.');
+					return;
+					// Optionally handle touch move events elsewhere
+				}
+
 				const touch = event.touches[0];
 				const deltaX = touch.clientX - this.touchStart.x;
 				const deltaY = touch.clientY - this.touchStart.y;

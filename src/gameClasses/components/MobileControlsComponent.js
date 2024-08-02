@@ -125,7 +125,7 @@ var MobileControlsComponent = TaroEntity.extend({
 		// we currently only support max 2 joysticks
 		if (joysticks.length == 1) {
 			let joystickZone = document.getElementById(joysticks[0] + '_joystick');
-			joystickZone.style.width = '100vw';
+			// joystickZone.style.width = '100vw';
 		}
 	},
 
@@ -261,13 +261,19 @@ var MobileControlsComponent = TaroEntity.extend({
 		// building joystick zone
 		let joystickZone = document.createElement('div');
 		joystickZone.id = type + '_joystick';
-		// joystickZone.style.width = '50vw';
-		// joystickZone.style.height = '100vh';
+		joystickZone.style.width = '100px';
+		joystickZone.style.height = '100px';
 		joystickZone.classList.add('joystick-zone');
 		joystickZone.style.position = 'fixed';
 
 		// placing joystick in the correct zone
 		// if x is more than 450, then place the joystick on the right side of the screen
+
+		const [xOnClientScreen, yOnClientScreen] = [(x * window.innerWidth) / 960, (y * window.innerHeight) / 540];
+
+		joystickZone.style.left = xOnClientScreen + 'px';
+		joystickZone.style.top = yOnClientScreen + 'px';
+
 		// if (x > 450) {
 		// 	joystickZone.style.right = '0';
 		// 	joystickZone.style.top = '0';
@@ -296,7 +302,7 @@ var MobileControlsComponent = TaroEntity.extend({
 		var manager = window.nipplejs.create({
 			zone: joystickZone,
 			mode: 'static',
-			position: { left: `${xPercentage}%`, top: `${yPercentage}%` },
+			position: { left: `50%`, top: `50%` },
 			color: 'black',
 		});
 
