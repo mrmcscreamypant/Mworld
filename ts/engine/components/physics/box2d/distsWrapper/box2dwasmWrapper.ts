@@ -230,7 +230,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 
 		if (body.fixtures[0].isSensor) {
 			const ownerEntity = taro.$(entity.ownerUnitId);
-			if (ownerEntity && ownerEntity.sensor && ownerEntity.sensor.getRadius() > 0) {
+			if (ownerEntity && ownerEntity.sensor && ownerEntity.sensor.getRadius() <= 0) {
 				return;
 			}
 		}
