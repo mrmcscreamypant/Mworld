@@ -29,7 +29,7 @@ namespace Renderer {
 
 				const maxParticlesPerGroup = 50000;
 
-				this.numTextureGroups = Math.floor(this.textures.length / this.maxTexturesPerGroup);
+				this.numTextureGroups = Math.ceil(this.textures.length / this.maxTexturesPerGroup);
 				if (this.numTextureGroups === 0) this.numTextureGroups = 1;
 
 				for (let i = 0; i < this.numTextureGroups; i++) {
