@@ -1331,7 +1331,9 @@ var ParameterComponent = TaroEntity.extend({
 					case 'unitSensorRadius':
 						var unit = self.getValue(text.unit, vars);
 
-						if (unit && unit._stats && unit._stats.ai) {
+						if (unit && unit.sensor) {
+							returnValue = unit.sensor.getRadius();
+						} else if (unit && unit._stats && unit._stats.ai) {
 							returnValue = unit._stats.ai.sensorRadius;
 						}
 

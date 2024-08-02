@@ -54,7 +54,7 @@ var Item = TaroEntityPhysics.extend({
 		self.entityId = entityIdFromServer;
 		// self._stats.handle = data.type
 		self._stats.lastUsed = 0;
-		self.anchoredOffset = { x: 0, y: 0, rotate: 0 };
+		self.anchoredOffset = { x: 0, y: 0, rotate: 0, unitAnchor: { x: 0, y: 0 }, itemAnchor: { x: 0, y: 0 } };
 
 		// convert numbers stored as string in database to int
 		self.parseEntityObject(self._stats);
@@ -400,7 +400,7 @@ var Item = TaroEntityPhysics.extend({
 							}
 
 							if (self.anchoredOffset == undefined) {
-								self.anchoredOffset = { x: 0, y: 0, rotate: 0 };
+								self.anchoredOffset = { x: 0, y: 0, rotate: 0, unitAnchor: { x: 0, y: 0 }, itemAnchor: { x: 0, y: 0 } };
 							}
 
 							// item is flipped, then mirror the rotation
