@@ -648,6 +648,24 @@ var ClientNetworkEvents = {
 		}
 	},
 
+	_onSendDataFromServer: function (data) {
+		var player = taro.client.myPlayer;
+		if (player && data) {
+			player.lastServerReceivedData = data.data
+				? Object.keys(data.data).reduce((result, key) => {
+						if (['boolean', 'number'].includes(typeof data.data[key])) {
+							result[key] = data.data[key];
+						} else if (typeof data.data[key] === 'string') {
+							result[key] = taro.clientSanitizer(data.data[key]);
+						}
+
+						return result;
+					}, {})
+				: {};
+			taro.script.trigger('whenDataReceivedFromServer');
+		}
+	},
+
 	// when other players' update tiles, apply the change to my local
 	_onEditTile: function (data) {
 		taro.client.emit('editTile', data);

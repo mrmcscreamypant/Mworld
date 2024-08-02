@@ -1996,6 +1996,12 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'changeSensorRadius':
+						if (action.sensor.unit) {
+							var unit = self._script.param.getValue(action.sensor.unit, vars);
+							if (unit.sensor === undefined) {
+								unit.sensor = new Sensor(unit, unit._stats.ai.sensorRadius);
+							}
+						}
 						var sensor = self._script.param.getValue(action.sensor, vars);
 						var radius = self._script.param.getValue(action.radius, vars);
 						// console.log("changeSensorRadius", sensor.id(), radius)
@@ -4488,6 +4494,25 @@ var ActionComponent = TaroEntity.extend({
 								taro.network.send('ui', data, player._stats.clientId);
 							} else if (player._stats.clientId === taro.network.id()) {
 								taro.playerUi.updateUiElement(data);
+							}
+						}
+						break;
+					}
+
+					case 'sendDataFromServerToClient': {
+						if (taro.isServer) {
+							const player = self._script.param.getValue(action.client, vars);
+							const data = self._script.param.getValue(action.data, vars);
+
+							if (player && player._stats.clientId) {
+								const clientId = player._stats.clientId;
+								taro.network.send(
+									'sendDataFromServer',
+									{
+										data,
+									},
+									clientId
+								);
 							}
 						}
 						break;

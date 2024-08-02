@@ -49,6 +49,9 @@ namespace Renderer {
 
 			private cameraO: THREE.OrthographicCamera;
 			private cameraP: THREE.PerspectiveCamera;
+			private dt = 1 / 60;
+
+			private trackingDelay = Math.min(Math.max(0.01, taro?.game?.data?.settings?.camera?.trackingDelay || 3), 60);
 
 			initialTouch: { x: number; y: number };
 			lastTouch: { x: number; y: number };
@@ -326,7 +329,9 @@ namespace Renderer {
 				this.controls.update();
 			}
 
-			update() {
+			update(dt: number) {
+				this.dt = dt;
+
 				this.cameraP.copy(this.perspectiveCamera);
 				this.cameraO.copy(this.orthographicCamera);
 
@@ -510,6 +515,7 @@ namespace Renderer {
 				this.target = target;
 
 				if (moveInstant) {
+					console.log('follow', this.target);
 					const targetWorldPos = new THREE.Vector3();
 					target.getWorldPosition(targetWorldPos);
 					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z);
@@ -552,9 +558,11 @@ namespace Renderer {
 			}
 
 			setPosition(x: number, y: number, z: number, lerp = false) {
+				// https://www.gamedeveloper.com/programming/improved-lerp-smoothing-
+				const rate = 2 ** Math.log2(this.trackingDelay * 3); // 3 is magic number to kind of match the old behavior in Phaser
+				const t = lerp ? 1 - 2 ** (-rate * this.dt) : 1;
 				const oldTarget = this.controls.target.clone();
 				const diff = new THREE.Vector3(x, y, z).sub(oldTarget);
-				const t = lerp ? (taro?.game?.data?.settings?.camera?.trackingDelay || 3) / taro.fps() : 1;
 				this.controls.target.lerp(this.controls.target.clone().add(diff), t);
 				this.orthographicCamera.position.lerp(this.orthographicCamera.position.clone().add(diff), t);
 				this.perspectiveCamera.position.lerp(this.perspectiveCamera.position.clone().add(diff), t);
@@ -563,14 +571,7 @@ namespace Renderer {
 			}
 
 			setPosition2D(x: number, z: number, lerp = false) {
-				const oldTarget = this.controls.target.clone();
-				const diff = new THREE.Vector3(x, oldTarget.y, z).sub(oldTarget);
-				const t = lerp ? (taro?.game?.data?.settings?.camera?.trackingDelay || 3) / taro.fps() : 1;
-				this.controls.target.lerp(this.controls.target.clone().add(diff), t);
-				this.orthographicCamera.position.lerp(this.orthographicCamera.position.clone().add(diff), t);
-				this.perspectiveCamera.position.lerp(this.perspectiveCamera.position.clone().add(diff), t);
-				this.cameraP.copy(this.perspectiveCamera);
-				this.cameraO.copy(this.orthographicCamera);
+				this.setPosition(x, this.controls.target.y, z, lerp);
 			}
 
 			onChange(cb: () => void) {

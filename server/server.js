@@ -694,6 +694,7 @@ var Server = TaroClass.extend({
 		// bullshit that's necessary for sending data to client
 		taro.network.define('makePlayerCameraTrackUnit', self._onSomeBullshit);
 		taro.network.define('changePlayerCameraPanSpeed', self._onSomeBullshit);
+		taro.network.define('sendDataFromServer', self._onSomeBullshit);
 
 		taro.network.define('hideUnitFromPlayer', self._onSomeBullshit);
 		taro.network.define('showUnitFromPlayer', self._onSomeBullshit);

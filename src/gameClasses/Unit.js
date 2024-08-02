@@ -686,6 +686,8 @@ var Unit = TaroEntityPhysics.extend({
 				self.pickUpItem(itemData);
 			} else {
 				taro.network.send('ui', { command: 'shopResponse', type: 'inventory_full' }, self._stats.clientId);
+				// escape the try block in ServerNetworkEvents.js so we don't fire purchase item trigger
+				throw new Error('inventory full');
 			}
 		}
 	},
