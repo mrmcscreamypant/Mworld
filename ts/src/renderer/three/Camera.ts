@@ -497,7 +497,6 @@ namespace Renderer {
 				this.target = target;
 
 				if (moveInstant) {
-					console.log('follow', this.target);
 					const targetWorldPos = new THREE.Vector3();
 					target.getWorldPosition(targetWorldPos);
 					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z);
