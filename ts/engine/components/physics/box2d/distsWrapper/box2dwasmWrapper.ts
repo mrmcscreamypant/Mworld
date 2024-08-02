@@ -233,9 +233,9 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			PhysicsComponent.prototype.log('warning: creating body for non-existent entity');
 			return;
 		}
-
+		let ownerEntity = undefined;
 		if (body.fixtures[0].isSensor) {
-			const ownerEntity = taro.$(entity.ownerUnitId);
+			ownerEntity = taro.$(entity.ownerUnitId);
 			if (ownerEntity && ownerEntity.sensor && ownerEntity.sensor.getRadius() <= 0) {
 				return;
 			}
@@ -320,7 +320,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 						break;
 
 					case 'fixedRotation':
-						if (body.fixedRotation) {
+						if (body.fixedRotation || (entity && entity._category === 'region')) {
 							tempBod.SetFixedRotation(true);
 						}
 						break;
