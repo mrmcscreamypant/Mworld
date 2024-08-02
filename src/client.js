@@ -136,6 +136,30 @@ const Client = TaroEventingClass.extend({
 			$(this.getCachedElementById('error-log-modal')).modal('show');
 		});
 
+		$(this.getCachedElementById('dev-debugDraw-button')).on('click', () => {
+			if (taro.physics && taro.physics.engine === 'BOX2DWASM') {
+				if (taro.physics.debugDrawEnabled) {
+					taro.physics.disableDebug();
+					$(this.getCachedElementById('dev-debugDraw-button')).text('Enable DebugDraw');
+					taro.physics.debugDrawEnabled = false;
+				} else {
+					taro.physics.enableDebug();
+					$(this.getCachedElementById('dev-debugDraw-button')).text('Disable DebugDraw');
+					taro.physics.debugDrawEnabled = true;
+				}
+			} else {
+				window.setAlert({
+					title: 'Incompatible client physics',
+					text: 'Debug Draw is exclusive to Box2DWASM physics (on client side). You can change the physics engine in game configuration.',
+					type: 'error',
+					showCancelButton: false,
+					confirmButtonText: 'Ok',
+					onConfirm: () => {},
+					onCancel: () => {},
+				});
+			}
+		});
+
 		$(this.getCachedElementById('bandwidth-usage')).on('click', () => {
 			// maybe we could rename 'bandwidth-usage'
 			$(this.getCachedElementById('dev-status-modal')).modal('show');
