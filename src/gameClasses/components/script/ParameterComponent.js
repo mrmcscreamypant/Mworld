@@ -3180,8 +3180,12 @@ var ParameterComponent = TaroEntity.extend({
 
 				if (string) {
 					try {
-						const repairedString = jsonrepair?.jsonrepair(string);
-						return JSON.parse(repairedString);
+						if (taro.isClient) {
+							return JSON.parse(string);
+						} else {
+							const repairedString = jsonrepair?.jsonrepair(string);
+							return JSON.parse(repairedString);
+						}
 					} catch (err) {
 						console.log('stringToObject err', err.message);
 						self._script.errorLog(
