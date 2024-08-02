@@ -972,6 +972,12 @@ NetIo.Server = NetIo.EventingClass.extend({
 					console.log('[net.io-server/index.js] idle game disconnect | client: ', socket.id);
 					// store disconnected clients
 					taro.server._idleDisconnectedClientIds[socket.id] = socket._token.userId;
+
+					console.log('set idle user', socket._token.userId);
+
+					// remove from idle userIds object
+					taro.workerComponent && taro.workerComponent.setIdleUser(socket._token.userId);
+
 					// replace hard number with `taro.game.data.settings.idleGameTimeout`
 					self._idleTimeoutsByUserId[socket._token.userId] = setTimeout(() => {
 						// let disconnect logic continue
