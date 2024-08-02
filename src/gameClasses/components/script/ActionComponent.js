@@ -3822,6 +3822,8 @@ var ActionComponent = TaroEntity.extend({
 							// hack to rotate entity properly
 							if (taro.isClient) {
 								entity.rotateTo(0, 0, radians);
+								entity.nextKeyFrame[1][2] = radians;
+								entity.isTransforming(true);
 							} else {
 								entity.streamUpdateData([{ rotate: radians }]);
 							}
