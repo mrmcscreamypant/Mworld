@@ -19,6 +19,13 @@ namespace Renderer {
 				return `${url}?v=1`;
 			}
 
+			export function isFocusOnPlayPage() {
+				if (document.activeElement.className !== 'play-page') {
+					return false;
+				}
+				return true;
+			}
+
 			export function fillRect(
 				ctx: CanvasRenderingContext2D,
 				x: number,

@@ -495,7 +495,7 @@ namespace Renderer {
 					}
 				});
 
-				window.addEventListener('mouseup', (event: MouseEvent) => {
+				renderer.domElement.addEventListener('mouseup', (event: MouseEvent) => {
 					if (event.button === 1) {
 						return;
 					}

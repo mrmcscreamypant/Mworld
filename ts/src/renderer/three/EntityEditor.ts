@@ -93,6 +93,9 @@ namespace Renderer {
 				});
 
 				window.addEventListener('keydown', (event) => {
+					if(!Utils.isFocusOnPlayPage()) {
+						return;
+					}
 					const renderer = Renderer.Three.instance();
 					if (event.key === 'Delete' || event.key === 'Backspace') {
 						this.deleteEntity();

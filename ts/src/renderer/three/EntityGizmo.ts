@@ -209,6 +209,9 @@ namespace Renderer {
 				});
 
 				window.addEventListener('keyup', function (event) {
+					if(!Utils.isFocusOnPlayPage()) {
+						return;
+					}
 					switch (event.key) {
 						case 'Shift':
 							control.setTranslationSnap(null);
