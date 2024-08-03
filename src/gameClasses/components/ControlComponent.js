@@ -120,10 +120,6 @@ var ControlComponent = TaroEntity.extend({
 	mouseMove(x, y, yaw, pitch) {
 		// Same conditional logic as line 155
 		{
-			if (taro.isMobile) {
-				return;
-			}
-
 			var player = this._entity;
 			if (!player) return;
 
@@ -133,6 +129,7 @@ var ControlComponent = TaroEntity.extend({
 					if (unit._stats.controls && !unit._stats.aiEnabled) {
 						const isRelativeMovement = ['wasdRelativeToUnit'].includes(unit._stats.controls.movementControlScheme);
 						if (isRelativeMovement) {
+							console.log('relative movemet cec', yaw);
 							unit.ability.moveRelativeToAngle(-yaw);
 						}
 					}

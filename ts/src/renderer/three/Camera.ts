@@ -518,6 +518,7 @@ namespace Renderer {
 					console.log('follow', this.target);
 					const targetWorldPos = new THREE.Vector3();
 					target.getWorldPosition(targetWorldPos);
+					console.log('set position called', targetWorldPos)
 					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z);
 				}
 			}
@@ -602,7 +603,7 @@ namespace Renderer {
 
 					if (this.target) {
 						const targetWorldPos = new THREE.Vector3();
-						this.target.getWorldPosition(targetWorldPos);
+						this.target.getWorldPosition(targetWorldPos);``
 						this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z);
 					}
 				}
@@ -660,14 +661,10 @@ namespace Renderer {
 			}
 
 			private onMouseMove(event: MouseEvent) {
-				console.log('mouse moving');
 				if (this.isLocked === false) return;
 
 				const movementX = event.movementX || 0;
 				const movementY = event.movementY || 0;
-
-				console.log('movex', movementX);
-				console.log('movey', movementY);
 
 				this.euler.y = -movementX * 0.2 * this.pointerlockSpeed;
 				this.euler.x = movementY * 0.2 * this.pointerlockSpeed;
@@ -683,15 +680,8 @@ namespace Renderer {
 			}
 
 			onTouchMove(event) {
-				console.log(event.target.tagName.toLowerCase());
-
-				if (event.target.tagName.toLowerCase() === 'canvas') {
-					console.log('Touch move event is happening on the canvas element.');
-					// Your logic here
-				} else {
-					console.log('Touch move event is not on the canvas element.');
+				if (event.target.tagName.toLowerCase() !== 'canvas') {
 					return;
-					// Optionally handle touch move events elsewhere
 				}
 
 				const touch = event.touches[0];
@@ -709,8 +699,6 @@ namespace Renderer {
 				// Calculate the drag value based on the direction and magnitude
 				this.dragValue.x = normalizedX * 10; // Adjust strength as needed
 				this.dragValue.y = normalizedY * 10; // Adjust strength as needed
-
-				console.log(`Drag value: (${this.dragValue.x}, ${this.dragValue.y})`);
 
 				this.euler.y = -this.dragValue.x * 1 * this.pointerlockSpeed;
 				this.euler.x = this.dragValue.y * 1 * this.pointerlockSpeed;
