@@ -156,7 +156,9 @@ namespace Renderer {
 									);
 									const allSelected = this.selectionBox.select();
 									if (allSelected) {
-										if (allSelected.filter((e) => e.entity instanceof InitEntity).length > 0) { this.entityEditor.selectEntity(null); }
+										if (allSelected.filter((e) => e.entity instanceof InitEntity).length > 0) {
+											this.entityEditor.selectEntity(null);
+										}
 										allSelected.forEach((e) => {
 											if (e.entity instanceof InitEntity) {
 												this.entityEditor.showOrHideOutline(e.entity, true);
@@ -392,9 +394,9 @@ namespace Renderer {
 													wasCreated: true,
 												};
 												if (entityData.offset) {
-													action.position.x += Utils.worldToPixel(entityData.offset.x)
-													action.position.z += Utils.worldToPixel(entityData.offset.y)
-													action.position.y += Utils.worldToPixel(entityData.offset.z)
+													action.position.x += Utils.worldToPixel(entityData.offset.x);
+													action.position.z += Utils.worldToPixel(entityData.offset.y);
+													action.position.y += Utils.worldToPixel(entityData.offset.z);
 												}
 												if (entityData.action) {
 													if (entityData.action.rotation) {
@@ -438,7 +440,7 @@ namespace Renderer {
 																)
 																?.delete(false);
 														},
-														mergedUuid: uuid
+														mergedUuid: uuid,
 													},
 													true
 												);
@@ -809,9 +811,9 @@ namespace Renderer {
 				});
 			}
 
-			private onEnterEntitiesMode() { }
+			private onEnterEntitiesMode() {}
 
-			private onExitEntitiesMode() { }
+			private onExitEntitiesMode() {}
 
 			private showEntities() {
 				this.setEntitiesVisible(true);
@@ -1055,7 +1057,7 @@ namespace Renderer {
 
 				taro.client.emit('tick');
 				if (this.entityEditor) this.entityEditor.update();
-				if (this.camera.target && !taro.isMobile) {
+				if (this.camera.target) {
 					const worldPos = this.camera.getWorldPoint(this.pointer);
 					const x = Utils.worldToPixel(worldPos.x);
 					const y = Utils.worldToPixel(worldPos.z);

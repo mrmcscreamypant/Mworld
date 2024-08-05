@@ -113,7 +113,8 @@ var MobileControlsComponent = TaroEntity.extend({
 				var x = keybinding.mobilePosition.x * 2;
 				var y = keybinding.mobilePosition.y * 2;
 
-				self.addControl(key, x, y, keybinding, abilities);
+				let usingPointerLock = (controls.mouseBehaviour.rotateToFaceMouseCursor && controls.cameraPointerLock) || false;
+				self.addControl(key, x, y, keybinding, abilities, usingPointerLock);
 
 				if (key === 'movementWheel' || key == 'lookWheel' || key == 'lookAndFireWheel') {
 					joysticks.push(key);
@@ -125,12 +126,12 @@ var MobileControlsComponent = TaroEntity.extend({
 		// we currently only support max 2 joysticks
 		if (joysticks.length == 1) {
 			let joystickZone = document.getElementById(joysticks[0] + '_joystick');
-			joystickZone.style.width = '100vw';
+			// joystickZone.style.width = '100vw';
 		}
 	},
 
 	// add a button or stick to the virtual controller
-	addControl: function (key, x, y, keybinding, abilities) {
+	addControl: function (key, x, y, keybinding, abilities, usingPointerLock = false) {
 		var self = this;
 
 		var settings = {};
@@ -143,7 +144,7 @@ var MobileControlsComponent = TaroEntity.extend({
 			case 'lookAndFireWheel':
 				{
 					if (document.getElementById(key + '_joystick')) break;
-					this.createJoystick(key, x, y);
+					this.createJoystick(key, x, y, usingPointerLock);
 				}
 				break;
 			default:
@@ -257,48 +258,99 @@ var MobileControlsComponent = TaroEntity.extend({
 			}
 		});
 	},
-	createJoystick: function (type, x, y) {
-		// building joystick zone
-		let joystickZone = document.createElement('div');
-		joystickZone.id = type + '_joystick';
-		joystickZone.style.width = '50vw';
-		joystickZone.style.height = '100vh';
-		joystickZone.classList.add('joystick-zone');
-		joystickZone.style.position = 'fixed';
+	createJoystick: function (type, x, y, usingPointerLock) {
+		var manager;
 
-		// placing joystick in the correct zone
-		// if x is more than 450, then place the joystick on the right side of the screen
-		if (x > 450) {
-			joystickZone.style.right = '0';
-			joystickZone.style.top = '0';
+		if (usingPointerLock) {
+			// building joystick zone
+			let joystickZone = document.createElement('div');
+			joystickZone.id = type + '_joystick';
+			joystickZone.style.width = '100px';
+			joystickZone.style.height = '100px';
+			joystickZone.classList.add('joystick-zone');
+			joystickZone.style.position = 'fixed';
+
+			// placing joystick in the correct zone
+			// if x is more than 450, then place the joystick on the right side of the screen
+
+			const [xOnClientScreen, yOnClientScreen] = [(x * window.innerWidth) / 960, (y * window.innerHeight) / 540];
+
+			joystickZone.style.left = xOnClientScreen + 'px';
+			joystickZone.style.top = yOnClientScreen + 'px';
+
+			// if (x > 450) {
+			// 	joystickZone.style.right = '0';
+			// 	joystickZone.style.top = '0';
+			// } else {
+			// 	joystickZone.style.left = '0';
+			// 	joystickZone.style.top = '0';
+			// }
+
+			// append joystick to the gamediv element
+			let gameDiv = document.getElementById('default-ingame-ui-container');
+			// make first child of gameDiv
+			// check if standalone
+			if (window.isStandalone) {
+				document.body.append(joystickZone);
+			} else {
+				gameDiv.insertBefore(joystickZone, gameDiv.firstChild);
+			}
+
+			// calculate joystick position based on x and y coordinates
+			const [xPercentage, yPercentage] = [
+				((x / window.innerWidth) * 100).toFixed(2),
+				((y / window.innerHeight) * 100).toFixed(2),
+			];
+
+			// assign joystick to the zone
+			manager = window.nipplejs.create({
+				zone: joystickZone,
+				mode: 'static',
+				position: { left: `50%`, top: `50%` },
+				color: 'black',
+			});
 		} else {
-			joystickZone.style.left = '0';
-			joystickZone.style.top = '0';
+			let joystickZone = document.createElement('div');
+			joystickZone.id = type + '_joystick';
+			joystickZone.style.width = '50vw';
+			joystickZone.style.height = '100vh';
+			joystickZone.classList.add('joystick-zone');
+			joystickZone.style.position = 'fixed';
+
+			// placing joystick in the correct zone
+			// if x is more than 450, then place the joystick on the right side of the screen
+			if (x > 450) {
+				joystickZone.style.right = '0';
+				joystickZone.style.top = '0';
+			} else {
+				joystickZone.style.left = '0';
+				joystickZone.style.top = '0';
+			}
+
+			// append joystick to the gamediv element
+			let gameDiv = document.getElementById('default-ingame-ui-container');
+			// make first child of gameDiv
+			// check if standalone
+			if (window.isStandalone) {
+				document.body.append(joystickZone);
+			} else {
+				gameDiv.insertBefore(joystickZone, gameDiv.firstChild);
+			}
+
+			// calculate joystick position based on x and y coordinates
+			const [xPercentage, yPercentage] = [
+				((x / window.innerWidth) * 100).toFixed(2),
+				((y / window.innerHeight) * 100).toFixed(2),
+			];
+
+			// assign joystick to the zone
+			manager = window.nipplejs.create({
+				zone: joystickZone,
+				mode: 'dynamic',
+				position: { left: `${xPercentage}%`, top: `${yPercentage}%` },
+				color: 'black',
+			});
 		}
-
-		// append joystick to the gamediv element
-		let gameDiv = document.getElementById('default-ingame-ui-container');
-		// make first child of gameDiv
-		// check if standalone
-		if (window.isStandalone) {
-			document.body.append(joystickZone);
-		} else {
-			gameDiv.insertBefore(joystickZone, gameDiv.firstChild);
-		}
-
-		// calculate joystick position based on x and y coordinates
-		const [xPercentage, yPercentage] = [
-			((x / window.innerWidth) * 100).toFixed(2),
-			((y / window.innerHeight) * 100).toFixed(2),
-		];
-
-		// assign joystick to the zone
-		var manager = window.nipplejs.create({
-			zone: joystickZone,
-			mode: 'dynamic',
-			position: { left: `${xPercentage}%`, top: `${yPercentage}%` },
-			color: 'black',
-		});
 
 		switch (type) {
 			case 'lookAndFireWheel':
