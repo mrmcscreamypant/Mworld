@@ -3504,7 +3504,6 @@ var ActionComponent = TaroEntity.extend({
 					case 'setEntityOpacity':
 						var entity = self._script.param.getValue(action.entity, vars);
 						var opacity = self._script.param.getValue(action.opacity, vars);
-						var duration = self._script.param.getValue(action.duration, vars);
 
 						if (entity && typeof opacity === 'number' && typeof duration === 'number') {
 							if (opacity < 0) {
@@ -3513,10 +3512,9 @@ var ActionComponent = TaroEntity.extend({
 								opacity = 1;
 							}
 
+							entity.opacity(opacity);
 							if (taro.isServer) {
-								entity.streamUpdateData([{ setOpacity: `${opacity}|-|${duration}` }]);
-							} else if (taro.isClient) {
-								entity.opacity(opacity, duration);
+								entity.streamUpdateData([{ opacity: opacity }]);
 							}
 						}
 						break;

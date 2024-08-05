@@ -164,8 +164,8 @@ namespace Renderer {
 					entity.ownerUnitId = unitId;
 				});
 
-				taroEntity.on('set-opacity', (data: { opacity: number; time?: number }) => {
-					entity.body.setOpacity(data.opacity, data.time);
+				taroEntity.on('set-opacity', (opacity) => {
+					entity.body.setOpacity(opacity);
 				});
 
 				return entity;

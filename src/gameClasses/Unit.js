@@ -148,6 +148,9 @@ var Unit = TaroEntityPhysics.extend({
 			if (this._stats.isHidden) {
 				this.hide(true);
 			}
+			if (!isNaN(this._stats.opacity)) {
+				this.opacity(this._stats.opacity);
+			}
 		}
 		self.playEffect('create');
 		self.addBehaviour('unitBehaviour', self._behaviour);
