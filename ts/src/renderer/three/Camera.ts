@@ -53,7 +53,6 @@ namespace Renderer {
 
 			private trackingDelay = Math.min(Math.max(0.01, taro?.game?.data?.settings?.camera?.trackingDelay || 3), 60);
 
-			initialTouch: { x: number; y: number };
 			lastTouch: { x: number; y: number };
 			touchStart: { x: number; y: number };
 			dragValue: { x: number; y: number };
@@ -80,7 +79,6 @@ namespace Renderer {
 				this.orthographicCamera.position.y = distance;
 				this.originalDistance = distance;
 
-				this.initialTouch = { x: 0, y: 0 };
 				this.lastTouch = { x: 0, y: 0 };
 
 				this.touchStart = { x: 0, y: 0 };
@@ -132,7 +130,7 @@ namespace Renderer {
 				};
 
 				window.addEventListener('keypress', (evt) => {
-					if(!Utils.isFocusOnPlayPage()) {
+					if (!Utils.isFocusOnPlayPage()) {
 						return;
 					}
 					if (evt.key === '~') {
