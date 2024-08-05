@@ -77,15 +77,21 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		component.b2Body.prototype.getAngle = component.b2Body.prototype.GetAngle;
 		component.b2Body.prototype.setPosition = function (position) {
 			let angle = component.recordLeak(this.GetAngle());
+			if ((!position.x && position.x !== 0) || (!position.y && position.y !== 0)) {
+				return;
+			}
 			let pos = new box2D.b2Vec2(position.x, position.y);
-			this.SetTransform(pos, angle);
+			this.SetTransform(pos, isNaN(angle) ? 0 : angle);
 			component.destroyB2dObj(pos);
 		};
 		component.b2Body.prototype.getPosition = component.b2Body.prototype.GetPosition;
 		component.b2Body.prototype.setGravityScale = component.b2Body.prototype.SetGravityScale;
 		component.b2Body.prototype.setAngle = function (angle) {
+			if (!angle && angle !== 0) {
+				return;
+			}
 			let pos = component.recordLeak(this.GetPosition());
-			this.SetTransform(pos, angle);
+			this.SetTransform(pos, isNaN(angle) ? 0 : angle);
 		};
 		component.b2Body.prototype.setTransform = component.b2Body.prototype.SetTransform;
 		component.b2Body.prototype.isAwake = component.b2Body.prototype.IsAwake;
@@ -227,10 +233,10 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			PhysicsComponent.prototype.log('warning: creating body for non-existent entity');
 			return;
 		}
-
+		let ownerEntity = undefined;
 		if (body.fixtures[0].isSensor) {
-			const ownerEntity = taro.$(entity.ownerUnitId);
-			if (ownerEntity && ownerEntity.sensor && ownerEntity.sensor.getRadius() > 0) {
+			ownerEntity = taro.$(entity.ownerUnitId);
+			if (ownerEntity && ownerEntity.sensor && ownerEntity.sensor.getRadius() <= 0) {
 				return;
 			}
 		}
@@ -314,7 +320,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 						break;
 
 					case 'fixedRotation':
-						if (body.fixedRotation) {
+						if (body.fixedRotation || (entity && entity._category === 'region')) {
 							tempBod.SetFixedRotation(true);
 						}
 						break;

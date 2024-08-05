@@ -253,6 +253,8 @@ var TaroNetIoServer = {
 			};
 
 			socket.close(reason);
+		} else {
+			console.log(`disconnect: socket not found`, clientId, reason, reasonCode);
 		}
 	},
 

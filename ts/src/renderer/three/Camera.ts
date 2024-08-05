@@ -132,6 +132,9 @@ namespace Renderer {
 				};
 
 				window.addEventListener('keypress', (evt) => {
+					if(!Utils.isFocusOnPlayPage()) {
+						return;
+					}
 					if (evt.key === '~') {
 						this.debugMode = !this.debugMode;
 						this.setEditorMode(this.debugMode);
@@ -515,7 +518,6 @@ namespace Renderer {
 				this.target = target;
 
 				if (moveInstant) {
-					console.log('follow', this.target);
 					const targetWorldPos = new THREE.Vector3();
 					target.getWorldPosition(targetWorldPos);
 					console.log('set position called', targetWorldPos)

@@ -9,6 +9,7 @@ var TaroNetIoClient = {
 	_requests: {},
 	_state: 0,
 	usedServers: [],
+	_firstServerTimestampReceived: false,
 
 	/**
 	 * Gets the current socket id.
@@ -467,12 +468,28 @@ var TaroNetIoClient = {
 			if (snapshot.length) {
 				var newSnapshotTimestamp = snapshot[snapshot.length - 1][1];
 
-				var obj = {};
+				// Note(nick): This, and the synchronization code on line 546,
+				// should be looked at. The client only receives server
+				// timestamps once it joins the game as a character and is
+				// moving (except for the first timestamp). But I think this
+				// code expects it being send every server tick. In any case,
+				// with the current implementation, it takes too long to sync
+				// the client to the server time, causing the client to first
+				// rely on the client time and then suddenly jump to the server
+				// time after the player moves for a bit. This causes issues
+				// with code that relies on taro._currentTime, like
+				// interpolation. This should be considered a temporary fix.
+				if (!this._firstServerTimestampReceived) {
+					if (!isNaN(newSnapshotTimestamp)) {
+						this._firstServerTimestampReceived = true;
+						taro._currentTime = newSnapshotTimestamp;
+					}
+				}
+
 				// iterate through each entities
 				for (var i = 0; i < snapshot.length; i++) {
 					var ciDecoded = snapshot[i][0].charCodeAt(0);
 					var commandName = this._networkCommandsIndex[ciDecoded];
-					// console.log("command2", commandName)
 					var entityData = snapshot[i][1];
 
 					switch (commandName) {
@@ -492,7 +509,6 @@ var TaroNetIoClient = {
 							// we are not executing this in taroEngine or taroEntity, becuase they don't execute when browser tab is inactive
 							var entity = taro.$(entityId);
 
-							// console.log(entity != undefined, isTeleporting)
 							if (entity) {
 								if (isTeleporting) {
 									entity.teleportTo(x, y, rotate, isTeleportingCamera);
@@ -523,7 +539,6 @@ var TaroNetIoClient = {
 									if (newSnapshotTimestamp > this.lastSnapshotTimestamp) {
 										entity.prevKeyFrame = entity.nextKeyFrame;
 										entity.nextKeyFrame = [newSnapshotTimestamp + taro.client.renderBuffer, newPosition];
-										// console.log(entity._category, entity._stats.name, newPosition)
 										entity.isTransforming(true);
 									}
 								}
@@ -553,8 +568,6 @@ var TaroNetIoClient = {
 						} else {
 							taro._currentTime = newSnapshotTimestamp;
 						}
-
-						// console.log(medianDiff, now, newSnapshotTimestamp, this._diffSamples)
 
 						this._diffSamples = [];
 					}

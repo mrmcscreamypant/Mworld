@@ -795,7 +795,6 @@ var ClientNetworkEvents = {
 			if (window.PokiSDK?.commercialBreak) {
 				window.PokiSDK?.commercialBreak(() => {
 					// you can pause any background music or other audio here
-					window.taro.network._io.disconnect('switching_map');
 					$('body').addClass('playing-ad');
 				}).then(() => {
 					console.log('Commercial break finished, proceeding to game');
@@ -814,6 +813,10 @@ var ClientNetworkEvents = {
 
 	_onSendPlayerToMap: function (data) {
 		if (data && data.type == 'sendPlayerToMap') {
+
+			// disconnect first so save data process starts immediately
+			window.taro.network._io.disconnect('switching_map');
+
 			// always stop music before sending user to another map
 			if (taro.sound.musicCurrentlyPlaying) {
 				taro.sound.stopMusic();
@@ -847,11 +850,10 @@ var ClientNetworkEvents = {
 
 						$('body').addClass('playing-ad');
 						window.CrazyGames.SDK.ad.requestAd('midgame', callbacks);
-						window.taro.network._io.disconnect('switching_map');
 						return;
 					}
 				}
-
+				
 				const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
 				window.location.href = mapUrl;
 			}

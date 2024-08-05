@@ -202,7 +202,7 @@ namespace Renderer {
 							this.selectionHelper.enabled = false;
 							this.selectionBox.enabled = false;
 						} else {
-							this.selectionHelper.enabled = true;
+							// this.selectionHelper.enabled = true;
 							this.selectionBox.enabled = true;
 						}
 						if (developerMode.regionTool) {
@@ -230,7 +230,7 @@ namespace Renderer {
 										if (this.entityEditor.gizmo.control.dragging) {
 											return;
 										}
-										this.selectionHelper.enabled = true;
+										// this.selectionHelper.enabled = true;
 
 										this.selectionBox.enabled = true;
 										this.selectionBox.startPoint.set(
@@ -497,7 +497,7 @@ namespace Renderer {
 					}
 				});
 
-				window.addEventListener('mouseup', (event: MouseEvent) => {
+				renderer.domElement.addEventListener('mouseup', (event: MouseEvent) => {
 					if (event.button === 1) {
 						return;
 					}
@@ -786,7 +786,7 @@ namespace Renderer {
 				}
 
 				taro.network.send<any>('updateClientInitEntities', true);
-				this.selectionHelper.enabled = true;
+				// this.selectionHelper.enabled = true;
 				this.selectionBox.enabled = true;
 				this.entityManager.initEntities.forEach((initEntity) => {
 					initEntity.body.visible = true;
