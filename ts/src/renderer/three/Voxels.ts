@@ -14,6 +14,8 @@ namespace Renderer {
 				private sidesTileset: TextureSheet
 			) {
 				super();
+				this.matrixAutoUpdate = false;
+				this.matrixWorldAutoUpdate = false;
 				this.brushArea = new TileShape();
 			}
 
@@ -29,14 +31,14 @@ namespace Renderer {
 					tilesetMain.image,
 					texMain,
 					tilesetMain.tilewidth,
-					tilesetMain.tilewidth,
+					tilesetMain.tileheight,
 					true
 				);
 				const sidesTileset = new TextureSheet(
 					tilesetSide.image,
 					texSide,
 					tilesetSide.tilewidth,
-					tilesetSide.tilewidth,
+					tilesetSide.tileheight,
 					true
 				);
 
@@ -134,12 +136,12 @@ namespace Renderer {
 				geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(voxelData.uvs), 2));
 				geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(voxelData.normals), 3));
 
-				const mat1 = new THREE.MeshBasicMaterial({
+				const mat1 = new THREE.MeshStandardMaterial({
 					map: this.sidesTileset.texture,
 					side: THREE.DoubleSide,
 					alphaTest: 0.5,
 				});
-				const mat2 = new THREE.MeshBasicMaterial({
+				const mat2 = new THREE.MeshStandardMaterial({
 					map: this.topTileset.texture,
 					side: THREE.DoubleSide,
 					alphaTest: 0.5,
@@ -236,28 +238,34 @@ namespace Renderer {
 			const xStep = tileset.tileWidth / tileset.width;
 			const yStep = tileset.tileHeight / tileset.height;
 
-			const pxGeometry = new THREE.PlaneGeometry(1, 1);
+			const resize = !taro.game.data.defaultData.dontResize;
+			const tileWidth = resize ? 1 : tileset.tileWidth / 64;
+			const tileHeight = resize ? 1 : tileset.tileHeight / 64;
+			const halfTileWidth = tileWidth / 2;
+			const halfTileHeight = tileHeight / 2;
+
+			const pxGeometry = new THREE.PlaneGeometry(tileWidth, tileHeight);
 			pxGeometry.rotateY(Math.PI / 2);
-			pxGeometry.translate(0.5, 0, 0);
+			pxGeometry.translate(halfTileWidth, 0, 0);
 
-			const nxGeometry = new THREE.PlaneGeometry(1, 1);
+			const nxGeometry = new THREE.PlaneGeometry(tileWidth, tileHeight);
 			nxGeometry.rotateY(-Math.PI / 2);
-			nxGeometry.translate(-0.5, 0, 0);
+			nxGeometry.translate(-halfTileWidth, 0, 0);
 
-			const pyGeometry = new THREE.PlaneGeometry(1, 1);
+			const pyGeometry = new THREE.PlaneGeometry(tileWidth, tileHeight);
 			pyGeometry.rotateX(-Math.PI / 2);
-			pyGeometry.translate(0, 0.5, 0);
+			pyGeometry.translate(0, halfTileHeight, 0);
 
-			const nyGeometry = new THREE.PlaneGeometry(1, 1);
+			const nyGeometry = new THREE.PlaneGeometry(tileWidth, tileHeight);
 			nyGeometry.rotateX(Math.PI / 2);
-			nyGeometry.translate(0, -0.5, 0);
+			nyGeometry.translate(0, -halfTileHeight, 0);
 
-			const pzGeometry = new THREE.PlaneGeometry(1, 1);
-			pzGeometry.translate(0, 0, 0.5);
+			const pzGeometry = new THREE.PlaneGeometry(tileWidth, tileHeight);
+			pzGeometry.translate(0, 0, halfTileHeight);
 
-			const nzGeometry = new THREE.PlaneGeometry(1, 1);
+			const nzGeometry = new THREE.PlaneGeometry(tileWidth, tileHeight);
 			nzGeometry.rotateY(Math.PI);
-			nzGeometry.translate(0, 0, -0.5);
+			nzGeometry.translate(0, 0, -halfTileHeight);
 
 			const invertUvs = [nyGeometry];
 
@@ -287,7 +295,7 @@ namespace Renderer {
 					const localPositions = [...geometries[i].attributes.position.array];
 					for (let j = 0; j < 3; ++j) {
 						for (let v = 0; v < 4; ++v) {
-							localPositions[v * 3 + j] += curCell.position[j];
+							localPositions[v * 3 + j] += curCell.position[j] * (j === 0 ? tileWidth : tileHeight);
 						}
 					}
 					targetData.positions.push(...localPositions);

@@ -29,20 +29,23 @@ namespace Renderer {
 
 				const maxParticlesPerGroup = 50000;
 
-				this.numTextureGroups = Math.floor(this.textures.length / this.maxTexturesPerGroup);
+				this.numTextureGroups = Math.ceil(this.textures.length / this.maxTexturesPerGroup);
 				if (this.numTextureGroups === 0) this.numTextureGroups = 1;
 
 				for (let i = 0; i < this.numTextureGroups; i++) {
 					const material = new THREE.ShaderMaterial({
-						uniforms: {
-							textures: {
-								value: this.textures.slice(
-									i * this.maxTexturesPerGroup,
-									i * this.maxTexturesPerGroup + this.maxTexturesPerGroup
-								),
+						uniforms: THREE.UniformsUtils.merge([
+							THREE.UniformsLib['fog'],
+							{
+								textures: {
+									value: this.textures.slice(
+										i * this.maxTexturesPerGroup,
+										i * this.maxTexturesPerGroup + this.maxTexturesPerGroup
+									),
+								},
+								time: { value: 0 },
 							},
-							time: { value: 0 },
-						},
+						]),
 						vertexShader: vs,
 						fragmentShader: fs,
 						transparent: true,
@@ -52,6 +55,7 @@ namespace Renderer {
 						blendSrc: THREE.OneFactor,
 						blendDst: THREE.OneMinusSrcAlphaFactor,
 						forceSinglePass: true,
+						fog: true,
 					});
 
 					this.materials.push(material);
@@ -108,9 +112,9 @@ namespace Renderer {
 				if (particleData['z-index'].depth) zPosition += Utils.getDepthZOffset(particleData['z-index'].depth);
 				if (particleData['z-index'].offset) zPosition += Utils.pixelToWorld(particleData['z-index'].offset);
 
-				const xAngle = Utils.deg2rad(+particleData.direction?.x ?? 0);
-				const yAngle = Utils.deg2rad(+particleData.direction?.z ?? 0);
-				const zAngle = Utils.deg2rad(+particleData.direction?.y ?? 0);
+				const xAngle = Utils.deg2rad(+(particleData.direction?.x ?? 0));
+				const yAngle = Utils.deg2rad(+(particleData.direction?.z ?? 0));
+				const zAngle = Utils.deg2rad(+(particleData.direction?.y ?? 0));
 				const direction = new THREE.Euler(xAngle, yAngle, zAngle, 'XYZ');
 				const dirVec = new THREE.Vector3(1, 0, 0);
 				dirVec.applyEuler(direction);
@@ -118,60 +122,60 @@ namespace Renderer {
 				direction.y = dirVec.y;
 				direction.z = dirVec.z;
 
-				const azimuthMin = Utils.deg2rad(+particleData.azimuth?.min ?? 0);
-				const azimuthMax = Utils.deg2rad(+particleData.azimuth?.max ?? 0);
+				const azimuthMin = Utils.deg2rad(+(particleData.azimuth?.min ?? 0));
+				const azimuthMax = Utils.deg2rad(+(particleData.azimuth?.max ?? 0));
 
-				const elevationMin = Utils.deg2rad(+particleData.elevation?.min ?? 0);
-				const elevationMax = Utils.deg2rad(+particleData.elevation?.max ?? 0);
+				const elevationMin = Utils.deg2rad(+(particleData.elevation?.min ?? 0));
+				const elevationMax = Utils.deg2rad(+(particleData.elevation?.max ?? 0));
 
-				const lifetimeFrom = (+particleData.lifetime?.min || 1000) / 1000 ?? 1;
-				const lifetimeTo = (+particleData.lifetime?.max || 1000) / 1000 ?? 1;
+				const lifetimeFrom = +(particleData.lifetime?.min ?? 1000) / 1000 ?? 1;
+				const lifetimeTo = +(particleData.lifetime?.max ?? 1000) / 1000 ?? 1;
 
 				const emitting = false;
 
-				const frequency = 1 / +particleData.emitFrequency ?? 10;
+				const frequency = 1 / +(particleData.emitFrequency ?? 10);
 
 				const shape = {
-					width: particleData.emitZone?.x ?? 0,
-					height: particleData.emitZone?.z ?? 0,
-					depth: particleData.emitZone?.y ?? 0,
+					width: +(particleData.emitZone?.x ?? 0),
+					height: +(particleData.emitZone?.z ?? 0),
+					depth: +(particleData.emitZone?.y ?? 0),
 				};
 
 				const rotation = {
-					min: Utils.deg2rad(+particleData.rotation?.min ?? 0),
-					max: Utils.deg2rad(+particleData.rotation?.max ?? 0),
+					min: Utils.deg2rad(+(particleData.rotation?.min ?? 0)),
+					max: Utils.deg2rad(+(particleData.rotation?.max ?? 0)),
 				};
 
 				const speed = {
-					min: +particleData.speed?.min ?? 0,
-					max: +particleData.speed?.max ?? 0,
+					min: +(particleData.speed?.min ?? 0),
+					max: +(particleData.speed?.max ?? 0),
 				};
 
 				const scale = {
-					x: +particleData.scale?.x ?? 1,
-					y: +particleData.scale?.y ?? 1,
+					x: +(particleData.scale?.x ?? 1),
+					y: +(particleData.scale?.y ?? 1),
 					start: 1,
-					step: +particleData.scale?.step ?? 0,
+					step: +(particleData.scale?.step ?? 0),
 				};
 
 				const startColor = Utils.hexToRgb(particleData.colorStart);
 				const endColor = Utils.hexToRgb(particleData.colorEnd);
 				const colorSpeed = {
-					min: +particleData.colorSpeed?.min ?? 1,
-					max: +particleData.colorSpeed?.max ?? 1,
+					min: +(particleData.colorSpeed?.min ?? 1),
+					max: +(particleData.colorSpeed?.max ?? 1),
 				};
 
 				const brightness = {
-					min: +particleData.brightness?.min ?? 1,
-					max: +particleData.brightness?.max ?? 1,
+					min: +(particleData.brightness?.min ?? 1),
+					max: +(particleData.brightness?.max ?? 1),
 				};
 
 				const opacity = {
-					start: +particleData.opacity?.start ?? 1,
-					end: +particleData.opacity?.end ?? 1,
+					start: +(particleData.opacity?.start ?? 1),
+					end: +(particleData.opacity?.end ?? 1),
 				};
 
-				const duration = +particleData.duration / 1000 ?? 1;
+				const duration = +(particleData.duration / 1000 ?? 1);
 
 				return {
 					particleTypeId: config.particleId,
@@ -307,13 +311,13 @@ namespace Renderer {
 				}
 			}
 
-			updateEmitters(delta: number) {
+			updateEmitters(dt: number) {
 				for (let n = 0; n < this.emitters.length; n++) {
 					const emitter = this.emitters[n] as EmitterInternal;
 
 					if (!emitter.emitting) continue;
 
-					emitter.accumulator += delta;
+					emitter.accumulator += dt;
 
 					if (emitter.addInterval > 0) {
 						// NOTE(nick): Avoids spawning to particles too fast; it has to be seen
@@ -321,10 +325,10 @@ namespace Renderer {
 						const addInterval = emitter.addInterval < 0.0001 ? 0.0001 : emitter.addInterval;
 						while (emitter.accumulator >= addInterval) {
 							emitter.accumulator -= addInterval;
-							this.emitterEmit(emitter, delta);
+							this.emitterEmit(emitter);
 						}
 					} else {
-						this.emitterEmit(emitter, delta);
+						this.emitterEmit(emitter);
 					}
 				}
 
@@ -333,7 +337,7 @@ namespace Renderer {
 					const particle = this.particles[n];
 
 					if (particle.live > 0) {
-						particle.live -= delta;
+						particle.live -= dt;
 
 						// NOTE(nick): Decreases opacity during particle's lifetime, this is how
 						// it currently works in the Phaser renderer. We might want to add more
@@ -347,19 +351,19 @@ namespace Renderer {
 							particle.color[0] = p.color_from[0] + (p.color_to[0] - p.color_from[0]) * p.color_t;
 							particle.color[1] = p.color_from[1] + (p.color_to[1] - p.color_from[1]) * p.color_t;
 							particle.color[2] = p.color_from[2] + (p.color_to[2] - p.color_from[2]) * p.color_t;
-							particle.color_t += delta * particle.color_speed;
+							particle.color_t += particle.color_speed * dt;
 						} else {
 							particle.color[0] = particle.color_to[0];
 							particle.color[1] = particle.color_to[1];
 							particle.color[2] = particle.color_to[2];
 						}
 
-						particle.offset[0] += particle.velocity[0];
-						particle.offset[1] += particle.velocity[1];
-						particle.offset[2] += particle.velocity[2];
+						particle.offset[0] += particle.velocity[0] * dt;
+						particle.offset[1] += particle.velocity[1] * dt;
+						particle.offset[2] += particle.velocity[2] * dt;
 
-						particle.scale[0] += particle.scale_increase;
-						particle.scale[1] += particle.scale_increase;
+						particle.scale[0] += particle.scale_increase * dt;
+						particle.scale[1] += particle.scale_increase * dt;
 
 						this.particles[i] = particle;
 
@@ -370,7 +374,7 @@ namespace Renderer {
 				this.particles.length = i;
 			}
 
-			emitterEmit(emitter: Emitter, dt: number) {
+			emitterEmit(emitter: Emitter) {
 				this.forward.set(emitter.direction.x, emitter.direction.y, emitter.direction.z).normalize();
 				this.right.crossVectors({ x: 0, y: 1, z: 0 } as THREE.Vector3, this.forward).normalize();
 				if (this.forward.x <= Number.EPSILON && this.forward.z <= Number.EPSILON) {
@@ -382,7 +386,7 @@ namespace Renderer {
 				const randAzimuth = Utils.lerp(emitter.azimuth.min, emitter.azimuth.max, Math.random());
 				const randElevation = Utils.lerp(emitter.elevation.min, emitter.elevation.max, Math.random());
 				const angleOffset = Math.PI * 0.5;
-				const speed = Utils.lerp(emitter.speed.min, emitter.speed.max, Math.random()) * dt;
+				const speed = Utils.lerp(emitter.speed.min, emitter.speed.max, Math.random());
 
 				this.velocity
 					.setFromSphericalCoords(1, angleOffset - randElevation, -randAzimuth)
@@ -398,7 +402,7 @@ namespace Renderer {
 					z: emitter.shape.depth * Math.random() - emitter.shape.depth * 0.5,
 				};
 
-				const targetAngle = -emitter.target.body.rotation.y;
+				const targetAngle = -emitter.target.rotation.y;
 				const tempX = offset.x;
 				offset.x = offset.x * Math.cos(targetAngle) - offset.z * Math.sin(targetAngle);
 				offset.z = tempX * Math.sin(targetAngle) + offset.z * Math.cos(targetAngle);
@@ -470,6 +474,8 @@ namespace Renderer {
 		}
 
 		const vs = `
+  #include <fog_pars_vertex>
+
   attribute vec3 offset;
   attribute vec2 scale;
   attribute float rotation;
@@ -498,11 +504,16 @@ namespace Renderer {
     vec3 cameraUp = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
     vec3 pos = offset + cameraRight * vRotated.x * scale.x + cameraUp * vRotated.y * scale.y;
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+	vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+
+	#include <fog_vertex>
   }
 `;
 
 		const fs = `
+  #include <fog_pars_fragment>
+
   uniform sampler2D textures[16];
 
   varying vec2 vUv;
@@ -528,10 +539,11 @@ namespace Renderer {
     else if (vTexture == 14) gl_FragColor = texture2D(textures[14], vUv) * vColor;
     else if (vTexture == 15) gl_FragColor = texture2D(textures[15], vUv) * vColor;
 
+	#include <fog_fragment>
     gl_FragColor.rgb *= gl_FragColor.a;
 	gl_FragColor.a *= vBlend;
 
-    #include <tonemapping_fragment>
+	#include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
 `;

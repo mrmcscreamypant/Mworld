@@ -465,8 +465,11 @@ NetIo.Client = NetIo.EventingClass.extend({
 			const disconnectReason = decodedToken.isBanned
 				? bannedReason
 				: 'Error trying to contact server. Please refresh this page or visit our homepage.';
-			taro.menuUi.onDisconnectFromServer('netio-client index:446', disconnectReason);
-			this.emit('error', { reason: 'Cannot establish connection, is server running?' });
+			
+			
+				taro.menuUi.onDisconnectFromServer('netio-client index:446', disconnectReason);
+			
+				this.emit('error', { reason: 'Cannot establish connection, is server running?' });
 		}
 
 		// Remove the last disconnect reason

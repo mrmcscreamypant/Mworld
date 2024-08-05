@@ -443,6 +443,46 @@ var ActionComponent = TaroEntity.extend({
 						}
 						break;
 
+					case 'runScriptOnClient':
+						if (taro.isServer) {
+							var previousScriptId = self._script.currentScriptId;
+							var previousAcionBlockIdx = self._script.currentActionLineNumber;
+
+							const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
+							const localPlayer = self._script.param.getValue(action.player, vars);
+							localPlayer.streamUpdateData(
+								[{ script: { name: action.scriptName, params: localScriptParams } }],
+								localPlayer._stats.clientId
+							);
+
+							self._script.currentScriptId = previousScriptId;
+							self._script.currentActionLineNumber = previousAcionBlockIdx;
+						}
+						break;
+
+					case 'runEntityScriptOnClient':
+						if (taro.isServer) {
+							var previousScriptId = self._script.currentScriptId;
+							var previousAcionBlockIdx = self._script.currentActionLineNumber;
+
+							var entity = self._script.param.getValue(action.entity, vars);
+							if (entity) {
+								const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
+								const localPlayer = self._script.param.getValue(action.player, vars);
+								localPlayer.streamUpdateData(
+									[{ script: { name: action.scriptName, entityId: entity.id(), params: localScriptParams } }],
+									localPlayer._stats.clientId
+								);
+
+								self._script.currentScriptId = previousScriptId;
+								self._script.currentActionLineNumber = previousAcionBlockIdx;
+
+								self._script.currentScriptId = previousScriptId;
+								self._script.currentActionLineNumber = previousAcionBlockIdx;
+							}
+						}
+						break;
+
 					case 'condition':
 						if (self._script.condition.run(action.conditions, vars, `${actionPath}/condition`)) {
 							let previousAcionBlockIdx = self._script.currentActionLineNumber;
@@ -1956,6 +1996,12 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'changeSensorRadius':
+						if (action.sensor.unit) {
+							var unit = self._script.param.getValue(action.sensor.unit, vars);
+							if (unit.sensor === undefined) {
+								unit.sensor = new Sensor(unit, unit._stats.ai.sensorRadius);
+							}
+						}
 						var sensor = self._script.param.getValue(action.sensor, vars);
 						var radius = self._script.param.getValue(action.radius, vars);
 						// console.log("changeSensorRadius", sensor.id(), radius)
@@ -2384,7 +2430,7 @@ var ActionComponent = TaroEntity.extend({
 					case 'startEmittingParticles':
 						if (taro.isClient) {
 							var particleTypeId = self._script.param.getValue(action.particleEmitter, vars);
-							var entity = self._script.param.getValue(action.entity, vars);
+							var entity = self._script.param.getValue(action.particleEmitter.entity, vars);
 							if (particleTypeId && entity) {
 								taro.client.emit('start-emitting-particles', { particleTypeId, entityId: entity.id() });
 							}
@@ -2394,7 +2440,7 @@ var ActionComponent = TaroEntity.extend({
 					case 'stopEmittingParticles':
 						if (taro.isClient) {
 							var particleTypeId = self._script.param.getValue(action.particleEmitter, vars);
-							var entity = self._script.param.getValue(action.entity, vars);
+							var entity = self._script.param.getValue(action.particleEmitter.entity, vars);
 
 							if (particleTypeId && entity) {
 								taro.client.emit('stop-emitting-particles', { particleTypeId, entityId: entity.id() });
@@ -3282,6 +3328,7 @@ var ActionComponent = TaroEntity.extend({
 						let entityType = self._script.param.getValue(action.entityType, vars);
 						let entityToCreate = self._script.param.getValue(action.entity, vars);
 						var position = self._script.param.getValue(action.position, vars);
+						const defaultDepth = position.z;
 						var rotation = self._script.param.getValue(action.rotation, vars);
 						var scale = self._script.param.getValue(action.scale, vars);
 						var height = self._script.param.getValue(action.height, vars) || 100;
@@ -3429,7 +3476,10 @@ var ActionComponent = TaroEntity.extend({
 								height: height,
 								width: width,
 							};
-
+							if (defaultDepth) {
+								//FIXME: should remove tmpDefault and find somewhere else to store the defaultDepth
+								createdEntity.tmpDefaultDepth = defaultDepth;
+							}
 							taro.script.trigger('entityCreatedGlobal', { entityId: createdEntity.id() });
 							createdEntity.script.trigger('entityCreated', { thisEntityId: createdEntity.id() });
 						}
@@ -3772,6 +3822,8 @@ var ActionComponent = TaroEntity.extend({
 							// hack to rotate entity properly
 							if (taro.isClient) {
 								entity.rotateTo(0, 0, radians);
+								entity.nextKeyFrame[1][2] = radians;
+								entity.isTransforming(true);
 							} else {
 								entity.streamUpdateData([{ rotate: radians }]);
 							}
@@ -4449,6 +4501,25 @@ var ActionComponent = TaroEntity.extend({
 								taro.network.send('ui', data, player._stats.clientId);
 							} else if (player._stats.clientId === taro.network.id()) {
 								taro.playerUi.updateUiElement(data);
+							}
+						}
+						break;
+					}
+
+					case 'sendDataFromServerToClient': {
+						if (taro.isServer) {
+							const player = self._script.param.getValue(action.client, vars);
+							const data = self._script.param.getValue(action.data, vars);
+
+							if (player && player._stats.clientId) {
+								const clientId = player._stats.clientId;
+								taro.network.send(
+									'sendDataFromServer',
+									{
+										data,
+									},
+									clientId
+								);
 							}
 						}
 						break;

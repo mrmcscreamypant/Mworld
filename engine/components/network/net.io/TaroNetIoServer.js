@@ -253,6 +253,8 @@ var TaroNetIoServer = {
 			};
 
 			socket.close(reason);
+		} else {
+			console.log(`disconnect: socket not found`, clientId, reason, reasonCode);
 		}
 	},
 
@@ -736,6 +738,9 @@ var TaroNetIoServer = {
 		// triggers _onClientDisconnect in ServerNetworkEvents.js
 		this.emit('disconnect', {
 			clientId: socket.id,
+			userId: socket?._token?.userId,
+			guestUserId: socket?._guestUserId,
+			kickUserRequestId: taro.server.clients[socket.id]?.kickUserRequestId,
 			reason: _disconnect.reason,
 		});
 

@@ -48,7 +48,9 @@ namespace Renderer {
 										name: taroEntity._stats.id,
 										delete: true,
 									};
-									inGameEditor.updateRegionInReact && !window.isStandalone && inGameEditor.updateRegionInReact(data, 'threejs');
+									inGameEditor.updateRegionInReact &&
+										!window.isStandalone &&
+										inGameEditor.updateRegionInReact(data, 'threejs');
 								},
 							},
 							true
@@ -59,19 +61,18 @@ namespace Renderer {
 				}
 
 				this.entities.push(entity);
-
 				return entity;
 			}
 
 			destroyInitEntity(initEntity: InitEntity) {
 				const renderer = Three.instance();
 				if (
-					renderer.entityEditor.selectedEntity instanceof InitEntity &&
-					renderer.entityEditor.selectedEntity.action.actionId === initEntity.action.actionId
+					renderer.entityEditor.selectedEntities instanceof InitEntity &&
+					renderer.entityEditor.selectedEntities.action.actionId === initEntity.action.actionId
 				) {
 					renderer.entityEditor.selectEntity(null);
 				}
-				this.initEntities = this.initEntities.filter((e) => e.action.actionId !== initEntity.action.actionId)
+				this.initEntities = this.initEntities.filter((e) => e.action.actionId !== initEntity.action.actionId);
 				initEntity.destroy();
 			}
 
@@ -90,6 +91,7 @@ namespace Renderer {
 
 				if (this.items.includes(entity as Item)) {
 					this.items.splice(this.items.indexOf(entity as Item, 0), 1);
+					this.unownedItems.delete(entity.taroId);
 				}
 
 				if (this.projectiles.includes(entity as Unit)) {
@@ -104,12 +106,6 @@ namespace Renderer {
 			update(dt: number) {
 				for (const sprite of this.animatedSprites) {
 					sprite.update(dt);
-				}
-
-				if (this.unownedItems.size > 0) {
-					for (const unit of this.units) {
-						this.maybeAddUnownedItemsToUnit(unit);
-					}
 				}
 			}
 

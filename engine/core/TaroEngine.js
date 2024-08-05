@@ -41,7 +41,10 @@ var TaroEngine = TaroEntity.extend({
 						return navigator.userAgent.match(/BlackBerry/i);
 					},
 					iOS: function () {
-						return navigator.userAgent.match(/iPhone|iPad|iPod/i);
+						return (
+							/iPad|iPhone|iPod/.test(navigator.platform) ||
+							(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+						);
 					},
 					Opera: function () {
 						return navigator.userAgent.match(/Opera Mini/i);

@@ -645,6 +645,25 @@ var Player = TaroEntity.extend({
 								self.selectUnit(newValue);
 							}
 							break;
+
+						case 'script':
+							const scriptName = newValue.name;
+							const scriptParams = newValue.params;
+
+							let scriptComponent;
+							if (newValue.entityId) {
+								const entity = taro.$(newValue.entityId);
+								scriptComponent = entity.script;
+							} else {
+								scriptComponent = taro.script;
+							}
+							var previousScriptId = scriptComponent.currentScriptId;
+							var previousAcionBlockIdx = scriptComponent.currentActionLineNumber;
+
+							scriptComponent.runScript(scriptName, scriptParams);
+
+							scriptComponent.currentScriptId = previousScriptId;
+							scriptComponent.currentActionLineNumber = previousAcionBlockIdx;
 						default:
 							// Handle the case when attrName does not match any of the above cases.
 							break;
@@ -919,6 +938,16 @@ var Player = TaroEntity.extend({
 			taro.menuUi.hideMenu(); // if player's already joined the game, then just hide menu when "play game" button is clicked
 			if (!taro.client.guestmode) {
 				$('.open-menu-button').show();
+			}
+
+			if (!window.GAME_PLAY_STARTED) {
+				if (window.STATIC_EXPORT_ENABLED) {
+					window.PokiSDK?.gameplayStart();
+				}
+				if (window.IS_CRAZY_GAMES_ENV) {
+					window.CrazyGames.SDK.game.gameplayStart();
+				}
+				window.GAME_PLAY_STARTED = true;
 			}
 
 			window.reactApp && window.reactApp.playerJoinedGame && window.reactApp.playerJoinedGame();

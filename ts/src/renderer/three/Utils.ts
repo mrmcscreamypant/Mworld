@@ -19,6 +19,13 @@ namespace Renderer {
 				return `${url}?v=1`;
 			}
 
+			export function isFocusOnPlayPage() {
+				if (document.activeElement.className !== 'play-page') {
+					return false;
+				}
+				return true;
+			}
+
 			export function fillRect(
 				ctx: CanvasRenderingContext2D,
 				x: number,
@@ -258,10 +265,10 @@ namespace Renderer {
 				const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 				return result
 					? {
-							r: parseInt(result[1], 16) / 255,
-							g: parseInt(result[2], 16) / 255,
-							b: parseInt(result[3], 16) / 255,
-						}
+						r: parseInt(result[1], 16) / 255,
+						g: parseInt(result[2], 16) / 255,
+						b: parseInt(result[3], 16) / 255,
+					}
 					: { r: 1, g: 1, b: 1 };
 			}
 
@@ -280,6 +287,22 @@ namespace Renderer {
 			export function formatNumber(value: number, decimalPlaces = 0, trailingZeros = false) {
 				if (value === undefined || value === null) return '';
 				return trailingZeros ? value.toFixed(decimalPlaces).toString() : toFixedWithoutZeros(value, decimalPlaces);
+			}
+
+			export function isDebug() {
+				return location.hash === '#debug';
+			}
+
+			export function removeFromParentAndRecalcTransform(o: THREE.Object3D) {
+				if (o.parent && (o.parent as any).tag === Three.EntityEditor.TAG) {
+					const renderer = Renderer.Three.instance();
+					const parent_position = o.parent.position.clone();
+					const parent_scale = o.parent.scale.clone();
+					o.removeFromParent();
+					renderer.initEntityLayer.add(o);
+					o.position.divide(parent_scale);
+					o.position.add(parent_position);
+				}
 			}
 		}
 	}

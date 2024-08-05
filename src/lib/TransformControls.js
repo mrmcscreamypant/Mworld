@@ -117,6 +117,7 @@ class TransformControls extends Object3D {
 		const pointStart = new Vector3();
 		const pointEnd = new Vector3();
 		const rotationAxis = new Vector3();
+		const scaleAxis = new Vector3();
 		const rotationAngle = 0;
 		const eye = new Vector3();
 
@@ -132,6 +133,8 @@ class TransformControls extends Object3D {
 		defineProperty('pointEnd', pointEnd);
 		defineProperty('rotationAxis', rotationAxis);
 		defineProperty('rotationAngle', rotationAngle);
+		defineProperty('scaleAxis', scaleAxis);
+		defineProperty('nonePosition', 0);
 		defineProperty('eye', eye);
 
 		this._offset = new Vector3();
@@ -349,9 +352,9 @@ class TransformControls extends Object3D {
 			}
 
 			// Apply scale
-
+			this.nonePosition += 1;
 			object.scale.copy(this._scaleStart).multiply(_tempVector2);
-
+			this.scaleAxis.copy(object.scale);
 			if (this.scaleSnap) {
 				if (axis.search('X') !== -1) {
 					object.scale.x = Math.round(object.scale.x / this.scaleSnap) * this.scaleSnap || this.scaleSnap;
@@ -409,8 +412,8 @@ class TransformControls extends Object3D {
 
 			if (this.rotationSnap)
 				this.rotationAngle = Math.round(this.rotationAngle / this.rotationSnap) * this.rotationSnap;
-
 			// Apply rotate
+			this.nonePosition += 1;
 			if (space === 'local' && axis !== 'E' && axis !== 'XYZE') {
 				object.quaternion.copy(this._quaternionStart);
 				object.quaternion.multiply(_tempQuaternion.setFromAxisAngle(this.rotationAxis, this.rotationAngle)).normalize();
@@ -841,7 +844,7 @@ class TransformControlsGizmo extends Object3D {
 			const gizmo = new Object3D();
 
 			for (const name in gizmoMap) {
-				for (let i = gizmoMap[name].length; i--; ) {
+				for (let i = gizmoMap[name].length; i--;) {
 					const object = gizmoMap[name][i][0].clone();
 					const position = gizmoMap[name][i][1];
 					const rotation = gizmoMap[name][i][2];

@@ -1,6 +1,7 @@
 namespace Renderer {
 	export namespace Three {
 		export class Sprite extends Node {
+			root = new THREE.Object3D();
 			sprite: THREE.Mesh;
 			billboard = false;
 			scaleUnflipped = new THREE.Vector2(1, 1);
@@ -15,13 +16,20 @@ namespace Renderer {
 
 				const geometry = new THREE.PlaneGeometry(1, 1);
 				geometry.rotateX(-Math.PI / 2);
-				const material = new THREE.MeshBasicMaterial({
+				const material = new THREE.MeshStandardMaterial({
 					map: tex,
 					transparent: true,
 					alphaTest: 0.3,
 				});
 				this.sprite = new THREE.Mesh(geometry, material);
-				this.add(this.sprite);
+				const line = new THREE.LineSegments(
+					new THREE.EdgesGeometry(geometry),
+					new THREE.LineBasicMaterial({ linewidth: 2, color: 0xffffff })
+				);
+				line.visible = false;
+				this.sprite.add(line);
+				this.root.add(this.sprite);
+				this.add(this.root);
 			}
 
 			setBillboard(billboard: boolean, camera: Camera) {
@@ -42,28 +50,6 @@ namespace Renderer {
 					}, time);
 				}
 			}
-
-			/*setColor(color: number, time = 0) {
-				console.log('setColor', color, time, this.sprite);
-				this.traverse((child) => {
-					if (child instanceof THREE.Mesh) {
-						// Convert to basic material to avoid lighting
-						/*const material = new THREE.MeshBasicMaterial();
-						THREE.MeshBasicMaterial.prototype.copy.call(material, child.material);
-						child.material = material;*/
-			/*const originalColor = child.material.color.getHex();
-						child.material.color.setHex(color);
-						child.material.needsUpdate = true;
-						child.material.opacity = 0.5;
-						if (time > 0) {
-							setTimeout(() => {
-								child.material.color.setHex(originalColor);
-								child.material.opacity = 1;
-							}, time);
-						}
-					}
-				});
-			}*/
 
 			setScale(sx: number, sy: number) {
 				this.scaleUnflipped.set(sx, sy);

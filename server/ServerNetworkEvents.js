@@ -28,7 +28,7 @@ var ServerNetworkEvents = {
 		taro.server.testerId = clientId;
 	},
 
-	_onClientDisconnect: function ({ clientId, reason }) {
+	_onClientDisconnect: function ({ clientId, userId, guestUserId, kickUserRequestId, reason }) {
 		var self = this;
 
 		if (!reason) {
@@ -50,15 +50,15 @@ var ServerNetworkEvents = {
 			if (player) {
 				console.log(`_onclientDisconnect ${clientId} (${player._stats.name}) ${Date.now() - client.lastEventAt}`);
 				player.updatePlayerHighscore();
-
-				if (player._stats.userId) {
-					taro.workerComponent.saveLastPlayedTime(player._stats.userId);
-				}
 			}
 		}
 
 		if (player) {
 			player.remove();
+		}
+
+		if (userId || guestUserId) {
+			taro.workerComponent.saveLastPlayedTime(userId, guestUserId, kickUserRequestId);
 		}
 	},
 
@@ -350,11 +350,15 @@ var ServerNetworkEvents = {
 		if (player) {
 			var unit = player.getSelectedUnit();
 			if (unit) {
-				await unit.buyItem(id, token);
-				taro.script.trigger('playerPurchasesItem', {
-					itemId: taro.game.lastCreatedItemId,
-					playerId: player.id(),
-				});
+				try {
+					await unit.buyItem(id, token);
+					taro.script.trigger('playerPurchasesItem', {
+						itemId: taro.game.lastCreatedItemId,
+						playerId: player.id(),
+					});
+				} catch (e) {
+					console.log('playerPurchasesItem trigger not fired');
+				}
 			}
 		}
 	},

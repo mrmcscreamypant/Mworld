@@ -54,7 +54,7 @@ var Item = TaroEntityPhysics.extend({
 		self.entityId = entityIdFromServer;
 		// self._stats.handle = data.type
 		self._stats.lastUsed = 0;
-		self.anchoredOffset = { x: 0, y: 0, rotate: 0 };
+		self.anchoredOffset = { x: 0, y: 0, rotate: 0, unitAnchor: { x: 0, y: 0 }, itemAnchor: { x: 0, y: 0 } };
 
 		// convert numbers stored as string in database to int
 		self.parseEntityObject(self._stats);
@@ -353,7 +353,7 @@ var Item = TaroEntityPhysics.extend({
 		if (self.hasQuantityRemaining()) {
 			taro.game.lastUsedItemId = self.id();
 
-			if (self._stats.lastUsed + self._stats.fireRate < taro.now || self._stats.type == 'consumable') {
+			if (self._stats.lastUsed + self._stats.fireRate < taro.now) {
 				if (!self.canAffordItemCost()) {
 					taro.devLog('cannot afford item cost');
 					return;
@@ -388,7 +388,11 @@ var Item = TaroEntityPhysics.extend({
 							let bulletY = self._stats.bulletStartPosition.y || 0;
 							let bulletX = owner._stats.flip === 1 ? -1 : 1;
 
-							if (owner && self._stats.currentBody && self._stats.currentBody.jointType == 'weldJoint') {
+							if (
+								owner &&
+								self._stats.currentBody &&
+								(self._stats.currentBody.jointType == 'weldJoint' || self._stats.currentBody.type == 'none')
+							) {
 								rotate = owner._rotate.z;
 								// if we are welded to owner unit, we have to invert the start position when the item is flipped
 								// multiply bullet start position y-component by -1 if flip === 1
@@ -396,7 +400,7 @@ var Item = TaroEntityPhysics.extend({
 							}
 
 							if (self.anchoredOffset == undefined) {
-								self.anchoredOffset = { x: 0, y: 0, rotate: 0 };
+								self.anchoredOffset = { x: 0, y: 0, rotate: 0, unitAnchor: { x: 0, y: 0 }, itemAnchor: { x: 0, y: 0 } };
 							}
 
 							// item is flipped, then mirror the rotation
@@ -892,7 +896,7 @@ var Item = TaroEntityPhysics.extend({
 	 */
 	getAnchoredOffset: function (rotate = 0) {
 		var self = this;
-		var offset = { x: 0, y: 0, rotate: 0 };
+		var offset = { x: 0, y: 0, rotate: 0, unitAnchor: { x: 0, y: 0 }, itemAnchor: { x: 0, y: 0 } };
 		var ownerUnit = this.getOwnerUnit();
 
 		if (ownerUnit && this._stats.stateId != 'dropped') {
@@ -933,6 +937,12 @@ var Item = TaroEntityPhysics.extend({
 						x: unitAnchorOffsetX * Math.cos(unitRotate) + unitAnchorOffsetY * Math.sin(unitRotate),
 						y: unitAnchorOffsetX * Math.sin(unitRotate) - unitAnchorOffsetY * Math.cos(unitRotate),
 					};
+
+					offset.unitAnchor.x = unitAnchoredPosition.x;
+					offset.unitAnchor.y = unitAnchoredPosition.y;
+
+					offset.itemAnchor.x = itemAnchorOffsetX * Math.cos(rotate) + itemAnchorOffsetY * Math.sin(rotate);
+					offset.itemAnchor.y = itemAnchorOffsetX * Math.sin(rotate) - itemAnchorOffsetY * Math.cos(rotate);
 
 					(offset.x =
 						unitAnchoredPosition.x + itemAnchorOffsetX * Math.cos(rotate) + itemAnchorOffsetY * Math.sin(rotate)),

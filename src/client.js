@@ -136,6 +136,30 @@ const Client = TaroEventingClass.extend({
 			$(this.getCachedElementById('error-log-modal')).modal('show');
 		});
 
+		$(this.getCachedElementById('dev-debugDraw-button')).on('click', () => {
+			if (taro.physics && taro.physics.engine === 'BOX2DWASM') {
+				if (taro.physics.debugDrawEnabled) {
+					taro.physics.disableDebug();
+					$(this.getCachedElementById('dev-debugDraw-button')).text('Enable DebugDraw');
+					taro.physics.debugDrawEnabled = false;
+				} else {
+					taro.physics.enableDebug();
+					$(this.getCachedElementById('dev-debugDraw-button')).text('Disable DebugDraw');
+					taro.physics.debugDrawEnabled = true;
+				}
+			} else {
+				window.setAlert({
+					title: 'Incompatible client physics',
+					text: 'Debug Draw is exclusive to Box2DWASM physics (on client side). You can change the physics engine in game configuration.',
+					type: 'error',
+					showCancelButton: false,
+					confirmButtonText: 'Ok',
+					onConfirm: () => {},
+					onCancel: () => {},
+				});
+			}
+		});
+
 		$(this.getCachedElementById('bandwidth-usage')).on('click', () => {
 			// maybe we could rename 'bandwidth-usage'
 			$(this.getCachedElementById('dev-status-modal')).modal('show');
@@ -225,10 +249,15 @@ const Client = TaroEventingClass.extend({
 				taro.developerMode = new DeveloperMode();
 
 				if (taro.game.data.defaultData.defaultRenderer === '3d') {
-					if (options?.resetRenderer) {
-						taro.renderer = Renderer.Three.reset(); // reset renderer
+					const supportWebGL2 = document.createElement('canvas').getContext('webgl2');
+					if (supportWebGL2) {
+						if (options?.resetRenderer) {
+							taro.renderer = Renderer.Three.reset(options.rendererOptions); // reset renderer
+						} else {
+							taro.renderer = Renderer.Three.instance();
+						}
 					} else {
-						taro.renderer = Renderer.Three.instance();
+						window.showWebGLLoadFailedModal?.();
 					}
 				} else {
 					taro.renderer = new PhaserRenderer();
@@ -431,8 +460,8 @@ const Client = TaroEventingClass.extend({
 			);
 
 			taro.client.emit('camera-instant-move', [
-				(taro.map.data.width * tileWidth) / 2,
-				(taro.map.data.height * tileHeight) / 2,
+				gameData.settings.camera?.mapPreviewPos?.x ?? (taro.map.data.width * tileWidth) / 2,
+				gameData.settings.camera?.mapPreviewPos?.y ?? (taro.map.data.height * tileHeight) / 2,
 			]);
 
 			taro.addComponent(AdComponent);
@@ -542,11 +571,7 @@ const Client = TaroEventingClass.extend({
 		for (let server of validServers) {
 			const capacity = server.playerCount / server.maxPlayers;
 
-			if (
-				capacity < overloadCriteria &&
-				server.playerCount > maxPlayersInUnderLoadedServer &&
-				server.acceptingPlayers
-			) {
+			if (capacity < overloadCriteria && server.playerCount > maxPlayersInUnderLoadedServer) {
 				firstChoice = server;
 				maxPlayersInUnderLoadedServer = server.playerCount;
 			}
@@ -596,10 +621,6 @@ const Client = TaroEventingClass.extend({
 			}
 
 			$(self.getCachedElementById('loading-container')).addClass('slider-out');
-
-			if (window.STATIC_EXPORT_ENABLED) {
-				window.PokiSDK?.gameplayStart();
-			}
 
 			console.log('connected to ', taro.client.server.url, 'clientId ', taro.network.id()); // idk if this needs to be in production
 
@@ -715,6 +736,7 @@ const Client = TaroEventingClass.extend({
 		taro.network.define('showUnitNameLabelFromPlayer', this._onShowUnitNameLabelFromPlayer);
 
 		taro.network.define('streamUpdateData', this._onStreamUpdateData);
+		taro.network.define('sendDataFromServer', this._onSendDataFromServer);
 		taro.network.define('updateEntityAttribute', this._onUpdateEntityAttribute);
 
 		taro.network.define('updateUiText', this._onUpdateUiText);

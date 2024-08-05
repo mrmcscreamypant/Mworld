@@ -9,10 +9,13 @@ namespace Renderer {
 			defaultHeight: number;
 			defaultDepth: number;
 			isBillboard = false;
-
+			offset = new THREE.Vector3();
+			debounceUpdateAction: (action: { data: ActionData[] }) => void;
+			mergedTemplate: MergedTemplate<{ data: ActionData[] }>;
 			constructor(action: ActionData, type?: 'unit' | 'item' | 'projectile') {
 				super();
 				this.action = action;
+				this.mergedTemplate = { data: { method: 'array', calc: 'sum' } };
 				let key: string;
 				let cols: number;
 				let rows: number;
@@ -41,7 +44,7 @@ namespace Renderer {
 					defaultHeight = this.defaultHeight = entityTypeData.bodies?.default?.height;
 					defaultDepth = this.defaultDepth = entityTypeData.bodies?.default?.depth;
 				}
-				this.isBillboard = entityTypeData?.isBillboard ?? false;
+				this.isBillboard = entityTypeData?.bodies?.default?.isBillboard ?? false;
 				const renderer = Renderer.Three.instance();
 				let body: (Renderer.Three.AnimatedSprite | Renderer.Three.Model) & { entity: InitEntity };
 				if (entityTypeData.is3DObject) {
@@ -57,7 +60,7 @@ namespace Renderer {
 						entity: InitEntity;
 					};
 					(body.sprite as THREE.Mesh & { entity: InitEntity }).entity = this;
-					body.setBillboard(entityTypeData.isBillboard, renderer.camera);
+					body.setBillboard(this.isBillboard, renderer.camera);
 				}
 				body.entity = this;
 				this.rotation.order = 'YXZ';
@@ -122,12 +125,15 @@ namespace Renderer {
 				renderer.entityManager.initEntities.push(this);
 			}
 
-			edit(action: ActionData): void {
+			edit(action: ActionData, offset?: THREE.Vector3): void {
 				if (!this.action.wasEdited || !action.wasEdited) {
 					this.action.wasEdited = true;
 					action.wasEdited = true;
 				}
-				taro.network.send<any>('editInitEntity', action);
+				if (offset) {
+					this.offset.copy(offset);
+				}
+				taro.network.send<any>('editInitEntity', { ...action, offset });
 			}
 
 			setSize(x: number, y: number, z: number) {
@@ -140,11 +146,29 @@ namespace Renderer {
 				}
 			}
 
-			update(action: ActionData): void {
-				//update action in editor
-				if (inGameEditor && inGameEditor.updateAction && !window.isStandalone) {
-					inGameEditor.updateAction(action);
+			update() {
+				if (this.isBillboard) {
+					this.body.update(0);
 				}
+			}
+
+			updateAction(action: ActionData): void {
+				//update action in editor
+				if (
+					inGameEditor &&
+					inGameEditor.updateAction &&
+					!window.isStandalone &&
+					this.debounceUpdateAction === undefined
+				) {
+					this.debounceUpdateAction = debounce(
+						(actionData) => {
+							inGameEditor.updateAction(actionData.data as any);
+						},
+						0,
+						this.mergedTemplate
+					);
+				}
+				this.debounceUpdateAction?.({ data: [action] });
 				if (action.wasCreated) {
 					return;
 				}
@@ -158,10 +182,10 @@ namespace Renderer {
 					!isNaN(action.position.y)
 				) {
 					this.action.position = action.position;
-					this.position.x = Utils.pixelToWorld(action.position.x);
-					this.position.z = Utils.pixelToWorld(action.position.y);
+					this.position.x = Utils.pixelToWorld(action.position.x) + (action.offset?.x ?? 0);
+					this.position.z = Utils.pixelToWorld(action.position.y) + (action.offset?.z ?? 0);
 					if (!isNaN(action.position.z)) {
-						this.position.y = Utils.pixelToWorld(action.position.z);
+						this.position.y = Utils.pixelToWorld(action.position.z) + (action.offset?.y ?? 0);
 					}
 				}
 				if (taro.is3D()) {
@@ -263,7 +287,7 @@ namespace Renderer {
 				this.visible = false;
 			}
 
-			delete(history = true): void {
+			delete(history = true, uuid = undefined): void {
 				let editedAction: ActionData = { actionId: this.action.actionId, wasDeleted: true };
 				const nowDeleteAction = JSON.stringify(editedAction);
 				const nowAction = JSON.stringify(this.action);
@@ -301,6 +325,7 @@ namespace Renderer {
 								].cache = { newId, oldId };
 							}, 0);
 						},
+						mergedUuid: uuid
 					},
 					history
 				);

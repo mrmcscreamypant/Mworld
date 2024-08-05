@@ -113,6 +113,7 @@ class EntitiesToRender {
 					entity._category == 'item'
 				) {
 					// var timeStart = performance.now();
+
 					entity.transformTexture(x, y, rotate); // uses absolute position without anchorOffset for items. That info is later retrieved in the render function
 
 					// entity isn't moving anymore. prevent rendering to conserve cpu

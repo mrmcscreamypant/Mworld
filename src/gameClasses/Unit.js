@@ -686,6 +686,8 @@ var Unit = TaroEntityPhysics.extend({
 				self.pickUpItem(itemData);
 			} else {
 				taro.network.send('ui', { command: 'shopResponse', type: 'inventory_full' }, self._stats.clientId);
+				// escape the try block in ServerNetworkEvents.js so we don't fire purchase item trigger
+				throw new Error('inventory full');
 			}
 		}
 	},
@@ -1250,20 +1252,17 @@ var Unit = TaroEntityPhysics.extend({
 			} else {
 				// if designated item slot is already occupied, unit cannot get this item
 				var availableSlot = self.inventory.getFirstAvailableSlotForItem(itemData);
-
 				// Check if the item can merge
-				if (!!itemData.controls?.canMerge) {
+				if (itemData.controls?.canMerge) {
 					// insert/merge itemData's quantity into matching items in the inventory
 					var totalInventorySize = this.inventory.getTotalInventorySize();
 					for (var i = equipRequirementMet ? 0 : this._stats.inventorySize; i < totalInventorySize; i++) {
 						var currentItemId = self._stats.itemIds[i];
 						if (currentItemId) {
 							var currentItem = taro.$(currentItemId);
-
 							// if a matching item found in the inventory, try merging them
 							if (currentItem && currentItem._stats.itemTypeId == itemTypeId) {
 								var matchingItem = currentItem;
-
 								// lastCreatedItem is used to track the last item created by the server.
 								// This is necessary in case item isn't a new instance, but an existing item getting quantity updated
 								taro.game.lastCreatedItemId = matchingItem.id();
@@ -1279,11 +1278,13 @@ var Unit = TaroEntityPhysics.extend({
 								}
 
 								// the new item can fit in, because the matching item isn't full or has infinite quantity. Increase matching item's quantity only.
-								if (itemData.quantity > 0 && matchingItem._stats.maxQuantity - matchingItem._stats.quantity > 0) {
-									if (matchingItem._stats.maxQuantity != undefined) {
+								let maxQuantity = matchingItem._stats.maxQuantity || Infinity;
+
+								if (itemData.quantity > 0 && maxQuantity - matchingItem._stats.quantity > 0) {
+									if (matchingItem._stats.maxQuantity !== undefined) {
 										var quantityToBeTakenFromItem = Math.min(
 											itemData.quantity,
-											matchingItem._stats.maxQuantity - matchingItem._stats.quantity
+											maxQuantity - matchingItem._stats.quantity
 										);
 									} else {
 										// var quantityToBeTakenFromItem = itemData.quantity;
@@ -1979,10 +1980,21 @@ var Unit = TaroEntityPhysics.extend({
 		var self = this;
 		var owner = self.getOwner();
 		var persistedData = rfdc()(owner.persistedData);
+
 		if (persistedData && persistedData.data && persistedData.data.unit) {
 			TaroEntity.prototype.loadPersistentData.call(this, persistedData.data.unit);
 
 			var persistedInventoryItems = persistedData.data.unit.inventoryItems;
+			// destroy items given to unit as defaultItems if there is inventory to load
+			if (persistedInventoryItems.length > 0) {
+				this._stats.itemIds.forEach((itemId, i) => {
+					if (itemId) {
+						taro.$(itemId).destroy();
+						this._stats.itemIds[i] = null;
+					}
+				});
+			}
+			// now inventory should be empty and we can load in items to the slotIndex saved
 			for (var i = 0; i < persistedInventoryItems.length; i++) {
 				var persistedItem = persistedInventoryItems[i];
 				if (persistedItem) {
@@ -2209,7 +2221,7 @@ var Unit = TaroEntityPhysics.extend({
 			self.script.trigger(trigger.name, trigger.params);
 		});
 
-		if (taro.isServer || (taro.isClient && taro.client.selectedUnit == this)) {
+		if (taro.isServer || (taro.isClient && (taro.client.selectedUnit == this || this._stats.streamMode !== 1))) {
 			// ability component behaviour method call
 			this.ability._behaviour();
 
@@ -2271,15 +2283,22 @@ var Unit = TaroEntityPhysics.extend({
 					self.ai.targetPosition = undefined;
 					self.ai.targetUnitId = undefined;
 
-					// moving diagonally should reduce speed
-					if (self.direction.x != 0 && self.direction.y != 0) {
-						speed = speed / 1.41421356237;
-					}
+					// ignore client-side movement input if cspMode is 2 (client-authoritative),
+					// this unit's position is now dictated by the position streamed by its owner
+					if (
+						!taro.game.data.defaultData.clientPhysicsEngine ||
+						!(taro.isServer && self._stats.controls?.cspMode == 2)
+					) {
+						// moving diagonally should reduce speed
+						if (self.direction.x != 0 && self.direction.y != 0) {
+							speed = speed / 1.41421356237;
+						}
 
-					self.vector = {
-						x: self.direction.x * speed,
-						y: self.direction.y * speed,
-					};
+						self.vector = {
+							x: self.direction.x * speed,
+							y: self.direction.y * speed,
+						};
+					}
 				}
 
 				// update AI
@@ -2297,6 +2316,7 @@ var Unit = TaroEntityPhysics.extend({
 				if (ownerPlayer._stats.controlledBy == 'human' && !this._stats.aiEnabled) {
 					// toggle effects when unit starts/stops moving
 					if (!this.isMoving && (self.direction.x != 0 || self.direction.y != 0)) {
+						// ownerPlayer.control.lastInputSent = Date.now();
 						this.startMoving();
 					} else if (this.isMoving && self.direction.x === 0 && self.direction.y === 0) {
 						this.stopMoving();

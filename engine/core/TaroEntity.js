@@ -249,6 +249,12 @@ var TaroEntity = TaroObject.extend({
 			}
 
 			self.billboard(!!body['isBillboard']);
+
+			if (!body.rotate) body.rotate = { x: 0, y: 0, z: 0 };
+			body.rotate.x ||= 0;
+			body.rotate.y ||= 0;
+			body.rotate.z ||= 0;
+			self.rotate3d(body.rotate.x, body.rotate.y, body.rotate.z);
 		}
 	},
 
@@ -4362,6 +4368,12 @@ var TaroEntity = TaroObject.extend({
 							}
 							break;
 						case 'quests':
+							break;
+						//FIXME: when the 3d physics is ready, remove this
+						case 'temp_translation_y':
+							if (taro.isClient) {
+								this.emit('temp_translation_y', [data.temp_translation_y]);
+							}
 							break;
 						case 'depth':
 							this._stats[attrName] = newValue;

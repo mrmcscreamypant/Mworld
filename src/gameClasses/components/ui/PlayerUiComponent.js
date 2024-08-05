@@ -502,6 +502,16 @@ var PlayerUiComponent = TaroEntity.extend({
 			dialogue = getDialogueInstance(dialogue);
 			initModal();
 			showNextMessage();
+
+			if (window.GAME_PLAY_STARTED) {
+				if (window.STATIC_EXPORT_ENABLED) {
+					window.PokiSDK?.gameplayStop();
+				}
+				if (window.IS_CRAZY_GAMES_ENV) {
+					window.CrazyGames.SDK.game.gameplayStop();
+				}
+				window.GAME_PLAY_STARTED = false;
+			}
 		} else {
 			console.error('dialogue', dialogueId, 'not found');
 		}
@@ -510,6 +520,16 @@ var PlayerUiComponent = TaroEntity.extend({
 		window.closeDialogue && window.closeDialogue();
 		$('#modd-dialogue-container').html('');
 		this.clearListeners();
+
+		if (!window.GAME_PLAY_STARTED) {
+			if (window.STATIC_EXPORT_ENABLED) {
+				window.PokiSDK?.gameplayStart();
+			}
+			if (window.IS_CRAZY_GAMES_ENV) {
+				window.CrazyGames.SDK.game.gameplayStart();
+			}
+			window.GAME_PLAY_STARTED = true;
+		}
 	},
 
 	clearListeners: function () {

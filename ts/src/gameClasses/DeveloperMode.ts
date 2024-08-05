@@ -824,9 +824,7 @@ class DeveloperMode {
 						data.rotation &&
 						!isNaN(data.rotation.x) &&
 						!isNaN(data.rotation.y) &&
-						!isNaN(data.rotation.z) &&
-						((action.rotation && !isNaN(action.rotation.x) && !isNaN(action.rotation.y) && !isNaN(action.rotation.z)) ||
-							action.angle)
+						!isNaN(data.rotation.z)
 					) {
 						action.rotation = data.rotation;
 					}
@@ -834,10 +832,7 @@ class DeveloperMode {
 						data.scale &&
 						!isNaN(data.scale.x) &&
 						!isNaN(data.scale.y) &&
-						!isNaN(data.scale.z) &&
-						((action.scale && !isNaN(action.scale.x) && !isNaN(action.scale.y) && !isNaN(action.scale.z)) ||
-							action.width ||
-							action.height)
+						!isNaN(data.scale.z)
 					) {
 						action.scale = data.scale;
 					}
@@ -1012,7 +1007,7 @@ class DeveloperMode {
 		});
 	}
 
-	createProjectile(data) {}
+	createProjectile(data) { }
 
 	updateProjectile(data) {
 		// 1. broadcast update to all players

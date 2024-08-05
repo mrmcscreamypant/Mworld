@@ -3,27 +3,32 @@ on:
   workflow_dispatch:
     inputs:
       releaseVersion:
-        description: "Version"
+        description: "Release Version"
         required: true
-        default: '0.0.0'
+        default: 'x.x.x.x'
         type: string
       taroBranch:
         description: "Engine branch"
-        required: true
-        default: 'master'
+        required: false
+        default: ''
         type: string
       gsBranch:
         description: "GS branch"
-        required: true
-        default: 'master'
+        required: false
+        default: ''
         type: string
       editorBranch:
         description: "Editor branch"
-        required: true
-        default: 'master'
+        required: false
+        default: ''
+        type: string
+      fallbackRelease:
+        description: "Retain Engine/GS/Editor branches from this release (Leave above branch inputs empty)"
+        required: false
+        default: ''
         type: string
       regenerateApiFrom:
-        description: "Retain actions/triggers from release (Leave empty to generate fresh api from database)"
+        description: "Retain actions/triggers from this release (Leave empty to generate fresh api from database)"
         required: false
         default: ""
         type: string
@@ -37,37 +42,48 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.client_payload.taroBranch || github.event.client_payload.fallbackRelease || 'master' }}
+      
+      - name: Get commit SHA
+        id: get_sha
+        run: echo "::set-output name=sha::$(git rev-parse HEAD)"
+      
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with: 
           tag_name: ${{ github.event.inputs.releaseVersion }}
-          target_commitish: ${{ github.event.inputs.taroBranch }}
+          target_commitish: ${{ github.event.inputs.taroBranch || steps.get_sha.outputs.sha || 'master' }}
           generate_release_notes: true
+      
       - name: Determine release variables
         id: version
         run: |
           echo ::set-output name=VERSION::${{ github.event.inputs.releaseVersion || github.event.release.tag_name }}
-          echo ::set-output name=TARO_BRANCH::${{ github.event.inputs.taroBranch || 'master' }}
-          echo ::set-output name=GS_BRANCH::${{ github.event.inputs.gsBranch || 'master' }}
-          echo ::set-output name=EDITOR_BRANCH::${{ github.event.inputs.editorBranch || 'master' }}
-          echo ::set-output name=REGENERATE_API_FROM::${{ github.event.inputs.regenerateApiFrom }}
+          echo ::set-output name=TARO_BRANCH::${{ github.event.inputs.taroBranch || '' }}
+          echo ::set-output name=GS_BRANCH::${{ github.event.inputs.gsBranch || '' }}
+          echo ::set-output name=EDITOR_BRANCH::${{ github.event.inputs.editorBranch || '' }}
+          echo ::set-output name=FALLBACK_RELEASE::${{ github.event.inputs.fallbackRelease || '' }}
+          echo ::set-output name=REGENERATE_API_FROM::${{ github.event.inputs.regenerateApiFrom || '' }}
       - name: Dispatch to moddio/gs
         run: |
             curl -H "Accept: application/vnd.github.everest-preview+json" \
             -H "Authorization: token ${{ secrets.MODDIO2_DISPATCH_TOKEN }}" \
             --request POST \
-            --data '{"event_type": "moddio2_post_release", "client_payload": { "ref": "${{ steps.version.outputs.GS_BRANCH }}", "version": "${{ steps.version.outputs.VERSION }}", "gsBranch": "${{ steps.version.outputs.GS_BRANCH }}", "editorBranch": "${{ steps.version.outputs.EDITOR_BRANCH }}", "regenerateApiFrom": "${{ steps.version.outputs.REGENERATE_API_FROM }}" }}' https://api.github.com/repos/moddio/gs/dispatches?ref=${{ steps.version.outputs.GS_BRANCH }}
+            --data '{"event_type": "moddio2_post_release", "client_payload": { "ref": "${{ steps.version.outputs.GS_BRANCH }}", "version": "${{ steps.version.outputs.VERSION }}", "gsBranch": "${{ steps.version.outputs.GS_BRANCH }}", "editorBranch": "${{ steps.version.outputs.EDITOR_BRANCH }}", "fallbackRelease": "${{ steps.version.outputs.FALLBACK_RELEASE }}", "regenerateApiFrom": "${{ steps.version.outputs.REGENERATE_API_FROM }}" }}' https://api.github.com/repos/moddio/gs/dispatches?ref=${{ steps.version.outputs.GS_BRANCH }}
       - name: Dispatch to moddio/be
         run: |
           if [[ "${{ steps.version.outputs.VERSION }}" == *"-staging" ]]; then
             curl -H "Accept: application/vnd.github.everest-preview+json" \
             -H "Authorization: token ${{ secrets.MODDIO2_DISPATCH_TOKEN }}" \
             --request POST \
-            --data '{"event_type": "moddio2_staging_post_release", "client_payload": { "version": "${{ steps.version.outputs.VERSION }}", "gsBranch": "${{ steps.version.outputs.GS_BRANCH }}", "editorBranch": "${{ steps.version.outputs.EDITOR_BRANCH }}", "regenerateApiFrom": "${{ steps.version.outputs.REGENERATE_API_FROM }}" }}' https://api.github.com/repos/moddio/be/dispatches
+            --data '{"event_type": "moddio2_staging_post_release", "client_payload": { "version": "${{ steps.version.outputs.VERSION }}", "gsBranch": "${{ steps.version.outputs.GS_BRANCH }}", "editorBranch": "${{ steps.version.outputs.EDITOR_BRANCH }}", "fallbackRelease": "${{ steps.version.outputs.FALLBACK_RELEASE }}", "regenerateApiFrom": "${{ steps.version.outputs.REGENERATE_API_FROM }}" }}' https://api.github.com/repos/moddio/be/dispatches
           else
             curl -H "Accept: application/vnd.github.everest-preview+json" \
             -H "Authorization: token ${{ secrets.MODDIO2_DISPATCH_TOKEN }}" \
             --request POST \
-            --data '{"event_type": "moddio2_post_release", "client_payload": { "version": "${{ steps.version.outputs.VERSION }}", "gsBranch": "${{ steps.version.outputs.GS_BRANCH }}", "editorBranch": "${{ steps.version.outputs.EDITOR_BRANCH }}", "regenerateApiFrom": "${{ steps.version.outputs.REGENERATE_API_FROM }}" }}' https://api.github.com/repos/moddio/be/dispatches
+            --data '{"event_type": "moddio2_post_release", "client_payload": { "version": "${{ steps.version.outputs.VERSION }}", "gsBranch": "${{ steps.version.outputs.GS_BRANCH }}", "editorBranch": "${{ steps.version.outputs.EDITOR_BRANCH }}", "fallbackRelease": "${{ steps.version.outputs.FALLBACK_RELEASE }}", "regenerateApiFrom": "${{ steps.version.outputs.REGENERATE_API_FROM }}" }}' https://api.github.com/repos/moddio/be/dispatches
           fi
           

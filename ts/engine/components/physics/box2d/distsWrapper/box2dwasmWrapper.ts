@@ -77,15 +77,21 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		component.b2Body.prototype.getAngle = component.b2Body.prototype.GetAngle;
 		component.b2Body.prototype.setPosition = function (position) {
 			let angle = component.recordLeak(this.GetAngle());
+			if ((!position.x && position.x !== 0) || (!position.y && position.y !== 0)) {
+				return;
+			}
 			let pos = new box2D.b2Vec2(position.x, position.y);
-			this.SetTransform(pos, angle);
+			this.SetTransform(pos, isNaN(angle) ? 0 : angle);
 			component.destroyB2dObj(pos);
 		};
 		component.b2Body.prototype.getPosition = component.b2Body.prototype.GetPosition;
 		component.b2Body.prototype.setGravityScale = component.b2Body.prototype.SetGravityScale;
 		component.b2Body.prototype.setAngle = function (angle) {
+			if (!angle && angle !== 0) {
+				return;
+			}
 			let pos = component.recordLeak(this.GetPosition());
-			this.SetTransform(pos, angle);
+			this.SetTransform(pos, isNaN(angle) ? 0 : angle);
 		};
 		component.b2Body.prototype.setTransform = component.b2Body.prototype.SetTransform;
 		component.b2Body.prototype.isAwake = component.b2Body.prototype.IsAwake;
@@ -108,21 +114,27 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			component.enableDebug = (flags = 1) => {
 				console.log('please make sure clientPhyscisEngine is not "", and enabled csp');
 				if (!component.renderer) {
-					const canvas = taro.renderer.scene.getScene('Game');
-					ctx = canvas.add.graphics().setDepth(9999);
 					const scale = taro.physics._scaleRatio;
-					ctx.setScale(scale);
-					const newRenderer = new Box2dDebugDraw(box2D, new Box2dHelpers(box2D), ctx, scale).constructJSDraw();
-					newRenderer.SetFlags(flags);
-					component.renderer = newRenderer;
-					component._world.SetDebugDraw(newRenderer);
-					component.ctx = ctx;
+					let debugDrawer;
+					if (taro.game.data.defaultData.defaultRenderer !== '3d') {
+						const canvas = taro.renderer.scene.getScene('Game');
+						ctx = canvas.add.graphics().setDepth(9999);
+						ctx.setScale(scale);
+						component.ctx = ctx;
+						debugDrawer = new Box2dDebugDrawerPhaser(box2D, new Box2dHelpers(box2D), ctx, scale).constructJSDraw();
+						debugDrawer.SetFlags(flags);
+						component._world.SetDebugDraw(debugDrawer);
+					} else {
+						debugDrawer = new Box2dDebugDrawerThree(taro.renderer.scene as any, 0.47, box2D);
+						component._world.SetDebugDraw(debugDrawer.instance);
+					}
+					component.debugDrawer = debugDrawer;
 				}
-				component.renderer.SetFlags(flags);
 			};
 			component.disableDebug = () => {
-				component.ctx.destroy();
-				component.renderer = undefined;
+				component.ctx?.destroy();
+				component.debugDrawer?.destroy?.();
+				component.debugDrawer = undefined;
 			};
 		}
 
@@ -170,13 +182,13 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		if (preSolve !== undefined) {
 			contactListener.PreSolve = preSolve;
 		} else {
-			contactListener.PreSolve = () => {};
+			contactListener.PreSolve = () => { };
 		}
 
 		if (postSolve !== undefined) {
 			contactListener.PostSolve = postSolve;
 		} else {
-			contactListener.PostSolve = () => {};
+			contactListener.PostSolve = () => { };
 		}
 		self._world.SetContactListener(contactListener);
 
@@ -220,6 +232,13 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		if (!entity) {
 			PhysicsComponent.prototype.log('warning: creating body for non-existent entity');
 			return;
+		}
+		let ownerEntity = undefined;
+		if (body.fixtures[0].isSensor) {
+			ownerEntity = taro.$(entity.ownerUnitId);
+			if (ownerEntity && ownerEntity.sensor && ownerEntity.sensor.getRadius() <= 0) {
+				return;
+			}
 		}
 
 		// if there's already a body, destroy it first
@@ -301,7 +320,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 						break;
 
 					case 'fixedRotation':
-						if (body.fixedRotation) {
+						if (body.fixedRotation || (entity && entity._category === 'region')) {
 							tempBod.SetFixedRotation(true);
 						}
 						break;

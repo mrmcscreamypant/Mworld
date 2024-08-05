@@ -641,8 +641,12 @@ var PhysicsComponent = TaroEventingClass.extend({
 					(!self.getPointer || self.getPointer(tempBod) !== self.getPointer(self.nullPtr))
 				) {
 					// Check if the body is awake && not static
+					entity = self.getPointer !== undefined ? self.metaData[self.getPointer(tempBod)]._entity : tempBod._entity;
+					//FIXME: when the 3d physics is ready, remove this
+					if (entity && entity.tmpDefaultDepth) {
+						entity.queueStreamData({ temp_translation_y: entity.tmpDefaultDepth });
+					}
 					if (tempBod.m_type !== 'static' && tempBod.isAwake() && (!tempBod.GetType || tempBod.GetType() !== 0)) {
-						entity = self.getPointer !== undefined ? self.metaData[self.getPointer(tempBod)]._entity : tempBod._entity;
 						if (entity && !entity._stats.isHidden) {
 							// apply movement if it's either human-controlled unit, or ai unit that's currently moving
 							if (entity.body && entity.vector && (entity.vector.x != 0 || entity.vector.y != 0)) {
@@ -673,6 +677,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 							// ) {
 							// 	var angle = Math.atan2(tempBod.m_linearVelocity.y, tempBod.m_linearVelocity.x) + Math.PI / 2;
 							// } else {
+
 							var angle = this.engine === 'BOX2DWASM' ? self.recordLeak(tempBod.getAngle()) : tempBod.getAngle();
 							// }
 
@@ -719,7 +724,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 							// entity just has teleported
 
-							if (entity.teleportDestination != undefined && entity.isTeleporting) {
+							if (entity.teleportDestination != undefined) {
 								entity.nextKeyFrame[1] = entity.teleportDestination;
 								x = entity.teleportDestination[0];
 								y = entity.teleportDestination[1];
@@ -739,7 +744,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 									// if client-authoritative csp mode is enabled, and the client msg was received within 100ms,
 									// then use the client's msg to update this unit's position
-									if (entity._stats.controls?.cspMode == 2) {
+									if (taro.game.data.defaultData.clientPhysicsEngine && entity._stats.controls?.cspMode == 2) {
 										let clientStreamReceivedAt = entity.clientStreamedKeyFrame[0];
 										let player = entity.getOwner();
 
@@ -751,11 +756,16 @@ var PhysicsComponent = TaroEventingClass.extend({
 										// client msg was received within 200ms,
 										// also ignore client msg if client just recently became active again (<2s)
 										// as the client's position isn't as reliable. for the next 3s, the client's position will be dictated by the server stream
-										if (now - clientStreamReceivedAt < 200 && now - player.tabBecameActiveAt > 2000) {
+										if (now - clientStreamReceivedAt < 200 && now - player.tabBecameActiveAt > 1000) {
 											let clientStreamedPosition = entity.clientStreamedKeyFrame[1];
-											x += (clientStreamedPosition[0] - x) / 2;
-											y += (clientStreamedPosition[1] - y) / 2;
+											x += clientStreamedPosition[0] - x;
+											y += clientStreamedPosition[1] - y;
 											angle = clientStreamedPosition[2];
+
+											if (!isNaN(clientStreamedPosition[3]) && !isNaN(clientStreamedPosition[4])) {
+												// console.log(clientStreamedPosition[3], clientStreamedPosition[4]);
+												entity.setLinearVelocity(clientStreamedPosition[3], clientStreamedPosition[4]);
+											}
 										}
 									}
 								} else if (taro.isClient) {
@@ -764,7 +774,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 									// this does NOT run for items
 									if (
 										(entity == taro.client.selectedUnit && entity._stats.controls?.cspMode) ||
-										(entity._category == 'projectile' && !entity._stats.streamMode)
+										(entity._category == 'projectile' && !entity._stats.streamMode) ||
+										(entity._category == 'unit' && entity._stats.streamMode !== 1)
 									) {
 										// if client-authoritative mode is enabled, and tab became active within the last 3 seconds let server dictate my unit's position
 										let myUnit = taro.client.selectedUnit;
@@ -773,7 +784,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 										if (entity == myUnit) {
 											if (
 												entity._stats.controls?.cspMode == 2 &&
-												now - taro.client.tabBecameActiveAt < 2000 // it hasn't passed 4 sec since the tab became active
+												now - taro.client.tabBecameActiveAt < 1000 // it hasn't passed 2 sec since the tab became active
 											) {
 												x = myUnit.serverStreamedPosition.x;
 												y = myUnit.serverStreamedPosition.y;
@@ -809,14 +820,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 										entity.prevKeyFrame = entity.nextKeyFrame;
 										entity.nextKeyFrame = [taro._currentTime + taro.client.renderBuffer, [x, y, angle]];
-
-										// keep track of units' position history for CSP reconciliation
-										if (entity == taro.client.selectedUnit) {
-											entity.posHistory.push([taro._currentTime, [x, y, angle]]);
-											if (entity.posHistory.length > taro._physicsTickRate) {
-												entity.posHistory.shift();
-											}
-										}
 									} else {
 										// update server-streamed entities' body position
 										// for items, client-side physics body is updated by setting entity.nextKeyFrame in item._behaviour()
@@ -839,6 +842,18 @@ var PhysicsComponent = TaroEventingClass.extend({
 									) {
 										// console.log("is moving", entity.prevKeyFrame[1][0], entity.nextKeyFrame[1][0], entity.prevKeyFrame[1][1], entity.nextKeyFrame[1][1], entity.prevKeyFrame[1][2], entity.nextKeyFrame[1][2])
 										entity.isTransforming(true);
+									}
+								}
+
+								// keep track of units' position history for CSP reconciliation
+								if (
+									entity._category == 'unit' &&
+									((taro.isClient && entity == taro.client.selectedUnit) ||
+										(taro.isServer && entity._stats.controls?.cspMode == 2))
+								) {
+									entity.posHistory.push([taro._currentTime, [x, y, angle]]);
+									if (entity.posHistory.length > taro._physicsTickRate) {
+										entity.posHistory.shift();
 									}
 								}
 							}
@@ -867,6 +882,12 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 				// Call the world step; frame-rate, velocity iterations, position iterations
 				self._world.step(timeElapsedSinceLastStep / 1000, 8, 3);
+
+				if (self.debugDrawer && self.debugDrawer.begin) {
+					self.debugDrawer.begin();
+					self._world.DebugDraw();
+					self.debugDrawer.end();
+				}
 
 				if (self.ctx) {
 					self.ctx.clear();

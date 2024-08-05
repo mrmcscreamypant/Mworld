@@ -36,7 +36,7 @@ namespace Renderer {
 				this.load([{ name: 'placeholderTexture', type: 'texture', src: '/assets/images/placeholder-texture.jpg' }]);
 
 				const geometry = new THREE.BoxGeometry(1, 1, 1);
-				const material = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+				const material = new THREE.MeshStandardMaterial({ color: 0xff00ff });
 				const scene = new THREE.Group();
 				scene.add(new THREE.Mesh(geometry, material));
 				const placeholderModel = {
@@ -69,14 +69,12 @@ namespace Renderer {
 							if (source.type === 'gltf') {
 								(asset as GLTF).scene.traverse((child) => {
 									if (child instanceof THREE.Mesh) {
-										// Convert to basic material to avoid lighting
-										const material = new THREE.MeshBasicMaterial();
-										THREE.MeshBasicMaterial.prototype.copy.call(material, child.material);
+										const material = new THREE.MeshStandardMaterial();
+										THREE.MeshStandardMaterial.prototype.copy.call(material, child.material);
 
 										if (material.map) {
 											material.map.magFilter = this.filter;
 										}
-
 										child.material = material;
 									}
 								});
@@ -112,6 +110,10 @@ namespace Renderer {
 			getModel(name: string) {
 				const placeholderModel = this.assets.get('placeholderModel') as GLTF;
 				return (this.assets.get(name) as GLTF) || placeholderModel;
+			}
+
+			getModelWithoutPlaceholder(name: string) {
+				return this.assets.get(name) as GLTF;
 			}
 		}
 

@@ -1,63 +1,83 @@
 namespace Renderer {
 	export namespace Three {
 		export class Model extends Node {
+			root = new THREE.Object3D();
+			mesh: THREE.Group;
 			size = new THREE.Vector3();
 			originalSize = new THREE.Vector3();
 			originalScale = new THREE.Vector3();
 			firstTime = true;
-			private scene: THREE.Group;
+
 			private aabb = new THREE.Box3();
 			// OBB is something just like Box3 but with rotation
 			private obb = new OBB();
-			private center = new THREE.Vector3();
 
 			private mixer: THREE.AnimationMixer;
 			private clips: THREE.AnimationClip[];
+			private center = new THREE.Vector3();
+			private meshSize = new THREE.Vector3(1, 1, 1);
 
 			constructor(name: string) {
 				super();
 
+				this.add(this.root);
+
 				const model = gAssetManager.getModel(name);
-				this.scene = SkeletonUtils.clone(model.scene);
-				this.add(this.scene);
+				this.mesh = SkeletonUtils.clone(model.scene);
 
 				this.originalSize.copy(this.getSize());
-				this.originalScale.copy(this.scene.scale);
+				this.originalScale.copy(this.mesh.scale);
+				this.aabb.setFromObject(this.mesh);
 
-				const mixer = new THREE.AnimationMixer(this.scene);
-				this.mixer = mixer;
-
+				this.mixer = new THREE.AnimationMixer(this.mesh);
 				this.clips = model.animations;
 
-				this.aabb.setFromObject(this.scene);
+				this.root.add(this.mesh); // Important to add the mesh after above setup
+			}
+
+			setModel(model: GLTF) {
+				this.root.remove(this.mesh);
+				this.mesh = SkeletonUtils.clone(model.scene);
+
+				this.firstTime = true;
+				this.originalSize.copy(this.getSize());
+				this.originalScale.copy(this.mesh.scale);
+				this.aabb.setFromObject(this.mesh);
+				this.setSize(this.meshSize.x, this.meshSize.y, this.meshSize.z);
+
+				this.mixer = new THREE.AnimationMixer(this.mesh);
+				this.clips = model.animations;
+
+				this.root.add(this.mesh); // Important to add the mesh after above setup
 			}
 
 			getSize() {
 				if (this.firstTime) {
-					this.aabb.setFromObject(this.scene, true);
-					this.firstTime = false
+					this.aabb.setFromObject(this.mesh, true);
+					this.firstTime = false;
 				}
-				this.scene.updateMatrix();
-				this.scene.updateMatrixWorld();
+				this.mesh.updateMatrix();
+				this.mesh.updateMatrixWorld();
 				// get its original aabb which means its original geometry
 				this.obb.fromBox3(this.aabb);
 				// apply the additional translation, rotation, scale
-				this.obb.applyMatrix4(this.scene.matrixWorld)
+				this.obb.applyMatrix4(this.mesh.matrixWorld);
 				return this.obb.getSize(this.size);
 			}
 
 			setSize(x: number, y: number, z: number) {
-				this.scene.scale.x = this.originalScale.x * (x / this.originalSize.x);
-				this.scene.scale.y = this.originalScale.y * (y / this.originalSize.y);
-				this.scene.scale.z = this.originalScale.z * (z / this.originalSize.z);
+				this.meshSize.set(x, y, z);
+				this.mesh.scale.x = this.originalScale.x * (x / this.originalSize.x);
+				this.mesh.scale.y = this.originalScale.y * (y / this.originalSize.y);
+				this.mesh.scale.z = this.originalScale.z * (z / this.originalSize.z);
 			}
 
 			setOpacity(opacity: number, time = undefined) {
 				this.traverse((child) => {
 					if (child instanceof THREE.Mesh) {
 						// Convert to basic material to avoid lighting
-						const material = new THREE.MeshBasicMaterial();
-						THREE.MeshBasicMaterial.prototype.copy.call(material, child.material);
+						const material = new THREE.MeshStandardMaterial();
+						THREE.MeshStandardMaterial.prototype.copy.call(material, child.material);
 						child.material = material;
 						child.material.transparent = true;
 						child.material.opacity = opacity;
@@ -74,8 +94,8 @@ namespace Renderer {
 				this.traverse((child) => {
 					if (child instanceof THREE.Mesh) {
 						// Convert to basic material to avoid lighting
-						const material = new THREE.MeshBasicMaterial();
-						THREE.MeshBasicMaterial.prototype.copy.call(material, child.material);
+						const material = new THREE.MeshStandardMaterial();
+						THREE.MeshStandardMaterial.prototype.copy.call(material, child.material);
 						child.material = material;
 						const originalColor = child.material.color.getHex();
 						child.material.color.setHex(color);
@@ -89,15 +109,7 @@ namespace Renderer {
 			}
 
 			getCenter() {
-				if (this.firstTime) {
-					this.aabb.setFromObject(this.scene, true);
-					this.firstTime = false
-				}
-				this.scene.updateMatrix();
-				this.scene.updateMatrixWorld();
-				this.obb.fromBox3(this.aabb);
-				this.obb.applyMatrix4(this.scene.matrixWorld)
-				return this.obb.center;
+				return this.aabb.getCenter(this.center).multiply(this.mesh.scale);
 			}
 
 			update(dt) {

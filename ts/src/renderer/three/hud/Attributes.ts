@@ -93,6 +93,8 @@ namespace Renderer {
 						data.attr.showWhen === 'valueChanges'
 					) {
 						barToUpdate.showAndHideAfterDelay(1000);
+					} else if (data.shouldRender) {
+						barToUpdate.visible = data.shouldRender;
 					}
 				} else {
 					this.addAttribute(data.attr);

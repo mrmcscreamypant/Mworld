@@ -14,6 +14,8 @@ var taroClientConfig = {
 		'/lib/OrbitControls.js',
 		'/lib/OBB.js',
 		'/lib/TransformControls.js',
+		'/lib/SelectionBox.js',
+		'/lib/SelectionHelper.js',
 		'/lib/tween.umd.js',
 		'/lib/three_mesh_bvh.umd.js',
 		'/lib/SkeletonUtils.js',

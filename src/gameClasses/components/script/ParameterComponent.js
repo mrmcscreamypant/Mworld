@@ -1331,7 +1331,9 @@ var ParameterComponent = TaroEntity.extend({
 					case 'unitSensorRadius':
 						var unit = self.getValue(text.unit, vars);
 
-						if (unit && unit._stats && unit._stats.ai) {
+						if (unit && unit.sensor) {
+							returnValue = unit.sensor.getRadius();
+						} else if (unit && unit._stats && unit._stats.ai) {
 							returnValue = unit._stats.ai.sensorRadius;
 						}
 
@@ -2770,6 +2772,12 @@ var ParameterComponent = TaroEntity.extend({
 				}
 			},
 
+			localPlayer: function (text, vars) {
+				if (taro.isClient) {
+					return taro.client.myPlayer;
+				}
+			},
+
 			playerIsControlledByHuman: function (text, vars) {
 				var player = self.getValue(text.player, vars);
 				return player && player._stats.controlledBy == 'human';
@@ -3172,8 +3180,12 @@ var ParameterComponent = TaroEntity.extend({
 
 				if (string) {
 					try {
-						const repairedString = jsonrepair?.jsonrepair(string);
-						return JSON.parse(repairedString);
+						if (taro.isClient) {
+							return JSON.parse(string);
+						} else {
+							const repairedString = jsonrepair?.jsonrepair(string);
+							return JSON.parse(repairedString);
+						}
 					} catch (err) {
 						console.log('stringToObject err', err.message);
 						self._script.errorLog(
@@ -3191,6 +3203,12 @@ var ParameterComponent = TaroEntity.extend({
 					let elementId = self.getValue(text.elementId, vars);
 
 					return document.getElementById(elementId)?.[key];
+				}
+			},
+
+			getServerReceivedData: function () {
+				if (taro.isClient) {
+					return taro.client.myPlayer.lastServerReceivedData || {};
 				}
 			},
 
