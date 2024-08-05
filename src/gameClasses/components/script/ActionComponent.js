@@ -566,6 +566,12 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'sendPostRequest':
+						if (!taro.tierFeaturesToggle[taro.game.data.defaultData.tier]?.postRequests) {
+							self._script.errorLog(
+								'Indie+ tier is needed to send post request'
+							);
+							break;
+						}
 						var obj = self._script.param.getValue(action.string, vars);
 						var url = self._script.param.getValue(action.url, vars);
 						var proxyUrl = process.env.PROXY_URL || '';
@@ -624,6 +630,12 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'requestPost':
+						if (!taro.tierFeaturesToggle[taro.game.data.defaultData.tier]?.postRequests) {
+							self._script.errorLog(
+								'Indie+ tier is needed to send post request'
+							);
+							break;
+						}
 						var data = self._script.param.getValue(action.data, vars) || {};
 						var url = self._script.param.getValue(action.url, vars);
 						var varName = self._script.param.getValue(action.varName, vars);
@@ -683,6 +695,12 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'sendSecurePostRequest':
+						if (!taro.tierFeaturesToggle[taro.game.data.defaultData.tier]?.postRequests) {
+							self._script.errorLog(
+								'Indie+ tier is needed to send post request'
+							);
+							break;
+						}
 						var data = self._script.param.getValue(action.data, vars) || {};
 						var apiCredentials = self._script.param.getValue(action.apiCredentials, vars);
 						var varName = self._script.param.getValue(action.varName, vars);
