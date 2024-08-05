@@ -1208,7 +1208,7 @@ var Unit = TaroEntityPhysics.extend({
 			taro.client.myPlayer._stats.selectedUnitId == this.id() &&
 			this._stats.controls
 		) {
-			taro.mobileControls.configure(this._stats.controls);
+			taro.mobileControls.configure({ cameraPointerLock: this._stats.cameraPointerLock, ...this._stats.controls });
 		}
 	},
 

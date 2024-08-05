@@ -520,7 +520,6 @@ namespace Renderer {
 				if (moveInstant) {
 					const targetWorldPos = new THREE.Vector3();
 					target.getWorldPosition(targetWorldPos);
-					console.log('set position called', targetWorldPos)
 					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z);
 				}
 			}
@@ -605,7 +604,7 @@ namespace Renderer {
 
 					if (this.target) {
 						const targetWorldPos = new THREE.Vector3();
-						this.target.getWorldPosition(targetWorldPos);``
+						this.target.getWorldPosition(targetWorldPos);
 						this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z);
 					}
 				}
@@ -682,7 +681,7 @@ namespace Renderer {
 			}
 
 			onTouchMove(event) {
-				if (event.target.tagName.toLowerCase() !== 'canvas') {
+				if (event.target.tagName.toLowerCase() !== 'canvas' || !taro.client?.selectedUnit?._stats?.cameraPointerLock) {
 					return;
 				}
 
@@ -699,8 +698,8 @@ namespace Renderer {
 				normalizedY = Math.max(Math.min(normalizedY, 1), -1);
 
 				// Calculate the drag value based on the direction and magnitude
-				this.dragValue.x = normalizedX * 10; // Adjust strength as needed
-				this.dragValue.y = normalizedY * 10; // Adjust strength as needed
+				this.dragValue.x = normalizedX * 30; // Adjust strength as needed
+				this.dragValue.y = normalizedY * 30; // Adjust strength as needed
 
 				this.euler.y = -this.dragValue.x * 1 * this.pointerlockSpeed;
 				this.euler.x = this.dragValue.y * 1 * this.pointerlockSpeed;
