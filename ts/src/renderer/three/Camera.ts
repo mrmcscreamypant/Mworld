@@ -130,9 +130,6 @@ namespace Renderer {
 				};
 
 				window.addEventListener('keypress', (evt) => {
-					if (!Utils.isFocusOnPlayPage()) {
-						return;
-					}
 					if (evt.key === '~') {
 						this.debugMode = !this.debugMode;
 						this.setEditorMode(this.debugMode);
