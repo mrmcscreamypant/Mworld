@@ -614,14 +614,6 @@ var ParameterComponent = TaroEntity.extend({
 
 						break;
 
-					case 'getUnitFromId': //should remove soon and replace with the below one
-						var id = self.getValue(text.string, vars);
-						if (id) {
-							returnValue = taro.$(id);
-						}
-
-						break;
-
 					case 'getEntityFromId':
 						var id = self.getValue(text.string, vars);
 						if (id) {
@@ -2086,15 +2078,6 @@ var ParameterComponent = TaroEntity.extend({
 						var player = self.getValue(text.player, vars);
 
 						returnValue = player._stats.highscore;
-
-						break;
-
-					case 'getUnitId':
-						var unit = self.getValue(text.unit, vars);
-
-						if (unit) {
-							returnValue = unit.id();
-						}
 
 						break;
 
