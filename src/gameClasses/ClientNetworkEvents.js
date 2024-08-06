@@ -740,7 +740,7 @@ var ClientNetworkEvents = {
 			}
 		}
 
-		window.reactApp.showErrorToast(logs[Object.keys(logs)[Object.keys(logs).length - 1]]);
+		window.reactApp?.showErrorToast(logs[Object.keys(logs)[Object.keys(logs).length - 1]]);
 	},
 
 	_onSound: function (data) {
@@ -813,7 +813,6 @@ var ClientNetworkEvents = {
 
 	_onSendPlayerToMap: function (data) {
 		if (data && data.type == 'sendPlayerToMap') {
-
 			// disconnect first so save data process starts immediately
 			window.taro.network._io.disconnect('switching_map');
 
@@ -853,7 +852,7 @@ var ClientNetworkEvents = {
 						return;
 					}
 				}
-				
+
 				const mapUrl = `${window.location.origin}/play/${data.gameSlug}?autojoin=true&autoJoinToken=${data.autoJoinToken}${data.serverId ? '&serverId=' + data.serverId : ''}`;
 				window.location.href = mapUrl;
 			}

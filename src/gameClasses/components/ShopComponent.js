@@ -987,9 +987,9 @@ var ShopComponent = TaroEntity.extend({
 				prices += `<p  class="mb-2 ml-2 no-selection ${requirementsSatisfied}">${requiredQty || ''} ${item.name}</p>`;
 			}
 
-			// if (shopItem.price.coins) {
-			// 	prices += `<p><span><img src="${assetsProvider}/assets/images/coin_white.svg" style="height:20px"/></span>${shopItem.price.coins}</p>`;
-			// }
+			if (shopItem.price.coins) {
+				prices += `<p><span><img src="${assetsProvider}/assets/images/coin_white.svg" style="height:20px"/></span>${shopItem.price.coins}</p>`;
+			}
 			html += "<p class='font-weight-bold mb-2'>Price:</p>";
 			if (prices) {
 				html += prices;

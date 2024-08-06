@@ -321,6 +321,7 @@ var ActionComponent = TaroEntity.extend({
 						if (taro.game.data.variables.hasOwnProperty(action.variableName)) {
 							taro.game.lastUpdatedVariableName = action.variableName;
 							taro.game.data.variables[action.variableName].value = newValue;
+
 							// if variable has default field then it will be returned when variable's value is undefined
 							if (
 								newValue === undefined &&
@@ -1964,6 +1965,7 @@ var ActionComponent = TaroEntity.extend({
 							if (!player) invalidParameters.push('player');
 							if (!spawnPosition) invalidParameters.push('spawn position');
 							if (!unitTypeId) invalidParameters.push('unit type');
+							if (!unitTypeData) invalidParameters.push('unit type data');
 							throw new Error(`cannot create unit. invalid parameter(s) given: ${invalidParameters.toString()}`);
 						}
 
