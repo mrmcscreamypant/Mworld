@@ -10,6 +10,7 @@ var includeFolders = [
 			'box2dwebWrapper',
 			'nativeWrapper',
 			'box2dWrapper',
+			'rapierWrapper',
 		],
 	},
 ];
@@ -97,6 +98,8 @@ var taroCoreConfig = {
 		['csap', 'box2dninja', './components/physics/box2d/dists/box2dweb/box2d_ninja.js', 'box2dninja'],
 		['csap', 'box2dts', './components/physics/box2d/dists/flyoverbox2dts/bundle.js'],
 		['casp', 'box2dwasm', './components/physics/box2d/dists/box2dwasm/Box2D.simd.js', 'box2dwasm'],
+
+		['csap', 'RAPIER', './components/physics/rapier/rapier3d-compat.js', 'RAPIER'],
 	],
 };
 
