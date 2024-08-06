@@ -1062,15 +1062,13 @@ var TaroEntity = TaroObject.extend({
 	 * @return {*} "this" when arguments are passed to allow method
 	 * chaining or the current value if no arguments are specified.
 	 */
-	opacity: function (val, time = undefined) {
+	opacity: function (val) {
 		if (taro.isClient) {
-			this.emit('set-opacity', {
-				opacity: val,
-				time: time,
-			});
+			this.emit('set-opacity', val);
 		}
 		if (val !== undefined) {
 			this._opacity = val;
+			this._stats.opacity = val;
 			return this;
 		}
 
@@ -4381,10 +4379,9 @@ var TaroEntity = TaroObject.extend({
 								this.depth(data.depth);
 							}
 							break;
-						case 'setOpacity':
+						case 'opacity':
 							if (taro.isClient) {
-								newValue = newValue.split('|-|');
-								this.opacity(newValue[0], newValue[1]);
+								this.opacity(newValue);
 							}
 							break;
 
@@ -4431,7 +4428,7 @@ var TaroEntity = TaroObject.extend({
 								'useQueued',
 								'isHidden',
 								'cameraTrackedUnitId',
-								'setOpacity',
+								'opacity',
 							];
 							var dataIsAttributeRelated = [
 								'attributes',
@@ -5033,6 +5030,7 @@ var TaroEntity = TaroObject.extend({
 						'height',
 						'scaleDimensions',
 						'isHidden',
+						'opacity',
 					];
 					data = {
 						attributes: {},
@@ -5058,6 +5056,7 @@ var TaroEntity = TaroObject.extend({
 						'description',
 						'slotIndex',
 						'isHidden',
+						'opacity',
 					];
 					data = {
 						attributes: {},
@@ -5077,6 +5076,7 @@ var TaroEntity = TaroObject.extend({
 						'sourceItemId',
 						'streamMode',
 						'isHidden',
+						'opacity',
 					];
 					data = {
 						attributes: {},

@@ -148,6 +148,9 @@ var Unit = TaroEntityPhysics.extend({
 			if (this._stats.isHidden) {
 				this.hide(true);
 			}
+			if (!isNaN(this._stats.opacity)) {
+				this.opacity(this._stats.opacity);
+			}
 		}
 		self.playEffect('create');
 		self.addBehaviour('unitBehaviour', self._behaviour);
@@ -1882,6 +1885,10 @@ var Unit = TaroEntityPhysics.extend({
 			changeTextureType = 'normal';
 		}
 		self.emit('update-texture', changeTextureType);
+
+		if (!isNaN(this._stats.opacity)) {
+			this.opacity(this._stats.opacity);
+		}
 
 		var ownerPlayer = self.getOwner();
 		var isInvisible = self.shouldBeInvisible(ownerPlayer, taro.client.myPlayer);

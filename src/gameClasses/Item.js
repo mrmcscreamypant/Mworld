@@ -107,6 +107,9 @@ var Item = TaroEntityPhysics.extend({
 			if (this._stats.isHidden) {
 				this.hide(true);
 			}
+			if (!isNaN(this._stats.opacity)) {
+				this.opacity(this._stats.opacity);
+			}
 		}
 		self.playEffect('create');
 		// self.addComponent(EffectComponent);
