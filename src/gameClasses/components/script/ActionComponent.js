@@ -3505,7 +3505,7 @@ var ActionComponent = TaroEntity.extend({
 						var entity = self._script.param.getValue(action.entity, vars);
 						var opacity = self._script.param.getValue(action.opacity, vars);
 
-						if (entity && typeof opacity === 'number' && typeof duration === 'number') {
+						if (entity && typeof opacity === 'number') {
 							if (opacity < 0) {
 								opacity = 0;
 							} else if (opacity > 1) {
