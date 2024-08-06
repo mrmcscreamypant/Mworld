@@ -1228,14 +1228,14 @@ var ParameterComponent = TaroEntity.extend({
 
 					case 'getMapHeight':
 						var worldHeight = taro.map.data.height;
-						var tileHeight = taro.game.data.map.tileheight;
+						var tileHeight = taro.scaleMapDetails.tileHeight;
 						returnValue = tileHeight * worldHeight;
 
 						break;
 
 					case 'getMapWidth':
 						var worldWidth = taro.map.data.width;
-						var tileWidth = 64 || taro.game.data.map.tilewidth;
+						var tileWidth = taro.scaleMapDetails.tileWidth;
 						returnValue = tileWidth * worldWidth;
 
 						break;
