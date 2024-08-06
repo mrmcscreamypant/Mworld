@@ -1886,6 +1886,10 @@ var Unit = TaroEntityPhysics.extend({
 		}
 		self.emit('update-texture', changeTextureType);
 
+		if (!isNaN(this._stats.opacity)) {
+			this.opacity(this._stats.opacity);
+		}
+
 		var ownerPlayer = self.getOwner();
 		var isInvisible = self.shouldBeInvisible(ownerPlayer, taro.client.myPlayer);
 		// if owner player is not available (due to race condition) then render everything or it is hostile and player is invisible them make unit invisible to hostile players. it can still move and interact with objects

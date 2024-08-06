@@ -42,13 +42,8 @@ namespace Renderer {
 				}
 			}
 
-			setOpacity(opacity: number, time = undefined) {
+			setOpacity(opacity: number) {
 				(this.sprite.material as THREE.Material).opacity = opacity;
-				if (time !== undefined) {
-					setTimeout(() => {
-						(this.sprite.material as THREE.Material).opacity = 1;
-					}, time);
-				}
 			}
 
 			setScale(sx: number, sy: number) {
