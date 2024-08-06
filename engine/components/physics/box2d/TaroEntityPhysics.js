@@ -603,17 +603,10 @@ var TaroEntityPhysics = TaroEntity.extend({
 	// loss tolerent
 	translateToLT: function (x, y) {
 		if (this.body) {
-			if (taro.physics.engine == 'crash') {
-				var position = {
-					x: x,
-					y: y,
-				};
-			} else {
-				var position = {
-					x: x / this._b2dRef._scaleRatio,
-					y: y / this._b2dRef._scaleRatio,
-				};
-			}
+			var position = {
+				x: x / this._b2dRef._scaleRatio,
+				y: y / this._b2dRef._scaleRatio,
+			};
 
 			this.body.setPosition(position);
 			this.body.setAwake(true);
