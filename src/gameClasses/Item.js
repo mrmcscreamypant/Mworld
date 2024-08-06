@@ -242,6 +242,8 @@ var Item = TaroEntityPhysics.extend({
 						taro.script.trigger('unitDroppedAnItem', triggerParams); // unit dropped item
 					}
 				}
+
+				newOwner.ownedItems = newOwner.ownedItems || {};
 				newOwner.ownedItems[this.id()] = this;
 				if (!persistedItem) {
 					const triggerParams = {

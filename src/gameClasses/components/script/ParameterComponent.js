@@ -1674,7 +1674,6 @@ var ParameterComponent = TaroEntity.extend({
 
 					case 'getPositionX':
 						var position = self.getValue(text.position, vars);
-
 						if (position) {
 							returnValue = position.x;
 						}
@@ -3039,7 +3038,6 @@ var ParameterComponent = TaroEntity.extend({
 
 			getVariable: function (text, vars) {
 				var name = self.getValue(text.variableName, vars);
-				// console.log(name);
 				return self.getVariable(name);
 			},
 

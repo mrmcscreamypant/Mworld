@@ -105,9 +105,14 @@ namespace Renderer {
 
 			createEmitter(config: Particle) {
 				const particleData = taro.game.data.particleTypes[config.particleId];
-				const tex = gAssetManager.getTexture(`particle/${particleData.url}`);
+				const tex = gAssetManager.getTexture(`particle/${particleData?.url}`);
 
 				let zPosition = 0;
+				if (!particleData) {
+					console.error('Particle data not found for particleId', config.particleId);
+					return;
+				}
+
 				if (particleData['z-index'].layer) zPosition += Utils.getLayerZOffset(particleData['z-index'].layer);
 				if (particleData['z-index'].depth) zPosition += Utils.getDepthZOffset(particleData['z-index'].depth);
 				if (particleData['z-index'].offset) zPosition += Utils.pixelToWorld(particleData['z-index'].offset);

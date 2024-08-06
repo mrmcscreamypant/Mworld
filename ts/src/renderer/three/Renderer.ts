@@ -1002,6 +1002,8 @@ namespace Renderer {
 
 				taro.client.on('create-particle-emitter', (particle: Particle) => {
 					const emitter = this.particleSystem.createEmitter(particle);
+					if (emitter == null) return;
+
 					emitter.position.y += this.entitiesLayer.position.y;
 
 					if (particle.entityId) {
