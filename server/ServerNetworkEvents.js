@@ -495,6 +495,12 @@ var ServerNetworkEvents = {
 				}
 
 				unit.streamUpdateData([{ itemIds: itemIds }], clientId);
+				if (fromItem != undefined) {
+					fromItem.changeSlotIndex(parseInt(data.to));
+				}
+				if (toItem != undefined) {
+					toItem.changeSlotIndex(parseInt(data.from));
+				}
 				unit.changeItem(unit._stats.currentItemIndex);
 			}
 		}
