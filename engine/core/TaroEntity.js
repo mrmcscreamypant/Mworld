@@ -1063,10 +1063,10 @@ var TaroEntity = TaroObject.extend({
 	 * chaining or the current value if no arguments are specified.
 	 */
 	opacity: function (val) {
-		if (taro.isClient) {
-			this.emit('set-opacity', val);
-		}
 		if (val !== undefined) {
+			if (taro.isClient) {
+				this.emit('set-opacity', val);
+			}
 			this._opacity = val;
 			this._stats.opacity = val;
 			return this;

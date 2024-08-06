@@ -1285,6 +1285,13 @@ var ParameterComponent = TaroEntity.extend({
 						}
 						break;
 
+					case 'entityOpacity':
+						if (entity && self._entity.script.action.entityCategories.indexOf(entity._category) > -1) {
+							returnValue = entity.opacity();
+						}
+
+						break;
+
 					case 'entityWidth':
 						if (entity && self._entity.script.action.entityCategories.indexOf(entity._category) > -1) {
 							// returnValue = entity._aabb.width;
