@@ -99,7 +99,7 @@ var taroCoreConfig = {
 		['csap', 'box2dts', './components/physics/box2d/dists/flyoverbox2dts/bundle.js'],
 		['casp', 'box2dwasm', './components/physics/box2d/dists/box2dwasm/Box2D.simd.js', 'box2dwasm'],
 
-		['csap', 'RAPIER', './components/physics/rapier/rapier3d-compat.js', 'RAPIER'],
+		['csap', 'RAPIER', './components/physics/box2d/dists/rapier/rapier3d-compat.js', 'RAPIER'],
 	],
 };
 
