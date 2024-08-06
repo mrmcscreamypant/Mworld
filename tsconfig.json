@@ -5,6 +5,7 @@
 		"sourceMap": true,
 		"outDir": ".",
 		"rootDir": "ts",
+		"moduleResolution": "node",
 		"typeRoots": [
 			"node_modules/@types",
 			"node_modules/phaser/types",
