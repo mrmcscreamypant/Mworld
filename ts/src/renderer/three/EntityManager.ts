@@ -30,9 +30,9 @@ namespace Renderer {
 						break;
 					}
 					case 'projectile': {
-						entity = Unit.create(taroEntity);
+						entity = Unit.create(taroEntity, true);
 						this.projectiles.push(entity);
-						this.animatedSprites.push(entity);
+						// this.animatedSprites.push(entity);
 						break;
 					}
 					case 'region': {
@@ -99,6 +99,13 @@ namespace Renderer {
 				}
 
 				if (this.projectiles.includes(entity as Unit)) {
+					const renderer = Renderer.Three.instance();
+					renderer.projectilPool.editInstanceMesh(
+						{ scale: [0, 0, 0] },
+						(entity as Unit).textureId,
+						(entity as Unit).instancedIdx,
+						true
+					);
 					this.projectiles.splice(this.projectiles.indexOf(entity as Unit, 0), 1);
 				}
 

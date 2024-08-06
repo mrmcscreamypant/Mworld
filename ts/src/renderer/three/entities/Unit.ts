@@ -7,8 +7,9 @@ namespace Renderer {
 				offset: { x: 0, y: 0, z: 0 },
 			};
 
-			body: AnimatedSprite | Model;
-
+			body: AnimatedSprite | Model | null = null;
+			instancedIdx: number | null = null;
+			textureId: string;
 			private hud = new THREE.Group();
 			private topHud = new THREE.Group();
 			private bottomHud = new THREE.Group();
@@ -20,24 +21,33 @@ namespace Renderer {
 			constructor(
 				public taroId: string,
 				public ownerId: string,
-				public taroEntity: TaroEntityPhysics
+				public taroEntity: TaroEntityPhysics,
+				instancedMesh = false
 			) {
 				super(taroEntity);
-
-				if (taroEntity._stats.is3DObject) {
-					const name = taroEntity._stats.cellSheet.url;
-					this.body = new Model(name);
+				const renderer = Renderer.Three.instance();
+				this.textureId = taroEntity._stats.cellSheet.url;
+				if (!instancedMesh) {
+					if (taroEntity._stats.is3DObject) {
+						const name = taroEntity._stats.cellSheet.url;
+						this.body = new Model(name);
+					} else {
+						const key = taroEntity._stats.cellSheet.url;
+						const cols = taroEntity._stats.cellSheet.columnCount || 1;
+						const rows = taroEntity._stats.cellSheet.rowCount || 1;
+						const tex = gAssetManager.getTexture(key).clone();
+						const frameWidth = tex.image.width / cols;
+						const frameHeight = tex.image.height / rows;
+						const spriteSheet = new TextureSheet(key, tex, frameWidth, frameHeight);
+						this.body = new AnimatedSprite(spriteSheet);
+					}
 				} else {
-					const key = taroEntity._stats.cellSheet.url;
-					const cols = taroEntity._stats.cellSheet.columnCount || 1;
-					const rows = taroEntity._stats.cellSheet.rowCount || 1;
-					const tex = gAssetManager.getTexture(key).clone();
-					const frameWidth = tex.image.width / cols;
-					const frameHeight = tex.image.height / rows;
-					const spriteSheet = new TextureSheet(key, tex, frameWidth, frameHeight);
-					this.body = new AnimatedSprite(spriteSheet);
+					this.instancedIdx = renderer.projectilPool.createOrMergeProjectile(taroEntity._stats.cellSheet.url);
 				}
-				this.add(this.body);
+
+				if (this.body !== null) {
+					this.add(this.body);
+				}
 
 				this.add(this.hud);
 				this.hud.add(this.topHud);
@@ -74,30 +84,32 @@ namespace Renderer {
 				this.label.position.y = Utils.pixelToWorld(this.topAttributes.topBarsHeight + 16);
 				this.topHud.add(this.label);
 
-				if (this.body instanceof Sprite) {
-					const size = this.body.getSize();
-					if (this.body.billboard) {
-						this.topHud.position.y = size.height;
-						this.topHud.position.z = 0;
+				if (this.body !== null) {
+					if (this.body instanceof Sprite) {
+						const size = this.body.getSize();
+						if (this.body.billboard) {
+							this.topHud.position.y = size.height;
+							this.topHud.position.z = 0;
 
-						this.bottomHud.position.y = 0;
-						this.bottomHud.position.z = 0;
+							this.bottomHud.position.y = 0;
+							this.bottomHud.position.z = 0;
+						} else {
+							this.topHud.position.y = 0;
+							this.topHud.position.z = -size.height * 0.5;
+
+							this.bottomHud.position.y = 0;
+							this.bottomHud.position.z = size.height * 0.5;
+						}
 					} else {
-						this.topHud.position.y = 0;
-						this.topHud.position.z = -size.height * 0.5;
-
-						this.bottomHud.position.y = 0;
-						this.bottomHud.position.z = size.height * 0.5;
+						const size = this.body.getSize();
+						this.topHud.position.y = size.y;
 					}
-				} else {
-					const size = this.body.getSize();
-					this.topHud.position.y = size.y;
 				}
 			}
 
-			static create(taroEntity: TaroEntityPhysics) {
+			static create(taroEntity: TaroEntityPhysics, instancedMesh = false) {
 				const renderer = Three.instance();
-				const entity = new Unit(taroEntity._id, taroEntity._stats.ownerId, taroEntity);
+				const entity = new Unit(taroEntity._id, taroEntity._stats.ownerId, taroEntity, instancedMesh);
 				entity.setHudScale(1 / renderer.camera.lastAuthoritativeZoom);
 
 				if (taroEntity._stats.cameraPointerLock) {
@@ -138,6 +150,7 @@ namespace Renderer {
 					'transform',
 					(data: { x: number; y: number; rotation: number }) => {
 						if (
+							entity.body !== null &&
 							entity.position.x === Utils.pixelToWorld(data.x) &&
 							entity.position.z === Utils.pixelToWorld(data.y) &&
 							entity.body.rotation.y === -data.rotation
@@ -146,12 +159,23 @@ namespace Renderer {
 						}
 						entity.position.x = Utils.pixelToWorld(data.x);
 						entity.position.z = Utils.pixelToWorld(data.y);
-						if (entity.body instanceof AnimatedSprite) {
-							entity.body.rotation.y = -data.rotation;
-							const flip = taroEntity._stats.flip;
-							entity.body.setFlip(flip % 2 === 1, flip > 1);
+						if (entity.body === null) {
+							renderer.projectilPool.editInstanceMesh(
+								{
+									position: [entity.position.x, entity.position.y, entity.position.z],
+									rotation: [0, -data.rotation, 0],
+								},
+								entity.textureId,
+								entity.instancedIdx
+							);
 						} else {
-							entity.body.rotation.y = -data.rotation;
+							if (entity.body instanceof AnimatedSprite) {
+								entity.body.rotation.y = -data.rotation;
+								const flip = taroEntity._stats.flip;
+								entity.body.setFlip(flip % 2 === 1, flip > 1);
+							} else {
+								entity.body.rotation.y = -data.rotation;
+							}
 						}
 						entity.updateMatrix();
 					},
@@ -160,15 +184,25 @@ namespace Renderer {
 
 				taroEntity.on('rotate', (x: number, y: number, z: number) => {
 					if (
+						entity.body !== null &&
 						entity.body.root.rotation.x === Utils.deg2rad(x) &&
 						entity.body.root.rotation.y === Utils.deg2rad(z) &&
 						entity.body.root.rotation.z === Utils.deg2rad(y)
 					) {
 						return;
 					}
-					entity.body.root.rotation.x = Utils.deg2rad(x);
-					entity.body.root.rotation.y = Utils.deg2rad(z);
-					entity.body.root.rotation.z = Utils.deg2rad(y);
+					if (entity.body !== null) {
+						entity.body.root.rotation.x = Utils.deg2rad(x);
+						entity.body.root.rotation.y = Utils.deg2rad(z);
+						entity.body.root.rotation.z = Utils.deg2rad(y);
+					} else {
+						renderer.projectilPool.editInstanceMesh(
+							{ rotation: [Utils.deg2rad(x), Utils.deg2rad(y), Utils.deg2rad(z)] },
+							entity.textureId,
+							entity.instancedIdx
+						);
+					}
+
 					entity.updateMatrix();
 				});
 
@@ -178,10 +212,15 @@ namespace Renderer {
 						const width = Utils.pixelToWorld(data.width || 0);
 						const height = Utils.pixelToWorld(data.height || 0);
 						const depth = Utils.pixelToWorld(entity.taroEntity._stats?.currentBody?.depth || 0);
-						if (data.width === width && data.height === height) {
-							return;
+						if (entity.body !== null) {
+							entity.setScale(width, height, depth);
+						} else {
+							renderer.projectilPool.editInstanceMesh(
+								{ scale: [width, height, depth] },
+								entity.textureId,
+								entity.instancedIdx
+							);
 						}
-						entity.setScale(width, height, depth);
 						entity.updateMatrix();
 					},
 					this
@@ -201,7 +240,7 @@ namespace Renderer {
 						if (anim) {
 							const name = anim.threeAnimationKey || '';
 							const loopCount = anim.loopCount || 0;
-							entity.body.play(name, loopCount);
+							entity.body?.play(name, loopCount);
 						}
 					}
 				});
@@ -269,17 +308,19 @@ namespace Renderer {
 			}
 
 			update(dt: number) {
-				this.body.update(dt);
+				if (this.body !== null) {
+					this.body?.update(dt);
 
-				const camera = Three.instance().camera.instance;
-				if (this.body instanceof AnimatedSprite && this.body.billboard) {
-					this.hud.quaternion.copy(camera.quaternion);
-					this.hud.position.copy(this.body.position);
-					this.topHud.position.y = this.body.getSize().height * 0.5;
-					this.bottomHud.position.y = -this.body.getSize().height * 0.5;
-				} else {
-					this.topHud.quaternion.copy(camera.quaternion);
-					this.bottomHud.quaternion.copy(camera.quaternion);
+					const camera = Three.instance().camera.instance;
+					if (this.body instanceof AnimatedSprite && this.body.billboard) {
+						this.hud.quaternion.copy(camera.quaternion);
+						this.hud.position.copy(this.body.position);
+						this.topHud.position.y = this.body.getSize().height * 0.5;
+						this.bottomHud.position.y = -this.body.getSize().height * 0.5;
+					} else {
+						this.topHud.quaternion.copy(camera.quaternion);
+						this.bottomHud.quaternion.copy(camera.quaternion);
+					}
 				}
 			}
 
@@ -320,30 +361,35 @@ namespace Renderer {
 			}
 
 			setScale(sx: number, sy: number, sz: number) {
-				if (this.body instanceof AnimatedSprite) {
-					this.body.setScale(sx, sy);
+				if (this.body === null) {
+					const renderer = Renderer.Three.instance();
+					renderer.projectilPool.editInstanceMesh({ scale: [sx, sy, sz] }, this.textureId, this.instancedIdx);
 				} else {
-					this.body.setSize(sx, sz, sy);
-				}
-
-				if (this.body instanceof Sprite) {
-					const size = this.body.getSize();
-					if (this.body.billboard) {
-						this.topHud.position.y = size.height;
-						this.topHud.position.z = 0;
-
-						this.bottomHud.position.y = 0;
-						this.bottomHud.position.z = 0;
+					if (this.body instanceof AnimatedSprite) {
+						this.body.setScale(sx, sy);
 					} else {
-						this.topHud.position.y = 0;
-						this.topHud.position.z = -size.height * 0.5;
-
-						this.bottomHud.position.y = 0;
-						this.bottomHud.position.z = size.height * 0.5;
+						this.body.setSize(sx, sz, sy);
 					}
-				} else {
-					const size = this.body.getSize();
-					this.topHud.position.y = size.y;
+
+					if (this.body instanceof Sprite) {
+						const size = this.body.getSize();
+						if (this.body.billboard) {
+							this.topHud.position.y = size.height;
+							this.topHud.position.z = 0;
+
+							this.bottomHud.position.y = 0;
+							this.bottomHud.position.z = 0;
+						} else {
+							this.topHud.position.y = 0;
+							this.topHud.position.z = -size.height * 0.5;
+
+							this.bottomHud.position.y = 0;
+							this.bottomHud.position.z = size.height * 0.5;
+						}
+					} else {
+						const size = this.body.getSize();
+						this.topHud.position.y = size.y;
+					}
 				}
 			}
 

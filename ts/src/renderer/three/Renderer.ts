@@ -24,6 +24,10 @@ namespace Renderer {
 			return Renderer.getVoxels();
 		}
 
+		export function getEntitiesLayer() {
+			return Renderer.getEntitiesLayer();
+		}
+
 		class Renderer {
 			private static _instance: Renderer;
 			renderer: THREE.WebGLRenderer;
@@ -33,6 +37,7 @@ namespace Renderer {
 			selectionBox: SelectionBox;
 			selectionHelper: SelectionHelper;
 			voxels: Voxels;
+			projectilPool: ProjectilePool;
 			private clock = new THREE.Clock();
 			private pointer = new THREE.Vector2();
 			private initLoadingManager = new THREE.LoadingManager();
@@ -664,6 +669,10 @@ namespace Renderer {
 				return this._instance.voxels;
 			}
 
+			static getEntitiesLayer() {
+				return this._instance.entitiesLayer;
+			}
+
 			tmpSetTIleId(tileId: number) {
 				this.tmp_tileId = tileId;
 				this.voxelEditor.voxelMarker.updatePreview(false);
@@ -935,7 +944,7 @@ namespace Renderer {
 
 				this.entitiesLayer.position.y = 0.51;
 				this.scene.add(this.entitiesLayer);
-
+				this.projectilPool = ProjectilePool.create();
 				this.regionsLayer.position.y = 0.51;
 				this.scene.add(this.regionsLayer);
 
@@ -948,6 +957,8 @@ namespace Renderer {
 					switch (type) {
 						case 'region':
 							this.regionsLayer.add(entity);
+							break;
+						case 'projectile':
 							break;
 						default:
 							this.entitiesLayer.add(entity);
