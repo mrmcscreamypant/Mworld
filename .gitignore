@@ -129,6 +129,8 @@ engine/components/physics/box2d/distsWrapper/*.js.map
 engine/components/physics/box2d/dists.js
 engine/components/physics/box2d/dists.js.map
 
+engine/components/physics/rapier/*.js.map
+
 src/gameClasses/Combinator.js
 src/gameClasses/Combinator.js.map
 src/gameClasses/DeveloperMode.js
