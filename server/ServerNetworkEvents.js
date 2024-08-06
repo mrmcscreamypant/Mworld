@@ -428,9 +428,6 @@ var ServerNetworkEvents = {
 							toItem._stats.controls.permittedInventorySlots.includes(data.from + 1) ||
 							(data.from + 1 > unit._stats.inventorySize && toItem._stats.controls.backpackAllowed !== false)) // any item can be moved into backpack slots if the backpackAllowed property is true
 					) {
-						fromItem.changeSlotIndex(parseInt(data.to));
-						toItem.changeSlotIndex(parseInt(data.from));
-
 						if (
 							fromItem._stats.bonus &&
 							fromItem._stats.bonus.passive &&
@@ -476,8 +473,6 @@ var ServerNetworkEvents = {
 						fromItem._stats.controls.permittedInventorySlots.includes(data.to + 1) ||
 						(data.to + 1 > unit._stats.inventorySize && fromItem._stats.controls.backpackAllowed !== false)) // any item can be moved into backpack slots if the backpackAllowed property is true
 				) {
-					fromItem.changeSlotIndex(parseInt(data.to));
-
 					if (
 						fromItem._stats.bonus &&
 						fromItem._stats.bonus.passive &&
