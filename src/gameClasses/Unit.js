@@ -400,7 +400,7 @@ var Unit = TaroEntityPhysics.extend({
 
 	show: function (force = false) {
 		if (this._stats.isHidden || force) {
-			if (this._stats.aiEnabled) {
+			if (!this._stats.aiEnabled) {
 				this.ai.enable();
 			}
 
