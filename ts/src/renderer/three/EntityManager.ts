@@ -99,7 +99,7 @@ namespace Renderer {
 				}
 
 				if (this.projectiles.includes(entity as Unit)) {
-					if((entity as Unit).body === null) {
+					if ((entity as Unit).body === null) {
 						const renderer = Renderer.Three.instance();
 						renderer.projectilPool.editInstanceMesh(
 							{ position: [-Infinity, -Infinity, -Infinity] },
