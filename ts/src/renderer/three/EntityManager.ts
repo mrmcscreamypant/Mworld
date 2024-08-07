@@ -101,7 +101,7 @@ namespace Renderer {
 				if (this.projectiles.includes(entity as Unit)) {
 					const renderer = Renderer.Three.instance();
 					renderer.projectilPool.editInstanceMesh(
-						{ scale: [0, 0, 0] },
+						{ position: [-Infinity, -Infinity, -Infinity] },
 						(entity as Unit).textureId,
 						(entity as Unit).instancedIdx,
 						true

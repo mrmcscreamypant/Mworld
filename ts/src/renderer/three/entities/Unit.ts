@@ -9,6 +9,7 @@ namespace Renderer {
 
 			body: AnimatedSprite | Model | null = null;
 			instancedIdx: number | null = null;
+			instancedData: { depthZOffset: number } | null = null;
 			textureId: string;
 			private hud = new THREE.Group();
 			private topHud = new THREE.Group();
@@ -43,6 +44,7 @@ namespace Renderer {
 					}
 				} else {
 					this.instancedIdx = renderer.projectilPool.createOrMergeProjectile(taroEntity._stats.cellSheet.url);
+					this.instancedData = { depthZOffset: 0 };
 				}
 
 				if (this.body !== null) {
@@ -132,7 +134,10 @@ namespace Renderer {
 				taroEntity.on('render-attributes', (data) => (entity as Unit).updateAttributes(data));
 				taroEntity.on('update-attribute', (data) => (entity as Unit).updateAttribute(data));
 				taroEntity.on('render-chat-bubble', (text) => (entity as Unit).renderChat(text));
-
+				// instancedMesh
+				if (entity.body === null) {
+					taroEntity.on('depth', (depth) => (entity.instancedData['depthZOffset'] = Utils.getDepthZOffset(depth)));
+				}
 				if (entity.body instanceof AnimatedSprite) {
 					taroEntity.on('depth', (depth) => (entity.body as AnimatedSprite).setDepth(depth));
 					taroEntity.on('flip', (flip) => (entity.body as AnimatedSprite).setFlip(flip % 2 === 1, flip > 1));
@@ -162,7 +167,11 @@ namespace Renderer {
 						if (entity.body === null) {
 							renderer.projectilPool.editInstanceMesh(
 								{
-									position: [entity.position.x, entity.position.y, entity.position.z],
+									position: [
+										entity.position.x,
+										entity.position.y + entity.instancedData.depthZOffset,
+										entity.position.z,
+									],
 									rotation: [0, -data.rotation, 0],
 								},
 								entity.textureId,
