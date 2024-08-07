@@ -1543,16 +1543,6 @@ var Unit = TaroEntityPhysics.extend({
 					rotate: item.anchoredOffset.rotate,
 				};
 
-				if (taro.physics.engine === 'CRASH') {
-					item.crashBody.pos.x = defaultData.translate.x;
-					item.crashBody.pos.y = defaultData.translate.y;
-					item._translate.x = defaultData.translate.x;
-					item._translate.y = defaultData.translate.y;
-					item.crashActive(true);
-					/*item._hasMoved = true;
-					item._translateTo(defaultData.translate.x, defaultData.translate.y)*/
-				}
-
 				item.setOwnerUnit(undefined);
 				item.show();
 				item.setState('dropped', defaultData);
@@ -2399,9 +2389,7 @@ var Unit = TaroEntityPhysics.extend({
 			taro.client.emit('unit-position', [this._translate.x, this._translate.y]);
 		}
 
-		if (taro.physics && taro.physics.engine != 'CRASH') {
-			this.processBox2dQueue();
-		}
+		this.processBox2dQueue();
 	},
 
 	destroy: function () {

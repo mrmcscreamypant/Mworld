@@ -40,16 +40,6 @@ var taroPhysicsConfig = {
 			['csap', 'dists', './components/physics/box2d/dists.js'],
 			['csap', 'box2dts', './components/physics/box2d/dists/flyoverbox2dts/bundle.js'],
 		],
-
-		crash: [
-			['csap', 'PhysicsComponent', './components/physics/crash/CrashComponent.js'],
-			['csap', 'TaroEntityPhysics', './components/physics/crash/TaroEntityPhysics.js'],
-			['csap', 'CollisionController', './components/physics/crash/CollisionController.js'],
-			['csap', 'quickselect', './components/physics/crash/crashDependencies/quickselect.js'],
-			['csap', 'rbush', './components/physics/crash/crashDependencies/rbush.js'],
-			['csap', 'sat', './components/physics/crash/crashDependencies/sat.js'],
-			['csap', 'crash', './components/physics/crash/crashDependencies/crash.js', 'crash'],
-		],
 	},
 
 	gameClasses: [
@@ -69,9 +59,6 @@ var taroPhysicsConfig = {
 	loadPhysicsGameClasses: function () {
 		this.loadFiles(this.gameClasses);
 	},
-
-	// I don't think the server needs to be loading crash dependencies if we have them as npm packages.
-	// Should test removing the 's' from those item[0] strings.
 
 	loadFiles: function (physicsFiles) {
 		var arr = physicsFiles;

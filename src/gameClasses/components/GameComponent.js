@@ -325,7 +325,7 @@ var GameComponent = TaroEntity.extend({
 				}
 			}
 
-			if (data.status != {} /*&& taro.physics && taro.physics.engine != 'CRASH'*/) {
+			if (data.status != {}) {
 				// if streaming entity count > 150 warn user
 				if (
 					data.status &&

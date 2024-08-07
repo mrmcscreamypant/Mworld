@@ -91,17 +91,14 @@ var Sensor = TaroEntityPhysics.extend({
 		var ownerUnit = this.getOwnerUnit();
 		if (ownerUnit) {
 			if (this.body) {
-				if (taro.physics.engine === 'CRASH') {
-					this.translateTo(ownerUnit._translate.x, ownerUnit._translate.y);
-				} else this.translateTo(ownerUnit._translate.x, ownerUnit._translate.y); // keep sensor following its owner unit
+				this.translateTo(ownerUnit._translate.x, ownerUnit._translate.y); // keep sensor following its owner unit
 			}
 		} else {
 			// destroy ownerless sensors
 			this.remove();
 		}
-		if (taro.physics && taro.physics.engine != 'CRASH') {
-			this.processBox2dQueue();
-		}
+
+		this.processBox2dQueue();
 	},
 });
 
