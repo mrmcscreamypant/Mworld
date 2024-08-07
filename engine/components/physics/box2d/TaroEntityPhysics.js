@@ -51,9 +51,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 	updateBody: function (defaultData, isLossTolerant) {
 		var self = this;
 
-		// console.log("updatebody", this._stats.name, defaultData, this._stats.currentBody.type)
-		// console.trace()
-
 		body = this._stats.currentBody;
 		if (!body) {
 			return;
@@ -148,12 +145,8 @@ var TaroEntityPhysics = TaroEntity.extend({
 				},
 			],
 		};
-		// console.log("collidesWith", this._category, filterCategoryBits, collidesWith, body)
+
 		this.physicsBody(body, isLossTolerant);
-		// if (this._category === 'item') {
-		//     this.previousState = this._stats && this._stats.states && this._stats.states[this._stats.stateId] || {};
-		//     console.log('setting previous sate', this.previousState);
-		// }
 
 		// if initialTranform variable's provided, then transform this entity immediately after body creation
 		if (defaultData) {
@@ -164,14 +157,9 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 			// immediately apply rotate.z if facingAngle is assigned
 			if (!isNaN(rotate)) {
-				// console.log("rotate ", defaultData.rotate)
-				// if (isLossTolerant)
-				//     this.rotateToLT(rotate);
-				// else
 				this.rotateTo(0, 0, rotate);
 			}
 
-			// console.log("defaultData", defaultData)
 			if (defaultData.translate) {
 				var x = defaultData.translate.x;
 				var y = defaultData.translate.y;
@@ -291,7 +279,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 					});
 
 					if (!this._contactListener) {
-						// Setup contact listener
 						this._contactListener = this._setupContactListeners();
 					}
 					break;
@@ -305,7 +292,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 					});
 
 					if (!this._contactListener) {
-						// Setup contact listener
 						this._contactListener = this._setupContactListeners();
 					}
 					break;
@@ -749,7 +735,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 		if (taro.physics && taro.physics._active && taro.physics._world) {
 			if (this.body) {
 				var x = 0;
-				// return;
 				while (this._actionQueue && this._actionQueue.length > 0) {
 					var action = this._actionQueue.shift();
 
