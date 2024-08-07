@@ -211,25 +211,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	 * @returns {*}
 	 */
 	gravitic: function (val) {
-		if (this.body) {
-			switch (taro.physics.engine) {
-				case 'BOX2DWASM': {
-					this.body.SetGravityScale(!val ? 0 : 1);
-					return !!val;
-				}
-				default: {
-					if (val !== undefined) {
-						this.body.m_nonGravitic = !val;
-						this.body.m_gravityScale = !val ? 0 : 1;
-
-						// Wake up the body
-						this.body.setAwake(true);
-						return this;
-					}
-					return !this.body.m_nonGravitic;
-				}
-			}
-		}
+		taro.physics.gravitic(this.body, val);
 	},
 
 	on: function () {

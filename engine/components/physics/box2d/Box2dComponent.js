@@ -904,6 +904,20 @@ var PhysicsComponent = TaroEventingClass.extend({
 		// Destroy all box2d world bodies
 	},
 
+	gravitic: function (body, toggle) {
+		if (!body || toggle === undefined) {
+			return;
+		}
+
+		if (taro.physics.engine === 'BOX2DWASM') {
+			body.SetGravityScale(!toggle ? 0 : 1);
+		} else {
+			body.m_nonGravitic = !toggle;
+			body.m_gravityScale = !toggle ? 0 : 1;
+			body.setAwake(true);
+		}
+	},
+
 	applyForce: function (body, x, y) {
 		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
 			return;
