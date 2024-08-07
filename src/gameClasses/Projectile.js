@@ -181,9 +181,7 @@ var Projectile = TaroEntityPhysics.extend({
 			}
 		}
 
-		if (taro.physics && taro.physics.engine != 'CRASH') {
-			this.processBox2dQueue();
-		}
+		this.processBox2dQueue();
 	},
 
 	changeProjectileType: function (type, defaultData) {
@@ -338,9 +336,6 @@ var Projectile = TaroEntityPhysics.extend({
 		this.script.trigger('initEntityDestroy');
 		this.playEffect('destroy');
 		TaroEntityPhysics.prototype.destroy.call(this);
-		if (taro.physics && taro.physics.engine == 'CRASH') {
-			this.destroyBody();
-		}
 	},
 });
 

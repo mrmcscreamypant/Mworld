@@ -567,6 +567,12 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'sendPostRequest':
+						if (!taro.tierFeaturesToggle[taro.game.data.defaultData.tier]?.postRequests) {
+							self._script.errorLog(
+								'Indie+ tier is needed to send post request'
+							);
+							break;
+						}
 						var obj = self._script.param.getValue(action.string, vars);
 						var url = self._script.param.getValue(action.url, vars);
 						var proxyUrl = process.env.PROXY_URL || '';
@@ -625,6 +631,12 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'requestPost':
+						if (!taro.tierFeaturesToggle[taro.game.data.defaultData.tier]?.postRequests) {
+							self._script.errorLog(
+								'Indie+ tier is needed to send post request'
+							);
+							break;
+						}
 						var data = self._script.param.getValue(action.data, vars) || {};
 						var url = self._script.param.getValue(action.url, vars);
 						var varName = self._script.param.getValue(action.varName, vars);
@@ -684,9 +696,27 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'sendSecurePostRequest':
+						if (!taro.tierFeaturesToggle[taro.game.data.defaultData.tier]?.postRequests) {
+							self._script.errorLog(
+								'Indie+ tier is needed to send post request'
+							);
+							break;
+						}
 						var data = self._script.param.getValue(action.data, vars) || {};
 						var apiCredentials = self._script.param.getValue(action.apiCredentials, vars);
 						var varName = self._script.param.getValue(action.varName, vars);
+
+						// ensure we aren't sending more than 30 POST requests within 10 seconds
+						taro.server.postReqTimestamps.push(taro.currentTime());
+						var oldestReqTimestamp = taro.server.postReqTimestamps[0];
+						while (taro.currentTime() - oldestReqTimestamp > 10000 && taro.server.postReqTimestamps.length > 0) {
+							oldestReqTimestamp = taro.server.postReqTimestamps.shift();
+						}
+						if (taro.server.postReqTimestamps.length > 30) {
+							taro.server.unpublish(
+								'Game server is sending too many POST requests. You cannot send more than 30 req per every 10s.'
+							);
+						}
 
 						// use closure to store globalVariableName
 						(function (targetVarName, actionsOnSuccess, actionsOnFailure, currentScriptId) {
@@ -1001,7 +1031,7 @@ var ActionComponent = TaroEntity.extend({
 								if (unit && !unit.persistentDataLoaded) {
 									throw new Error('Fail saving unit data bcz persisted data not loaded correctly');
 								} else {
-									throw new Error('Fail saving unit data');
+									throw new Error('a player unit was destroyed without being saving its data');
 								}
 							}
 						} else {
@@ -2969,7 +2999,7 @@ var ActionComponent = TaroEntity.extend({
 					/* Ads */
 
 					case 'playAdForEveryone':
-						if (taro.game.data.defaultData.tier && parseInt(taro.game.data.defaultData.tier) !== 1) {
+						if (taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].ads) {
 							if (!taro.ad.lastPlayedAd || Date.now() - taro.ad.lastPlayedAd >= 60000) {
 								taro.ad.play({ type: 'preroll' });
 								taro.ad.lastPlayedAd = Date.now();
@@ -2980,7 +3010,7 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'playAdForPlayer':
-						if (action.entity && taro.game.data.defaultData.tier && parseInt(taro.game.data.defaultData.tier) !== 1) {
+						if (action.entity && taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].ads) {
 							var unit = self._script.param.getValue(action.entity, vars);
 							if (unit && unit._stats && unit._stats.clientId) {
 								if (!taro.ad.lastPlayedAd || Date.now() - taro.ad.lastPlayedAd >= 60000) {
@@ -4434,7 +4464,12 @@ var ActionComponent = TaroEntity.extend({
 						var shopId = action.shop;
 						var entityId = action.itemType;
 
-						if (entityId && player && shopId && taro.game.data?.defaultData?.tier !== '1') {
+						if (
+							entityId &&
+							player &&
+							shopId &&
+							taro.tierFeaturesToggle[taro.game.data?.defaultData?.tier || '1'].coinItemPurchase
+						) {
 							player._stats.lastOpenedShop = action.shop;
 							taro.network.send(
 								'ui',
@@ -4451,7 +4486,7 @@ var ActionComponent = TaroEntity.extend({
 
 					case 'openSkinShop':
 						var player = self._script.param.getValue(action.player, vars);
-						if (player && taro.game.data.defaultData.tier >= '2') {
+						if (player && taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].skinShop) {
 							taro.network.send(
 								'ui',
 								{
@@ -4465,7 +4500,7 @@ var ActionComponent = TaroEntity.extend({
 
 					case 'openSkinSubmissionPage':
 						var player = self._script.param.getValue(action.player, vars);
-						if (player && taro.game.data.defaultData.tier >= '2') {
+						if (player && taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].skinShop) {
 							taro.network.send(
 								'ui',
 								{
@@ -4547,8 +4582,8 @@ var ActionComponent = TaroEntity.extend({
 					taro.profiler.logTimeElapsed(actionPath, startTime);
 				}
 			} catch (e) {
-				// console.log(e);
-				self._script.errorLog(e, path); // send error msg to client
+				console.log('error', e.message);
+				self._script.errorLog(e.message, path); // send error msg to client
 			}
 		}
 	},

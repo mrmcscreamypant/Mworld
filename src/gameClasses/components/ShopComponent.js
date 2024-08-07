@@ -126,7 +126,7 @@ var ShopComponent = TaroEntity.extend({
 					}
 
 					if (isCoinTxRequired) {
-						if (taro.game.data.defaultData.tier === '1') {
+						if (!taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].coinItemPurchase) {
 							self.purchaseWarning('advanced-tier', name);
 							return;
 						}

@@ -1884,9 +1884,6 @@ var TaroEntity = TaroObject.extend({
 	 * @param {CanvasRenderingContext2D} ctx The canvas context to render to.
 	 */
 	update: function (ctx, tickDelta, isForOrphans) {
-		// if (taro.physics.engine === 'CRASH' && this.body) {
-		// 	this._behaviourCrash();
-		// }
 		if (this._deathTime !== undefined && this._deathTime <= taro._tickStart) {
 			// Check if the deathCallBack was set
 			if (this._deathCallBack) {
@@ -3196,13 +3193,7 @@ var TaroEntity = TaroObject.extend({
 	 * @return {*}
 	 */
 	translateTo: function (x, y) {
-		// console.log('start translate', x, y)
 		if (x !== undefined && y !== undefined && !isNaN(x) && !isNaN(y)) {
-			// console.log('non-crash translate', this._translate)
-			/* if (taro.physics && taro.physics.engine == 'CRASH') {
-				console.log('crash translate');
-				this.translateColliderTo(x, y);
-			} */
 			if (this._translate) {
 				this._translate.x = x;
 				this._translate.y = y;
@@ -3245,9 +3236,6 @@ var TaroEntity = TaroObject.extend({
 
 		if (taro.isServer) {
 			this.clientStreamedPosition = undefined;
-			if (taro.physics && taro.physics.engine == 'CRASH') {
-				this.translateColliderTo(x, y);
-			}
 		} else if (taro.isClient) {
 			// client-side prediction is enabled (cspMode either 1 or 2)
 			let myUnit = taro.client.selectedUnit;

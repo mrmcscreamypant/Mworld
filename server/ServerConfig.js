@@ -62,6 +62,7 @@ var defaultConfig = [
 
 	{ name: 'DeveloperMode', path: '../src/gameClasses/DeveloperMode' },
 	{ name: 'mergeGameJson', path: '../src/helpers/merge-game-json' },
+	{ name: 'tierFeaturesToggle', path: '../src/helpers/tiers' },
 	// Color support
 	{ name: 'Colors', path: '../src/utils/Colors' },
 ];

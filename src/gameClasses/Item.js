@@ -1395,9 +1395,7 @@ var Item = TaroEntityPhysics.extend({
 			}
 		}
 
-		if (taro.physics && taro.physics.engine != 'CRASH') {
-			this.processBox2dQueue();
-		}
+		this.processBox2dQueue();
 	},
 
 	loadPersistentData: function (persistData) {

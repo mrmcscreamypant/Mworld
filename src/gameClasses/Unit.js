@@ -400,7 +400,7 @@ var Unit = TaroEntityPhysics.extend({
 
 	show: function (force = false) {
 		if (this._stats.isHidden || force) {
-			if (this._stats.aiEnabled) {
+			if (!this._stats.aiEnabled) {
 				this.ai.enable();
 			}
 
@@ -605,7 +605,7 @@ var Unit = TaroEntityPhysics.extend({
 				if (shopData.price.coins && ownerPlayer._stats.coins >= shopData.price.coins) {
 					// disable coin consuming due to some bug wrt coins
 					// add coin consuming code
-					if (taro.game.data.defaultData.tier >= 2) {
+					if (taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].coinItemPurchase) {
 						try {
 							var socket = taro.network._socketById[ownerPlayer._stats.clientId];
 							const VERIFICATION_UNLOCKED_FOR = 35 * 60 * 1000; // 35 mins - 5 mins more than what is configured on client side to avoid race conditions
@@ -1543,16 +1543,6 @@ var Unit = TaroEntityPhysics.extend({
 					rotate: item.anchoredOffset.rotate,
 				};
 
-				if (taro.physics.engine === 'CRASH') {
-					item.crashBody.pos.x = defaultData.translate.x;
-					item.crashBody.pos.y = defaultData.translate.y;
-					item._translate.x = defaultData.translate.x;
-					item._translate.y = defaultData.translate.y;
-					item.crashActive(true);
-					/*item._hasMoved = true;
-					item._translateTo(defaultData.translate.x, defaultData.translate.y)*/
-				}
-
 				item.setOwnerUnit(undefined);
 				item.show();
 				item.setState('dropped', defaultData);
@@ -2399,9 +2389,7 @@ var Unit = TaroEntityPhysics.extend({
 			taro.client.emit('unit-position', [this._translate.x, this._translate.y]);
 		}
 
-		if (taro.physics && taro.physics.engine != 'CRASH') {
-			this.processBox2dQueue();
-		}
+		this.processBox2dQueue();
 	},
 
 	destroy: function () {
