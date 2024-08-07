@@ -202,27 +202,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 	},
 
 	/**
-	 * Gets / sets the box2d body's active flag which determines
-	 * if it will be included as part of the physics simulation
-	 * or not.
-	 * @param {Boolean=} val Set to true to include the body in
-	 * the physics simulation or false for it to be ignored.
-	 * @return {*}
-	 */
-	box2dActive: function (val) {
-		if (this.body) {
-			if (val !== undefined) {
-				this.body.setActive(val);
-				return this;
-			}
-
-			return this.body.isActive();
-		}
-
-		return this;
-	},
-
-	/**
 	 * Gets / sets the physics body definition. When setting the
 	 * definition the physics body will also be created automatically
 	 * from the supplied definition.
