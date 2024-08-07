@@ -706,6 +706,18 @@ var ActionComponent = TaroEntity.extend({
 						var apiCredentials = self._script.param.getValue(action.apiCredentials, vars);
 						var varName = self._script.param.getValue(action.varName, vars);
 
+						// ensure we aren't sending more than 30 POST requests within 10 seconds
+						taro.server.postReqTimestamps.push(taro.currentTime());
+						var oldestReqTimestamp = taro.server.postReqTimestamps[0];
+						while (taro.currentTime() - oldestReqTimestamp > 10000 && taro.server.postReqTimestamps.length > 0) {
+							oldestReqTimestamp = taro.server.postReqTimestamps.shift();
+						}
+						if (taro.server.postReqTimestamps.length > 30) {
+							taro.server.unpublish(
+								'Game server is sending too many POST requests. You cannot send more than 30 req per every 10s.'
+							);
+						}
+
 						// use closure to store globalVariableName
 						(function (targetVarName, actionsOnSuccess, actionsOnFailure, currentScriptId) {
 							taro.workerComponent.sendSecurePostRequest({ apiCredentials, data }).then(({ data, err }) => {
@@ -1019,7 +1031,7 @@ var ActionComponent = TaroEntity.extend({
 								if (unit && !unit.persistentDataLoaded) {
 									throw new Error('Fail saving unit data bcz persisted data not loaded correctly');
 								} else {
-									throw new Error('Fail saving unit data');
+									throw new Error('a player unit was destroyed without being saving its data');
 								}
 							}
 						} else {
@@ -4570,8 +4582,8 @@ var ActionComponent = TaroEntity.extend({
 					taro.profiler.logTimeElapsed(actionPath, startTime);
 				}
 			} catch (e) {
-				// console.log(e);
-				self._script.errorLog(e, path); // send error msg to client
+				console.log('error', e.message);
+				self._script.errorLog(e.message, path); // send error msg to client
 			}
 		}
 	},
