@@ -959,6 +959,20 @@ var PhysicsComponent = TaroEventingClass.extend({
 		body.setAwake(true);
 	},
 
+	setLinearVelocity: function (body, x, y) {
+		if (isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+			return;
+		}
+
+		if (taro.physics.engine === 'BOX2DWASM') {
+			const velocity = new taro.physics.b2Vec2(x, y);
+			body.setLinearVelocity(velocity);
+			taro.physics.destroyB2dObj(velocity);
+		} else {
+			body.setLinearVelocity(new TaroPoint3d(x, y, 0));
+		}
+	},
+
 	_triggerContactEvent: function (entityA, entityB) {
 		var triggeredBy = {};
 

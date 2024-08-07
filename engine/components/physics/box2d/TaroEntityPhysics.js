@@ -349,15 +349,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	setLinearVelocityLT: function (x, y) {
 		try {
-			if (!isNaN(x) && !isNaN(y) && isFinite(x) && isFinite(y)) {
-				if (taro.physics.engine === 'BOX2DWASM') {
-					let v = new taro.physics.b2Vec2(x, y);
-					this.body.setLinearVelocity(v);
-					taro.physics.destroyB2dObj(v);
-				} else {
-					this.body.setLinearVelocity(new TaroPoint3d(x, y, 0));
-				}
-			}
+			taro.physics.setLinearVelocity(this.body, x, y);
 		} catch (e) {
 			console.log(`TaroEntityBox2d.js: setLinearVelocityLT ${e}`);
 		}
