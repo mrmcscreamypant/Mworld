@@ -225,7 +225,7 @@ namespace Renderer {
 							entity.setScale(width, height, depth);
 						} else {
 							renderer.projectilPool.editInstanceMesh(
-								{ scale: [width, height, depth] },
+								{ scale: [width, 1, height] },
 								entity.textureId,
 								entity.instancedIdx
 							);

@@ -4,6 +4,11 @@ namespace Renderer {
 			pool: Record<
 				string,
 				{
+					currentData: {
+						position: [number, number, number];
+						rotation: [number, number, number];
+						scale: [number, number, number];
+					}[];
 					locks: number[];
 					mesh: THREE.InstancedMesh;
 				}
@@ -51,10 +56,19 @@ namespace Renderer {
 			) {
 				const dummy = new THREE.Object3D();
 				const mesh = this.pool[textureId].mesh;
-				mesh.getMatrixAt(idx, dummy.matrix);
-
-				dummy.position.set(-Infinity, -Infinity, -Infinity);
+				if (this.pool[textureId].currentData[idx] === undefined) {
+					this.pool[textureId].currentData[idx] = {
+						position: [-Infinity, -Infinity, -Infinity],
+						rotation: [0, 0, 0],
+						scale: [1, 1, 1],
+					};
+				}
+				Object.keys(this.pool[textureId].currentData[idx]).forEach((k) => {
+					const editData = this.pool[textureId].currentData[idx];
+					dummy[k].set(editData[k][0], editData[k][1], editData[k][2]);
+				});
 				Object.keys(editData).forEach((k) => {
+					this.pool[textureId].currentData[idx][k] = editData[k];
 					dummy[k].set(editData[k][0], editData[k][1], editData[k][2]);
 				});
 				dummy.updateMatrix();
@@ -69,7 +83,7 @@ namespace Renderer {
 
 			createOrMergeProjectile(textureId: string): number {
 				if (this.pool[textureId] === undefined) {
-					const geometry = new THREE.PlaneGeometry(0.5, 0.5);
+					const geometry = new THREE.PlaneGeometry(1.0, 1.0);
 					geometry.rotateX(-Math.PI / 2);
 					const tex = gAssetManager.getTexture(textureId).clone();
 					const material = new THREE.MeshBasicMaterial({
@@ -79,6 +93,7 @@ namespace Renderer {
 					});
 					this.pool[textureId] = {
 						locks: [0],
+						currentData: [],
 						mesh: new THREE.InstancedMesh(geometry, material, ProjectilePool.MaxInstancedCount),
 					};
 					this.editInstancedMeshAllIdx({ position: [-Infinity, -Infinity, -Infinity] }, textureId);
