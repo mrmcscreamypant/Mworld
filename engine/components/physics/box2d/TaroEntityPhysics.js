@@ -211,9 +211,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 	physicsBody: function (def, isLossTolerant) {
 		if (def) {
 			this.bodyDef = def;
-			// console.trace()
-			// taro.devLog("box2dBody", this._category, this._stats.name)
-			// Check that the box2d component exists
 			if (taro.physics) {
 				if (isLossTolerant) {
 					taro.physics.createBody(this, def, isLossTolerant);
@@ -221,8 +218,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 					this.destroyBody();
 					taro.physics.queueAction({ type: 'createBody', entity: this, def: def });
 				}
-			} else {
-				// TaroEntityPhysics.prototype.log('You are trying to create a box2d entity but you have not added the box2d component to the taro instance!', 'error');
 			}
 
 			return this;
@@ -260,7 +255,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 					if (val !== undefined) {
 						this.body.m_nonGravitic = !val;
 						this.body.m_gravityScale = !val ? 0 : 1;
-						// this.bodyDef.gravitic = val;
 
 						// Wake up the body
 						this.body.setAwake(true);
@@ -378,11 +372,9 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	setLinearVelocity: function (x, y, z, isLossTolerant) {
 		// if body doesn't exist yet, queue
-		// console.log("3. locked", taro.physics._world.isLocked(), "body",  this.body != undefined, isLossTolerant);
 		if ((!taro.physics._world.isLocked() && this.body != undefined) || isLossTolerant) {
 			this.setLinearVelocityLT(x, y);
 		} else {
-			// console.log("4. queue setLinearVelocity", x, y);
 			this.queueAction({
 				type: 'setLinearVelocity',
 				x: x,
@@ -425,8 +417,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	// loss tolerant applyForce
 	applyForceLT: function (x, y) {
-		// taro.devLog("applyForce", x, y)
-
 		try {
 			if (!isNaN(x) && !isNaN(y) && isFinite(x) && isFinite(y)) {
 				var thrustVector = new taro.physics.b2Vec2(x, y);
@@ -444,7 +434,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 	// lossless applyForce
 	applyImpulse: function (x, y) {
 		// if body doesn't exist yet, queue
-
 		if (!taro.physics._world.isLocked() && this.body != undefined) {
 			this.applyImpulseLT(x, y);
 		} else {
@@ -458,7 +447,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	// loss tolerant applyForce
 	applyImpulseLT: function (x, y) {
-		// taro.devLog("applyForce", x, y)
 		try {
 			if (!isNaN(x) && !isNaN(y) && isFinite(x) && isFinite(y)) {
 				var thrustVector = new taro.physics.b2Vec2(x, y);
@@ -482,6 +470,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 			TaroEntityPhysics.prototype.log(`taroEntityBox2d.js: applyTorque ${e}`);
 		}
 	},
+
 	_setupContactListeners: function () {
 		var self = this;
 
@@ -641,7 +630,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	rotateToLT: function (angle) {
 		if (this.body) {
-			// console.log("this.body", this.body)
 			this.body.setAngle(angle);
 			this.body.setAwake(true);
 		}
@@ -658,17 +646,11 @@ var TaroEntityPhysics = TaroEntity.extend({
 		if (currentState && this._stats.bodies) {
 			body = this._stats.bodies[currentState.body];
 		}
-		// console.log(self._stats.name,'->',self._stats.scale)
 		var newWidth = ((body && body.width) || 1) * self._stats.scale;
 		var newHeight = ((body && body.height) || 1) * self._stats.scale;
 
 		self.width(newWidth, false);
 		self.height(newHeight, false);
-
-		// var attributeBarContainer = self.getAttributeBarContainer();
-		// if (attributeBarContainer) {
-		//     attributeBarContainer.setContainerWidth(newWidth);
-		// }
 	},
 
 	_scaleBox2dBody: function (scale) {
@@ -733,8 +715,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 	 */
 	_rotateBy: function (x, y, z) {
 		this._rotateTo(this._rotate.x + x, this._rotate.y + y, this._rotate.z + z);
-		// this.body.setAngle(this._rotate.z + z);
-		// this.body.setAwake(true);
 	},
 
 	/**
@@ -746,11 +726,8 @@ var TaroEntityPhysics = TaroEntity.extend({
 	_update: function (ctx) {
 		// Call the original method
 		this._updateProto(ctx);
-
 		this._translateTo(this._translate.x, this._translate.y, this._translate.z, '_update');
 		this._rotateTo(this._rotate.x, this._rotate.y, this._rotate.z);
-
-		// TaroEntity.prototype.update.call(this, ctx);
 	},
 
 	/**
@@ -767,8 +744,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 	},
 
 	queueAction: function (action) {
-		// TaroEntityPhysics.prototype.log("queueAction: " +this._category + " " + this._stats.name+" " + action.type + " " +this._category + " "+this.id())
-
 		// prevent 'applyForce' causing memoryleak by overloading actionQueue
 		// this means if there's too many actions queued, chances are, applyForce will be ignored ;-;
 		// however, regardless of queueSize, translateTo and destroy will always be queued
