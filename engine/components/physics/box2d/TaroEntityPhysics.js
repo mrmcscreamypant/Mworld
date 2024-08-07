@@ -405,13 +405,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	// loss tolerant applyForce
 	applyImpulseLT: function (x, y) {
 		try {
-			if (!isNaN(x) && !isNaN(y) && isFinite(x) && isFinite(y)) {
-				var thrustVector = new taro.physics.b2Vec2(x, y);
-				this.body.applyLinearImpulse(thrustVector, this.body.getWorldCenter());
-				if (taro.physics.engine === 'BOX2DWASM') {
-					taro.physics.destroyB2dObj(thrustVector);
-				}
-			}
+			taro.physics.applyImpulse(this.body, x, y);
 		} catch (e) {
 			console.log(e);
 			TaroEntityPhysics.prototype.log(`taroEntityBox2d.js: applyForce ${e}`);

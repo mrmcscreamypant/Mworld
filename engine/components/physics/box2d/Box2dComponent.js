@@ -910,10 +910,23 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 
 		const force = new taro.physics.b2Vec2(x, y);
-		body.applyForce(force, this.body.getWorldCenter());
+		body.applyForce(force, body.getWorldCenter());
 
 		if (taro.physics.engine === 'BOX2DWASM') {
 			taro.physics.destroyB2dObj(force);
+		}
+	},
+
+	applyImpulse: function (body, x, y) {
+		if (isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+			return;
+		}
+
+		const impulse = new taro.physics.b2Vec2(x, y);
+		body.applyLinearImpulse(impulse, body.getWorldCenter());
+
+		if (taro.physics.engine === 'BOX2DWASM') {
+			taro.physics.destroyB2dObj(impulse);
 		}
 	},
 
