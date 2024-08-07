@@ -568,16 +568,19 @@ const Client = TaroEventingClass.extend({
 		let minPlayerCount = Number.MAX_SAFE_INTEGER; // ok this seems really unnecessary
 
 		for (let server of validServers) {
-			const capacity = server.playerCount / server.maxPlayers;
 
-			if (capacity < overloadCriteria && server.playerCount > maxPlayersInUnderLoadedServer) {
+			const playerCount = server.clientCount || server.playerCount;
+
+			const capacity = playerCount / server.maxPlayers;
+
+			if (capacity < overloadCriteria && playerCount > maxPlayersInUnderLoadedServer) {
 				firstChoice = server;
-				maxPlayersInUnderLoadedServer = server.playerCount;
+				maxPlayersInUnderLoadedServer = playerCount;
 			}
 
-			if (server.playerCount < minPlayerCount) {
+			if (playerCount < minPlayerCount) {
 				secondChoice = server;
-				minPlayerCount = server.playerCount;
+				minPlayerCount = playerCount;
 			}
 		}
 
