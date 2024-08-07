@@ -905,7 +905,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 	},
 
 	applyForce: function (body, x, y) {
-		if (isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
 			return;
 		}
 
@@ -918,7 +918,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 	},
 
 	applyImpulse: function (body, x, y) {
-		if (isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
 			return;
 		}
 
@@ -931,7 +931,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 	},
 
 	applyTorque: function (body, torque) {
-		if (isNaN(torque) || !isFinite(torque)) {
+		if (!body || isNaN(torque) || !isFinite(torque)) {
 			return;
 		}
 
@@ -939,7 +939,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 	},
 
 	translateTo: function (body, x, y) {
-		if (isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
 			return;
 		}
 
@@ -951,7 +951,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 	},
 
 	rotateTo: function (body, angle) {
-		if (isNaN(angle) || !isFinite(angle)) {
+		if (!body || isNaN(angle) || !isFinite(angle)) {
 			return;
 		}
 
@@ -960,7 +960,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 	},
 
 	setLinearVelocity: function (body, x, y) {
-		if (isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
 			return;
 		}
 
