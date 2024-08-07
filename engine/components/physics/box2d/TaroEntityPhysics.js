@@ -635,7 +635,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 		self.height(newHeight, false);
 	},
 
-	_scaleBox2dBody: function (scale) {
+	scaleBodyBy: function (scale) {
 		if (isNaN(scale)) {
 			return;
 		}
@@ -650,14 +650,14 @@ var TaroEntityPhysics = TaroEntity.extend({
 					scale: scale,
 				});
 			} else {
-				this.scaleBodyBy(scale);
+				this._scaleBodyBy(scale);
 			}
 		}
 
 		return this;
 	},
 
-	scaleBodyBy: function (scale) {
+	_scaleBodyBy: function (scale) {
 		var self = this;
 		var body = this._stats.currentBody;
 
@@ -778,7 +778,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 							break;
 
 						case 'scaleBy':
-							this.scaleBodyBy(action.scale);
+							this._scaleBodyBy(action.scale);
 							break;
 
 						case 'destroy':

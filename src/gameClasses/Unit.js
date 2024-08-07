@@ -1809,10 +1809,10 @@ var Unit = TaroEntityPhysics.extend({
 							}
 
 							// changing body dimensions
-							self._scaleBox2dBody(newValue);
+							self.scaleBodyBy(newValue);
 						} else if (taro.isClient) {
 							if (taro.physics) {
-								self._scaleBox2dBody(newValue);
+								self.scaleBodyBy(newValue);
 							}
 							self._stats.scale = newValue;
 							self._scaleTexture();

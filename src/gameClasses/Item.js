@@ -1193,7 +1193,7 @@ var Item = TaroEntityPhysics.extend({
 						this._stats[attrName] = newValue;
 						if (taro.isClient) {
 							if (taro.physics) {
-								self._scaleBox2dBody(newValue);
+								self.scaleBodyBy(newValue);
 							}
 							self._stats.scale = newValue;
 							self._scaleTexture();
@@ -1208,7 +1208,7 @@ var Item = TaroEntityPhysics.extend({
 								}
 							}
 							// attaching entities
-							self._scaleBox2dBody(newValue);
+							self.scaleBodyBy(newValue);
 						}
 						break;
 
