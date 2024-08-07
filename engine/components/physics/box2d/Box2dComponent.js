@@ -930,6 +930,14 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 	},
 
+	applyTorque: function (body, torque) {
+		if (isNaN(torque) || !isFinite(torque)) {
+			return;
+		}
+
+		body.applyTorque(torque);
+	},
+
 	_triggerContactEvent: function (entityA, entityB) {
 		var triggeredBy = {};
 

@@ -414,9 +414,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	applyTorqueLT: function (torque) {
 		try {
-			if (!isNaN(torque)) {
-				this.body.applyTorque(torque);
-			}
+			taro.physics.applyTorque(this.body, torque);
 		} catch (e) {
 			TaroEntityPhysics.prototype.log(`taroEntityBox2d.js: applyTorque ${e}`);
 		}
