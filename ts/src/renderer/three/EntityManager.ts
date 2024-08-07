@@ -30,7 +30,7 @@ namespace Renderer {
 						break;
 					}
 					case 'projectile': {
-						entity = Unit.create(taroEntity, true);
+						entity = Unit.create(taroEntity, taroEntity._stats.instancedMesh);
 						this.projectiles.push(entity);
 						// this.animatedSprites.push(entity);
 						break;
@@ -99,13 +99,15 @@ namespace Renderer {
 				}
 
 				if (this.projectiles.includes(entity as Unit)) {
-					const renderer = Renderer.Three.instance();
-					renderer.projectilPool.editInstanceMesh(
-						{ position: [-Infinity, -Infinity, -Infinity] },
-						(entity as Unit).textureId,
-						(entity as Unit).instancedIdx,
-						true
-					);
+					if((entity as Unit).body === null) {
+						const renderer = Renderer.Three.instance();
+						renderer.projectilPool.editInstanceMesh(
+							{ position: [-Infinity, -Infinity, -Infinity] },
+							(entity as Unit).textureId,
+							(entity as Unit).instancedIdx,
+							true
+						);
+					}
 					this.projectiles.splice(this.projectiles.indexOf(entity as Unit, 0), 1);
 				}
 

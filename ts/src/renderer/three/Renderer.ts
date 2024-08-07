@@ -820,9 +820,9 @@ namespace Renderer {
 				});
 			}
 
-			private onEnterEntitiesMode() {}
+			private onEnterEntitiesMode() { }
 
-			private onExitEntitiesMode() {}
+			private onExitEntitiesMode() { }
 
 			private showEntities() {
 				this.setEntitiesVisible(true);
@@ -959,6 +959,9 @@ namespace Renderer {
 							this.regionsLayer.add(entity);
 							break;
 						case 'projectile':
+							if (!taroEntity._stats.instancedMesh) {
+								this.entitiesLayer.add(entity);
+							}
 							break;
 						default:
 							this.entitiesLayer.add(entity);

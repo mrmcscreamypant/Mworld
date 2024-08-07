@@ -310,7 +310,9 @@ namespace Renderer {
 				});
 
 				taroEntity.on('set-opacity', (opacity) => {
-					entity.body.setOpacity(opacity);
+					if (entity.body !== null) {
+						entity.body.setOpacity(opacity);
+					}
 				});
 
 				return entity;
@@ -404,7 +406,7 @@ namespace Renderer {
 
 			showHud(visible: boolean) {
 				if (visible != this.hud.visible) {
-					const fadeAnimation = (from: number, to: number, onComplete = () => {}) => {
+					const fadeAnimation = (from: number, to: number, onComplete = () => { }) => {
 						new TWEEN.Tween({ opacity: from })
 							.to({ opacity: to }, 100)
 							.onUpdate(({ opacity }) => {
