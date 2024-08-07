@@ -730,18 +730,20 @@ var TaroEntityPhysics = TaroEntity.extend({
 		}
 	},
 
-	processBox2dQueue: function (ctx) {
+	processQueue: function () {
 		// process box2d only when box2d world is unlocked
 		if (taro.physics && taro.physics._active && taro.physics._world) {
 			if (this.body) {
 				var x = 0;
+
 				while (this._actionQueue && this._actionQueue.length > 0) {
 					var action = this._actionQueue.shift();
 
 					x++;
+
 					if (x > 1000) {
 						console.log(
-							'TaroEntityPhysics processBox2dQueue running over 1000 times',
+							'TaroEntityPhysics processQueue running over 1000 times',
 							action.type,
 							this._category,
 							this._stats.name,

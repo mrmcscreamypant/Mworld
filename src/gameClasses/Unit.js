@@ -2389,7 +2389,7 @@ var Unit = TaroEntityPhysics.extend({
 			taro.client.emit('unit-position', [this._translate.x, this._translate.y]);
 		}
 
-		this.processBox2dQueue();
+		this.processQueue();
 	},
 
 	destroy: function () {

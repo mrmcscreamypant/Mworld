@@ -181,7 +181,7 @@ var Projectile = TaroEntityPhysics.extend({
 			}
 		}
 
-		this.processBox2dQueue();
+		this.processQueue();
 	},
 
 	changeProjectileType: function (type, defaultData) {

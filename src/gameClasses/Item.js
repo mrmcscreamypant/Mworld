@@ -1395,7 +1395,7 @@ var Item = TaroEntityPhysics.extend({
 			}
 		}
 
-		this.processBox2dQueue();
+		this.processQueue();
 	},
 
 	loadPersistentData: function (persistData) {
