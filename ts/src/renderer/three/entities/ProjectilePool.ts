@@ -50,12 +50,14 @@ namespace Renderer {
 				remove = false
 			) {
 				const dummy = new THREE.Object3D();
+				const mesh = this.pool[textureId].mesh;
+				mesh.getMatrixAt(idx, dummy.matrix);
+
 				dummy.position.set(-Infinity, -Infinity, -Infinity);
 				Object.keys(editData).forEach((k) => {
 					dummy[k].set(editData[k][0], editData[k][1], editData[k][2]);
 				});
 				dummy.updateMatrix();
-				const mesh = this.pool[textureId].mesh;
 				mesh.setMatrixAt(idx, dummy.matrix);
 				mesh.instanceMatrix.needsUpdate = true;
 				// seems we do not need to computeBoundingBox for now
