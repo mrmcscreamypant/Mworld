@@ -146,7 +146,14 @@ var TaroEntityPhysics = TaroEntity.extend({
 			],
 		};
 
-		this.physicsBody(body, isLossTolerant);
+		if (taro.physics) {
+			if (isLossTolerant) {
+				taro.physics.createBody(this, body, isLossTolerant);
+			} else {
+				this.destroyBody();
+				taro.physics.queueAction({ type: 'createBody', entity: this, def: body });
+			}
+		}
 
 		// if initialTranform variable's provided, then transform this entity immediately after body creation
 		if (defaultData) {
@@ -183,31 +190,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 				}
 			}
 		}
-	},
-
-	/**
-	 * Gets / sets the physics body definition. When setting the
-	 * definition the physics body will also be created automatically
-	 * from the supplied definition.
-	 * @param def
-	 * @return {*}
-	 */
-	physicsBody: function (def, isLossTolerant) {
-		if (def) {
-			this.bodyDef = def;
-			if (taro.physics) {
-				if (isLossTolerant) {
-					taro.physics.createBody(this, def, isLossTolerant);
-				} else {
-					this.destroyBody();
-					taro.physics.queueAction({ type: 'createBody', entity: this, def: def });
-				}
-			}
-
-			return this;
-		}
-
-		return this.bodyDef;
 	},
 
 	destroyBody: function () {
