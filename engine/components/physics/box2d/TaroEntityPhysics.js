@@ -305,6 +305,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 			});
 		}
 	},
+
 	applyTorque: function (torque) {
 		if (taro.physics._world.isLocked() || this.body == undefined) {
 			this.queueAction({
@@ -381,7 +382,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 		try {
 			taro.physics.applyImpulse(this.body, x, y);
 		} catch (e) {
-			console.log(e);
 			TaroEntityPhysics.prototype.log(`taroEntityBox2d.js: applyForce ${e}`);
 		}
 	},
@@ -493,9 +493,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	// loss tolerent
 	translateToLT: function (x, y) {
-		if (this.body) {
-			taro.physics.translateTo(this.body, x, y);
-		}
+		taro.physics.translateTo(this.body, x, y);
 	},
 
 	/**
@@ -546,9 +544,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	},
 
 	rotateToLT: function (angle) {
-		if (this.body) {
-			taro.physics.rotateTo(this.body, angle);
-		}
+		taro.physics.rotateTo(this.body, angle);
 	},
 
 	_scaleTexture: function () {
