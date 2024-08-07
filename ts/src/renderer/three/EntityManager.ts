@@ -32,7 +32,7 @@ namespace Renderer {
 					case 'projectile': {
 						entity = Unit.create(taroEntity, taroEntity._stats.instancedMesh);
 						this.projectiles.push(entity);
-						// this.animatedSprites.push(entity);
+						this.animatedSprites.push(entity);
 						break;
 					}
 					case 'region': {
