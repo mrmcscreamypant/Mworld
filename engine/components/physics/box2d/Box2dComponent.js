@@ -938,6 +938,18 @@ var PhysicsComponent = TaroEventingClass.extend({
 		body.applyTorque(torque);
 	},
 
+	translateTo: function (body, x, y) {
+		if (isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+			return;
+		}
+
+		body.setPosition({
+			x: x / this._scaleRatio,
+			y: y / this._scaleRatio,
+		});
+		body.setAwake(true);
+	},
+
 	_triggerContactEvent: function (entityA, entityB) {
 		var triggeredBy = {};
 

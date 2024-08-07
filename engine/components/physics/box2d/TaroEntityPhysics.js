@@ -520,13 +520,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	// loss tolerent
 	translateToLT: function (x, y) {
 		if (this.body) {
-			var position = {
-				x: x / this._b2dRef._scaleRatio,
-				y: y / this._b2dRef._scaleRatio,
-			};
-
-			this.body.setPosition(position);
-			this.body.setAwake(true);
+			taro.physics.translateTo(this.body, x, y);
 		}
 	},
 
