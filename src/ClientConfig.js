@@ -156,6 +156,7 @@ var taroClientConfig = {
 		'renderer/three/entities/Entity.js',
 		'renderer/three/entities/Unit.js',
 		'renderer/three/entities/Item.js',
+		'renderer/three/entities/ProjectilePool.js',
 		'renderer/three/entities/Region.js',
 
 		'/client.js',

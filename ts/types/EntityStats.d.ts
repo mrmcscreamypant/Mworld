@@ -52,6 +52,7 @@ declare interface EntityStats {
 	id: string;
 	itemTypeId?: string;
 	flip: FlipMode;
+	instancedMesh: boolean | undefined;
 	controls: {
 		mouseBehaviour: any;
 		abilities: Record<string, ControlAbility>;
