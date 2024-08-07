@@ -8,6 +8,8 @@ var SoundComponent = TaroEntity.extend({
 		self.musicFiles = [];
 		self.preLoadedSounds = {};
 		self.preLoadedMusic = {};
+		self.cachedAudioBuffer = {};
+		self.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 		if (taro.isClient) {
 			var soundSetting = self.getItem('sound');
 			var musicSetting = self.getItem('music');
@@ -193,56 +195,89 @@ var SoundComponent = TaroEntity.extend({
 	},
 
 	playSound: function (sound, position, key, shouldRepeat = false) {
-		// var self = this;
-		// if (taro.isClient) {
-		// 	var soundSetting = self.getItem('sound');
-		// 	if (soundSetting == 'on') {
-		// 		// adjust volume based on distance between my unit and sound source
-		// 		var volume = position === null ? sound.volume / 100 : 0;
-		// 		if (position) {
-		// 			volume = this.getVolume(position, sound.volume);
-		// 		} else {
-		// 			var settingsVolume = parseFloat(self.getItem('sound-volume'));
-		// 			settingsVolume = isNaN(settingsVolume) ? 1 : settingsVolume / 100;
-		// 			volume = settingsVolume * volume;
-		// 		}
-		// 		if (sound && sound.file) {
-		// 			if (self.preLoadedSounds[key] && self.preLoadedSounds[key].src == sound.file) {
-		// 				// if audio is currently playing then stop it first and replay audio
-		// 				if (!self.preLoadedSounds[key].paused) {
-		// 					self.preLoadedSounds[key].pause();
-		// 					self.preLoadedSounds[key].currentTime = 0;
-		// 				}
-		// 				self.preLoadedSounds[key].volume = volume;
-		// 				self.preLoadedSounds[key].loop = shouldRepeat;
-		// 				self.preLoadedSounds[key].play().catch(function (e) {
-		// 					console.log(e);
-		// 				});
-		// 				if (shouldRepeat) {
-		// 					return self.preLoadedSounds[key];
-		// 				}
-		// 			} else {
-		// 				var element = document.createElement('audio');
-		// 				element.src = sound.file; // pick random item from array
-		// 				element.volume = volume;
-		// 				element.loop = shouldRepeat;
-		// 				element.play().catch(function (e) {
-		// 					console.log(e);
-		// 				});
-		// 				element.addEventListener(
-		// 					'ended',
-		// 					function () {
-		// 						this.remove();
-		// 					},
-		// 					false
-		// 				);
-		// 				if (shouldRepeat) {
-		// 					return element;
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// }
+		var self = this;
+		if (taro.isClient) {
+			var soundSetting = self.getItem('sound');
+			if (soundSetting == 'on') {
+				// adjust volume based on distance between my unit and sound source
+				var volume = position === null ? sound.volume / 100 : 0;
+				if (position) {
+					volume = this.getVolume(position, sound.volume);
+				} else {
+					var settingsVolume = parseFloat(self.getItem('sound-volume'));
+					settingsVolume = isNaN(settingsVolume) ? 1 : settingsVolume / 100;
+					volume = settingsVolume * volume;
+				}
+				if (sound && sound.file) {
+					if (self.preLoadedSounds[key] && self.preLoadedSounds[key].src == sound.file) {
+						// if audio is currently playing then stop it first and replay audio
+						if (!self.preLoadedSounds[key].paused) {
+							self.preLoadedSounds[key].pause();
+							self.preLoadedSounds[key].currentTime = 0;
+						}
+						self.preLoadedSounds[key].volume = volume;
+						self.preLoadedSounds[key].loop = shouldRepeat;
+						self.preLoadedSounds[key].play().catch(function (e) {
+							console.log(e);
+						});
+						if (shouldRepeat) {
+							return self.preLoadedSounds[key];
+						}
+					} else {
+						if (!self.cachedAudioBuffer[sound.file]) {
+							self.cachedAudioBuffer[sound.file] = {
+								locked: true,
+								buffer: undefined,
+								globalGainNode: self.audioCtx.createBiquadFilter(),
+							};
+							let xhr = new XMLHttpRequest();
+							xhr.open('GET', sound.file, true);
+							xhr.responseType = 'arraybuffer';
+							xhr.onload = function () {
+								self.audioCtx.decodeAudioData(xhr.response, function (buffer) {
+									self.cachedAudioBuffer[sound.file].locked = false;
+									self.cachedAudioBuffer[sound.file].buffer = buffer;
+								});
+							};
+							xhr.send();
+						} else {
+							if (self.cachedAudioBuffer[sound.file].locked === false) {
+								let source = self.audioCtx.createBufferSource();
+								source.buffer = self.cachedAudioBuffer[sound.file].buffer;
+								source.playbackRate.value = 1 + Math.random() * 0.1;
+								let gainNode = self.audioCtx.createGain();
+								gainNode.gain.value = volume;
+								source.connect(gainNode);
+								gainNode.connect(self.audioCtx.destination);
+								source.start();
+								source.addEventListener('ended', function () {
+									source = null;
+									gainNode = null;
+								});
+							} else {
+								var element = document.createElement('audio');
+								element.src = sound.file; // pick random item from array
+								element.volume = volume;
+								element.loop = shouldRepeat;
+								element.play().catch(function (e) {
+									console.log(e);
+								});
+								element.addEventListener(
+									'ended',
+									function () {
+										this.remove();
+									},
+									false
+								);
+								if (shouldRepeat) {
+									return element;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	},
 
 	playMusic: function (music, startAt, shouldRepeat, key) {
