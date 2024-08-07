@@ -39,10 +39,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 				this._rotateByProto = function () {};
 
 				this._updateProto = this.update;
-
-				// Make sure box2d is kept up to date by the engine
-
-				// this.update = this._update;
 			}
 			this.jointsAttached = {};
 			this.isOutOfBounds = false;
@@ -728,19 +724,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 		this._updateProto(ctx);
 		this._translateTo(this._translate.x, this._translate.y, this._translate.z, '_update');
 		this._rotateTo(this._rotate.x, this._rotate.y, this._rotate.z);
-	},
-
-	/**
-	 * If true, disabled box2d debug shape drawing for this entity.
-	 * @param {Boolean} val
-	 */
-	box2dNoDebug: function (val) {
-		if (val !== undefined) {
-			this._box2dNoDebug = val;
-			return this;
-		}
-
-		return this._box2dNoDebug;
 	},
 
 	queueAction: function (action) {
