@@ -573,8 +573,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	rotateToLT: function (angle) {
 		if (this.body) {
-			this.body.setAngle(angle);
-			this.body.setAwake(true);
+			taro.physics.rotateTo(this.body, angle);
 		}
 	},
 

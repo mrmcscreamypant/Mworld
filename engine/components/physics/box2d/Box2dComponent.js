@@ -950,6 +950,15 @@ var PhysicsComponent = TaroEventingClass.extend({
 		body.setAwake(true);
 	},
 
+	rotateTo: function (body, angle) {
+		if (isNaN(angle) || !isFinite(angle)) {
+			return;
+		}
+
+		body.setAngle(angle);
+		body.setAwake(true);
+	},
+
 	_triggerContactEvent: function (entityA, entityB) {
 		var triggeredBy = {};
 
