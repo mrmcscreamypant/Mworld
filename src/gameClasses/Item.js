@@ -1334,7 +1334,8 @@ var Item = TaroEntityPhysics.extend({
 				// for client-side, translate+rotate is handled in entitiesToRender.ts
 				self.translateTo(x, y);
 				self.rotateTo(0, 0, rotate);
-			} else {
+				// added check so braains works and ai item rotation also works
+			} else if (!taro.physics) {
 				// for updating physics body of this item
 				self.nextKeyFrame = [taro._currentTime + taro.client.renderBuffer, [x, y, rotate]];
 			}
