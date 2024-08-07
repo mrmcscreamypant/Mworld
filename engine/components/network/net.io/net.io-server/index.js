@@ -897,7 +897,7 @@ NetIo.Server = NetIo.EventingClass.extend({
 			}
 
 			// if not guest user && idle game && we have this userId stored already
-			if (decodedToken.userId !== '' && taro.game.data.settings.isIdleGame) {
+			if (decodedToken.userId !== '' && taro.game.data.settings.isIdleGame && taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].idleMode) {
 				if (self._userIds[decodedToken.userId]) {
 					assignedId = self._userIds[decodedToken.userId];
 					clearTimeout(self._idleTimeoutsByUserId[socket._token.userId]);
@@ -966,7 +966,7 @@ NetIo.Server = NetIo.EventingClass.extend({
 					// data contains {WebSocket socket, <Buffer > reason, Number code}
 					taro.network._onSocketDisconnect(data, socket);
 					// idle game; not guest
-				} else if (socket._token.userId !== '' && taro.game.data.settings.isIdleGame) {
+				} else if (socket._token.userId !== '' && taro.game.data.settings.isIdleGame && taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].idleMode) {
 					delete self._socketsById[socket.id];
 					// leave this log for now
 					console.log('[net.io-server/index.js] idle game disconnect | client: ', socket.id);

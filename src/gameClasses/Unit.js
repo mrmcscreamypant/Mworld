@@ -605,7 +605,7 @@ var Unit = TaroEntityPhysics.extend({
 				if (shopData.price.coins && ownerPlayer._stats.coins >= shopData.price.coins) {
 					// disable coin consuming due to some bug wrt coins
 					// add coin consuming code
-					if (taro.game.data.defaultData.tier >= 2) {
+					if (taro.tierFeaturesToggle[taro.game.data.defaultData.tier || '1'].coinItemPurchase) {
 						try {
 							var socket = taro.network._socketById[ownerPlayer._stats.clientId];
 							const VERIFICATION_UNLOCKED_FOR = 35 * 60 * 1000; // 35 mins - 5 mins more than what is configured on client side to avoid race conditions
