@@ -904,6 +904,19 @@ var PhysicsComponent = TaroEventingClass.extend({
 		// Destroy all box2d world bodies
 	},
 
+	applyForce: function (body, x, y) {
+		if (isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+			return;
+		}
+
+		const force = new taro.physics.b2Vec2(x, y);
+		body.applyForce(force, this.body.getWorldCenter());
+
+		if (taro.physics.engine === 'BOX2DWASM') {
+			taro.physics.destroyB2dObj(force);
+		}
+	},
+
 	_triggerContactEvent: function (entityA, entityB) {
 		var triggeredBy = {};
 
