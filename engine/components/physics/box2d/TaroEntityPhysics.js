@@ -400,6 +400,10 @@ var TaroEntityPhysics = TaroEntity.extend({
 		return taro.physics.getPosition(this.body);
 	},
 
+	getLinearVelocity: function () {
+		return taro.physics.getLinearVelocity(this.body);
+	},
+
 	_setupContactListeners: function () {
 		var self = this;
 

@@ -987,6 +987,18 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 	},
 
+	getLinearVelocity: function (body) {
+		if (!body) {
+			return { x: 0, y: 0 };
+		}
+
+		const velocity = body.getLinearVelocity();
+		return {
+			x: velocity.x,
+			y: velocity.y,
+		};
+	},
+
 	getPosition: function (body) {
 		if (!body) {
 			return;
