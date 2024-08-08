@@ -9,7 +9,7 @@ var SoundComponent = TaroEntity.extend({
 		self.preLoadedSounds = {};
 		self.preLoadedMusic = {};
 		self.cachedAudioBuffer = {};
-		self.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+		self.audioCtx = taro.isClient ? new (window.AudioContext || window.webkitAudioContext)() : null;
 		if (taro.isClient) {
 			var soundSetting = self.getItem('sound');
 			var musicSetting = self.getItem('music');
