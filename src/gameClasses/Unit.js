@@ -386,6 +386,7 @@ var Unit = TaroEntityPhysics.extend({
 				}
 			});
 
+			this.aiEnabledWhenHidden = this._stats.aiEnabled;
 			if (this._stats.aiEnabled) {
 				this.ai.disable();
 			}
@@ -400,7 +401,7 @@ var Unit = TaroEntityPhysics.extend({
 
 	show: function (force = false) {
 		if (this._stats.isHidden || force) {
-			if (!this._stats.aiEnabled) {
+			if (this.aiEnabledWhenHidden) {
 				this.ai.enable();
 			}
 
