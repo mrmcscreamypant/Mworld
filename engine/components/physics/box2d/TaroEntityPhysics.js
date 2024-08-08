@@ -394,6 +394,12 @@ var TaroEntityPhysics = TaroEntity.extend({
 		}
 	},
 
+	// TODO(nick): Move to TaroEntity eventually when position is decoupled from
+	// physics, as it has nothing to do with physics.
+	getPosition: function () {
+		return taro.physics.getPosition(this.body);
+	},
+
 	_setupContactListeners: function () {
 		var self = this;
 

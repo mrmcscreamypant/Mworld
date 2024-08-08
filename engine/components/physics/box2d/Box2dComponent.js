@@ -987,6 +987,18 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 	},
 
+	getPosition: function (body) {
+		if (!body) {
+			return;
+		}
+
+		const position = body.getPosition();
+		return {
+			x: position.x,
+			y: position.y,
+		};
+	},
+
 	_triggerContactEvent: function (entityA, entityB) {
 		var triggeredBy = {};
 
