@@ -202,7 +202,7 @@ var ControlComponent = TaroEntity.extend({
 					key == '9'
 				) {
 					var index = parseInt(key) - 1;
-					if (index < unit._stats.inventorySize) {
+					if (index < unit._stats.inventorySize && !unit._stats.isHidden) {
 						unit.changeItem(index);
 					}
 				}
@@ -226,7 +226,7 @@ var ControlComponent = TaroEntity.extend({
 					key == '9'
 				) {
 					var index = parseInt(key) - 1;
-					if (unit && index < unit._stats.inventorySize) {
+					if (unit && index < unit._stats.inventorySize && !unit._stats.isHidden) {
 						unit._stats.currentItemIndex = index;
 						unit.inventory.highlightSlot(index + 1);
 					}
