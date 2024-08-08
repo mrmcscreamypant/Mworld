@@ -3960,6 +3960,7 @@ var ActionComponent = TaroEntity.extend({
 						var player = taro.game.createPlayer({
 							controlledBy: 'human',
 							name: name,
+							clientId: -1, // -1 means the player is a bot
 						});
 						player._stats.isBot = true;
 						player.joinGame();
