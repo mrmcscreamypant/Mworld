@@ -166,33 +166,29 @@ var Item = TaroEntityPhysics.extend({
 
 	/* mount the item on unit. if it has box2d body, then create an appropriate joint */
 	mount: function (obj) {
-		var state = (this._stats.states && this._stats.states[this._stats.stateId]) || {};
-		var body = this._stats.currentBody;
+		var bodyDef = this._stats.currentBody;
 
-		// console.log("mounting on", obj._category)
 		if (obj && obj._category == 'unit') {
-			if (body && body.type != 'none') {
-				taro.devLog('mounting item to unit ', body.unitAnchor.x, -1 * body.unitAnchor.y);
+			if (bodyDef && bodyDef.type != 'none') {
+				taro.devLog('mounting item to unit ', bodyDef.unitAnchor.x, -1 * bodyDef.unitAnchor.y);
 
-				this.width(body.width);
-				this.height(body.height);
+				this.width(bodyDef.width);
+				this.height(bodyDef.height);
 
 				// mount texture on the unit in a correct position
 				if (taro.isClient) {
 					// avoid transforming box2d body by calling prototype
-
-					var unitAnchorX = body.unitAnchor.x;
-					var unitAnchorY = body.unitAnchor.y;
+					var unitAnchorX = bodyDef.unitAnchor.x;
+					var unitAnchorY = bodyDef.unitAnchor.y;
 					TaroEntity.prototype.translateTo.call(this, unitAnchorX, -1 * unitAnchorY, 0);
-					// TaroEntity.prototype.rotateTo.call(this, 0, 0, body.unitAnchor.rotation || 0)
 				}
 			}
 		} else {
 			taro.devLog("there's no unit to attach!");
 			// item is dropped
-			if (body && body.type != 'none') {
-				this.width(body.width);
-				this.height(body.height);
+			if (bodyDef && bodyDef.type != 'none') {
+				this.width(bodyDef.width);
+				this.height(bodyDef.height);
 			}
 			if (taro.isServer) {
 				TaroEntity.prototype.mount.call(this, obj);

@@ -51,29 +51,31 @@ var TaroEntityPhysics = TaroEntity.extend({
 	updateBody: function (defaultData, isLossTolerant) {
 		var self = this;
 
-		body = this._stats.currentBody;
-		if (!body) {
+		bodyDef = this._stats.currentBody;
+
+		if (!bodyDef) {
 			return;
 		}
-		if (body.type === 'none' || body.type === 'spriteOnly') {
+
+		if (bodyDef.type === 'none' || bodyDef.type === 'spriteOnly') {
 			self.destroyBody();
 			return;
 		}
 
-		this.width(parseFloat(body.width * (this._stats.scaleBody || 1)));
-		this.height(parseFloat(body.height * (this._stats.scaleBody || 1)));
+		this.width(parseFloat(bodyDef.width * (this._stats.scaleBody || 1)));
+		this.height(parseFloat(bodyDef.height * (this._stats.scaleBody || 1)));
 
 		var shapeData =
-			body.fixtures && body.fixtures[0] && body.fixtures[0].shape && body.fixtures[0].shape.data
-				? body.fixtures[0].shape.data
+			bodyDef.fixtures && bodyDef.fixtures[0] && bodyDef.fixtures[0].shape && bodyDef.fixtures[0].shape.data
+				? bodyDef.fixtures[0].shape.data
 				: undefined;
 
 		// override body bounds
-		if (body?.fixtures) {
-			var sizeX = body?.fixtures[0].size?.width;
-			var sizeY = body?.fixtures[0].size?.height;
-			var offsetX = body?.fixtures[0].offset?.x;
-			var offsetY = body?.fixtures[0].offset?.y;
+		if (bodyDef?.fixtures) {
+			var sizeX = bodyDef?.fixtures[0].size?.width;
+			var sizeY = bodyDef?.fixtures[0].size?.height;
+			var offsetX = bodyDef?.fixtures[0].offset?.x;
+			var offsetY = bodyDef?.fixtures[0].offset?.y;
 			if (shapeData === undefined) {
 				shapeData = {};
 			}
@@ -104,22 +106,22 @@ var TaroEntityPhysics = TaroEntity.extend({
 			filterCategoryBits = 0x0040;
 		}
 
-		var collidesWith = body.collidesWith || {};
+		var collidesWith = bodyDef.collidesWith || {};
 		// this mask bit are hex so it wonnt incremented by power of 2
-		var body = {
-			type: body.type || 'dynamic',
-			linearDamping: parseFloat(body.linearDamping) || 0,
-			angularDamping: parseFloat(body.angularDamping) || 0,
+		var bodyDef = {
+			type: bodyDef.type || 'dynamic',
+			linearDamping: parseFloat(bodyDef.linearDamping) || 0,
+			angularDamping: parseFloat(bodyDef.angularDamping) || 0,
 			allowSleep: false,
-			bullet: body.bullet,
-			fixedRotation: body.fixedRotation,
-			affectedByGravity: body.affectedByGravity != false, // we want undefined to be considered as true for backward compatibility
+			bullet: bodyDef.bullet,
+			fixedRotation: bodyDef.fixedRotation,
+			affectedByGravity: bodyDef.affectedByGravity != false, // we want undefined to be considered as true for backward compatibility
 			fixtures: [
 				{
-					density: body.fixtures ? parseFloat(body.fixtures[0].density) : 0,
-					friction: body.fixtures ? parseFloat(body.fixtures[0].friction) : 0,
-					restitution: body.fixtures ? body.fixtures[0].restitution : 0,
-					isSensor: body.fixtures ? body.fixtures[0].isSensor || false : false,
+					density: bodyDef.fixtures ? parseFloat(bodyDef.fixtures[0].density) : 0,
+					friction: bodyDef.fixtures ? parseFloat(bodyDef.fixtures[0].friction) : 0,
+					restitution: bodyDef.fixtures ? bodyDef.fixtures[0].restitution : 0,
+					isSensor: bodyDef.fixtures ? bodyDef.fixtures[0].isSensor || false : false,
 					filter: {
 						filterGroupIndex: 0,
 						filterCategoryBits: filterCategoryBits,
@@ -136,8 +138,8 @@ var TaroEntityPhysics = TaroEntity.extend({
 					},
 					shape: {
 						type:
-							body.fixtures && body.fixtures[0] && body.fixtures[0].shape && body.fixtures[0].shape.type
-								? body.fixtures[0].shape.type
+							bodyDef.fixtures && bodyDef.fixtures[0] && bodyDef.fixtures[0].shape && bodyDef.fixtures[0].shape.type
+								? bodyDef.fixtures[0].shape.type
 								: 'rectangle',
 						data: shapeData,
 					},
@@ -148,17 +150,17 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 		if (taro.physics) {
 			if (isLossTolerant) {
-				taro.physics.createBody(this, body, isLossTolerant);
+				taro.physics.createBody(this, bodyDef, isLossTolerant);
 			} else {
 				this.destroyBody();
-				taro.physics.queueAction({ type: 'createBody', entity: this, def: body });
+				taro.physics.queueAction({ type: 'createBody', entity: this, def: bodyDef });
 			}
 		}
 
 		// if initialTranform variable's provided, then transform this entity immediately after body creation
 		if (defaultData) {
 			var rotate = defaultData.rotate;
-			if (body.fixedRotation) {
+			if (bodyDef.fixedRotation) {
 				rotate = 0;
 			}
 
@@ -536,8 +538,8 @@ var TaroEntityPhysics = TaroEntity.extend({
 		// Call the original method
 		this._rotateToProto(x, y, z);
 
-		body = this._stats.currentBody;
-		if (body && body.type !== 'none' && body.type !== 'spriteOnly') {
+		bodyDef = this._stats.currentBody;
+		if (bodyDef && bodyDef.type !== 'none' && bodyDef.type !== 'spriteOnly') {
 			// Check if the entity has a box2d body attached
 			// and if so, is it updating or not
 			if ((taro.physics._world && taro.physics._world.isLocked()) || this.body == undefined) {
@@ -580,8 +582,8 @@ var TaroEntityPhysics = TaroEntity.extend({
 			return;
 		}
 
-		body = this._stats.currentBody;
-		if (body && body.type !== 'none' && body.type !== 'spriteOnly') {
+		bodyDef = this._stats.currentBody;
+		if (bodyDef && bodyDef.type !== 'none' && bodyDef.type !== 'spriteOnly') {
 			// Check if the entity has a box2d body attached
 			// and if so, is it updating or not
 			if ((taro.physics._world && taro.physics._world.isLocked()) || this.body == undefined) {
@@ -599,32 +601,32 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	_scaleBodyBy: function (scale) {
 		var self = this;
-		var body = this._stats.currentBody;
+		var bodyDef = this._stats.currentBody;
 
-		if (!body) {
+		if (!bodyDef) {
 			return;
 		}
 
-		var shapeType = (body.fixtures[0].shape && body.fixtures[0].shape.type) || 'rectangle';
+		var shapeType = (bodyDef.fixtures[0].shape && bodyDef.fixtures[0].shape.type) || 'rectangle';
 		var shapeData = {};
 
 		switch (shapeType) {
 			case 'circle': {
 				var normalizer = 0.5;
-				shapeData.radius = body.width * scale * normalizer;
+				shapeData.radius = bodyDef.width * scale * normalizer;
 				break;
 			}
 			case 'rectangle': {
 				// this should be unnecessary now that shapeData w/h are converted to halfW/H in updateBody()
 				// var normalizer = 0.45;
-				shapeData.width = body.width * scale;
-				shapeData.height = body.height * scale;
+				shapeData.width = bodyDef.width * scale;
+				shapeData.height = bodyDef.height * scale;
 
 				break;
 			}
 		}
 
-		body.fixtures[0].shape.data = shapeData;
+		bodyDef.fixtures[0].shape.data = shapeData;
 		self.updateBody();
 	},
 
