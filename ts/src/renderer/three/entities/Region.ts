@@ -64,6 +64,8 @@ namespace Renderer {
 				this.position.set(x + width / 2, z + depth / 2, y + height / 2);
 				this.scale.set(width, depth, height);
 				this.add(mesh);
+				mesh.renderOrder = 1;
+				this.renderOrder = 1;
 
 				if (stats.inside) {
 					this.devModeOnly = false;
