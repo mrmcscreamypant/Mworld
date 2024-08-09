@@ -14,6 +14,8 @@ namespace Renderer {
 				is3DObject?: boolean;
 				offset?: THREE.Vector3;
 			}[];
+			debounceUpdateAction: (actionData: { data: ActionData[] }) => void;
+			mergedTemplate: MergedTemplate<{ data: ActionData[] }> = { data: { method: 'array', calc: 'sum' } };
 			selectedEntities: (InitEntity | Region | THREE.Group)[];
 			selectedGroup: THREE.Group;
 			selectedEntitiesMinMaxCenterPos: { min: THREE.Vector3; max: THREE.Vector3; center: THREE.Vector3 } = {
@@ -28,6 +30,13 @@ namespace Renderer {
 				this.entityGroup = [];
 				this.selectedEntities = [];
 				this.selectedGroup = new THREE.Group();
+				this.debounceUpdateAction = debounce(
+					(actionData) => {
+						inGameEditor.updateAction(actionData.data as any);
+					},
+					0,
+					this.mergedTemplate
+				);
 				(this.selectedGroup as any).tag = Three.EntityEditor.TAG;
 				const renderer = Renderer.Three.instance();
 				renderer.initEntityLayer.add(this.selectedGroup);
@@ -64,9 +73,10 @@ namespace Renderer {
 					this.activeEntity = [inGameEditor.getActiveEntity && inGameEditor.getActiveEntity()];
 					this.updatePreview();
 				});
-				const initEntities = renderer.entityManager.initEntities;
+
 				taro.client.on('editInitEntity', (data: ActionData) => {
 					let found = false;
+					const initEntities = renderer.entityManager.initEntities;
 					initEntities.forEach((initEntity) => {
 						if (initEntity.action.actionId === data.actionId) {
 							found = true;
@@ -80,6 +90,7 @@ namespace Renderer {
 				taro.client.on('updateInitEntities', () => {
 					taro.developerMode.initEntities.forEach((action) => {
 						let found = false;
+						const initEntities = renderer.entityManager.initEntities;
 						initEntities.forEach((initEntity) => {
 							if (initEntity.action.actionId === action.actionId) {
 								found = true;
@@ -93,7 +104,7 @@ namespace Renderer {
 				});
 
 				window.addEventListener('keydown', (event) => {
-					if(!Utils.isFocusOnPlayPage()) {
+					if (!Utils.isFocusOnPlayPage()) {
 						return;
 					}
 					const renderer = Renderer.Three.instance();
@@ -112,7 +123,7 @@ namespace Renderer {
 										entityType: action.entityType,
 										action: action,
 										is3DObject: e.isObject3D,
-										offset: e.position.clone(),
+										offset: this.selectedEntities.length > 1 ? e.position.clone() : undefined,
 									};
 								})
 								.filter((e) => e !== null);
@@ -251,7 +262,7 @@ namespace Renderer {
 				this.selectedEntitiesMinMaxCenterPos.center.copy(this.selectedGroup.position);
 				this.selectedEntities.forEach((e) => {
 					let nowPos = e.position.clone();
-					if ((e.parent as any).tag === Three.EntityEditor.TAG) {
+					if ((e.parent as any)?.tag === Three.EntityEditor.TAG) {
 						nowPos.add(e.parent.position);
 					}
 					this.selectedEntitiesMinMaxCenterPos.min.min(nowPos);
@@ -324,8 +335,9 @@ namespace Renderer {
 				}
 			}
 
-			selectEntity(entity: InitEntity | Region, mode: 'addOrRemove' | 'select' = 'select'): void {
+			selectEntity(entity: InitEntity | Region, mode: 'addOrRemove' | 'select' | 'remove' = 'select'): void {
 				const renderer = Renderer.Three.instance();
+
 				if (entity === null) {
 					this.selectedEntities.forEach(e => {
 						Utils.removeFromParentAndRecalcTransform(e)
@@ -360,9 +372,11 @@ namespace Renderer {
 						}
 						break;
 					}
+					case 'remove':
 					case 'addOrRemove': {
-						let remove = false;
-						if (this.selectedEntities.find((e) => e.uuid === entity.uuid) === undefined) {
+						let remove = mode === 'remove' ? true : false;
+
+						if (!remove && this.selectedEntities.find((e) => e.uuid === entity.uuid) === undefined) {
 							this.selectedEntities.push(entity);
 						} else {
 							remove = true;

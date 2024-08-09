@@ -10,12 +10,9 @@ namespace Renderer {
 			defaultDepth: number;
 			isBillboard = false;
 			offset = new THREE.Vector3();
-			debounceUpdateAction: (action: { data: ActionData[] }) => void;
-			mergedTemplate: MergedTemplate<{ data: ActionData[] }>;
 			constructor(action: ActionData, type?: 'unit' | 'item' | 'projectile') {
 				super();
 				this.action = action;
-				this.mergedTemplate = { data: { method: 'array', calc: 'sum' } };
 				let key: string;
 				let cols: number;
 				let rows: number;
@@ -154,21 +151,8 @@ namespace Renderer {
 
 			updateAction(action: ActionData): void {
 				//update action in editor
-				if (
-					inGameEditor &&
-					inGameEditor.updateAction &&
-					!window.isStandalone &&
-					this.debounceUpdateAction === undefined
-				) {
-					this.debounceUpdateAction = debounce(
-						(actionData) => {
-							inGameEditor.updateAction(actionData.data as any);
-						},
-						0,
-						this.mergedTemplate
-					);
-				}
-				this.debounceUpdateAction?.({ data: [action] });
+				const renderer = Renderer.Three.instance()
+				renderer.entityEditor.debounceUpdateAction?.({ data: [action] });
 				if (action.wasCreated) {
 					return;
 				}
@@ -296,34 +280,14 @@ namespace Renderer {
 				renderer.voxelEditor.commandController.addCommand(
 					{
 						func: () => {
-							const nowCommandCount = renderer.voxelEditor.commandController.nowInsertIndex;
-							renderer.entityManager.destroyInitEntity(this);
 							const action = JSON.parse(nowDeleteAction);
-							if (
-								renderer.voxelEditor.commandController.commands[
-									nowCommandCount - renderer.voxelEditor.commandController.offset
-								]?.cache
-							) {
-								action.actionId =
-									renderer.voxelEditor.commandController.commands[
-										nowCommandCount - renderer.voxelEditor.commandController.offset
-									].cache.newId;
-							}
-							this.edit(action);
+							const nowEntitiy = renderer.entityManager.initEntities.find((e) => e.action.actionId === action.actionId);
+							// renderer.entityManager.destroyInitEntity(nowEntitiy);
+							nowEntitiy.edit(action);
 						},
 						undo: () => {
-							const newId = taro.newIdHex();
-							const nowCommandCount = renderer.voxelEditor.commandController.nowInsertIndex;
 							const nowActionObj = JSON.parse(nowAction);
-							const oldId = nowActionObj.actionId;
-							nowActionObj.actionId = newId;
-							renderer.createInitEntity(nowActionObj);
 							taro.network.send<any>('editInitEntity', nowActionObj);
-							setTimeout(() => {
-								renderer.voxelEditor.commandController.commands[
-									nowCommandCount - renderer.voxelEditor.commandController.offset
-								].cache = { newId, oldId };
-							}, 0);
 						},
 						mergedUuid: uuid
 					},
