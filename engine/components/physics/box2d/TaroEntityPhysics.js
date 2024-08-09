@@ -505,7 +505,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	// loss tolerent
 	translateToLT: function (x, y) {
-		taro.physics.translateTo(this.body, x, y);
+		taro.physics.translateTo(this.body, x / taro.physics._scaleRatio, y / taro.physics._scaleRatio);
 	},
 
 	/**

@@ -839,8 +839,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 						}
 
 						if (!isNaN(x) && !isNaN(y)) {
-							entity.body.setPosition({ x: x / entity._b2dRef._scaleRatio, y: y / entity._b2dRef._scaleRatio });
-							entity.body.setAngle(angle);
+							entity.translateToLT(x, y);
+							entity.rotateToLT(angle);
 						}
 
 						if (tempBod.asleep) {
@@ -960,10 +960,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 			return;
 		}
 
-		body.setPosition({
-			x: x / this._scaleRatio,
-			y: y / this._scaleRatio,
-		});
+		body.setPosition({ x, y });
 		body.setAwake(true);
 	},
 
