@@ -13,6 +13,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 	init: async function (component) {
 		const box2D = (await box2dwasm()) as typeof Box2D & EmscriptenModule;
 		const { freeLeaked, recordLeak } = new box2D.LeakMitigator();
+		this.component = component;
 		component.box2D = box2D;
 		component.freeLeaked = freeLeaked;
 		component.recordLeak = recordLeak;
@@ -439,6 +440,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		tempBod.SetEnabled(true);
 		// Add the body to the world with the passed fixture
 		entity.body = tempBod;
+		this.component.bodies.set(entity.id(), tempBod);
 		entity.gravitic(!!body.affectedByGravity);
 		// rotate body to its previous value
 		entity.rotateTo(0, 0, entity._rotate.z);

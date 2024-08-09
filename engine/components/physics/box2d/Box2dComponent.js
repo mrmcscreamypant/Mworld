@@ -32,6 +32,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		this.getPointer = undefined;
 		this.engine = dists.defaultEngine;
 
+		this.bodies = new Map();
+
 		if (taro.game && taro.game.data && taro.game.data.defaultData) {
 			if (taro.isServer) {
 				this.engine = taro.game.data.defaultData.physicsEngine;
@@ -225,6 +227,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 			if (isBodyDestroyed || this.engine === 'BOX2DWASM') {
 				entity.body = null;
+				this.bodies.delete(entity.id());
 				entity._box2dOurContactFixture = null;
 				entity._box2dTheirContactFixture = null;
 			}
