@@ -418,30 +418,19 @@ namespace Renderer {
 													};
 												}
 												const nowAction = JSON.stringify(action);
+												const nowActionId = action.actionId;
 												this.voxelEditor.commandController.addCommand(
 													{
 														func: () => {
-															const nowCommandCount = this.voxelEditor.commandController.nowInsertIndex;
 															const nowActionObj = JSON.parse(nowAction);
-															const newId = taro.newIdHex();
-															nowActionObj.actionId = newId;
-															this.createInitEntity(nowActionObj);
 															taro.network.send<any>('editInitEntity', nowActionObj);
-															setTimeout(() => {
-																this.voxelEditor.commandController.commands[
-																	nowCommandCount - this.voxelEditor.commandController.offset
-																].cache = newId;
-															}, 0);
 														},
 														undo: () => {
-															const nowCommandCount = this.voxelEditor.commandController.nowInsertIndex;
+															console.log(nowActionId, this.entityManager.initEntities)
 															this.entityManager.initEntities
 																.find(
 																	(v) =>
-																		v.action.actionId ===
-																		this.voxelEditor.commandController.commands[
-																			nowCommandCount - this.voxelEditor.commandController.offset
-																		].cache
+																		v.action.actionId === nowActionId
 																)
 																?.delete(false);
 														},
@@ -736,7 +725,7 @@ namespace Renderer {
 						}
 					}
 					if (inGameEditor && inGameEditor.updateAction && !window.isStandalone) {
-						inGameEditor.updateAction(action);
+						this.entityEditor.debounceUpdateAction({ data: [action] });
 					}
 				}
 			}

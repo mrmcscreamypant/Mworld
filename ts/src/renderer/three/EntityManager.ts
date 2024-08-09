@@ -70,12 +70,7 @@ namespace Renderer {
 
 			destroyInitEntity(initEntity: InitEntity) {
 				const renderer = Three.instance();
-				if (
-					renderer.entityEditor.selectedEntities instanceof InitEntity &&
-					renderer.entityEditor.selectedEntities.action.actionId === initEntity.action.actionId
-				) {
-					renderer.entityEditor.selectEntity(null);
-				}
+				renderer.entityEditor.selectEntity(initEntity, 'remove');
 				this.initEntities = this.initEntities.filter((e) => e.action.actionId !== initEntity.action.actionId);
 				initEntity.destroy();
 			}
