@@ -435,10 +435,9 @@ namespace Renderer {
 									},
 									undo: () => {
 										const transformData = JSON.parse(nowTransformData);
-										// TODO: no need to show the modal here
-										inGameEditor.addNewRegion &&
-											inGameEditor.addNewRegion({
-												name: '',
+										inGameEditor.addOrUpdateRegion &&
+											inGameEditor.addOrUpdateRegion({
+												name: transformData.key,
 												x: transformData.x,
 												y: transformData.y,
 												width: transformData.width,
