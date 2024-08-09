@@ -426,7 +426,6 @@ namespace Renderer {
 															taro.network.send<any>('editInitEntity', nowActionObj);
 														},
 														undo: () => {
-															console.log(nowActionId, this.entityManager.initEntities)
 															this.entityManager.initEntities
 																.find(
 																	(v) =>
