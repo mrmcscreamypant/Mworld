@@ -4,6 +4,7 @@ declare class InGameEditor extends TaroClass {
 		player: string;
 		entityType: string;
 	};
+	addOrUpdateRegion(data: RegionData): void;
 	addNewRegion(data: RegionData): void;
 	updateRegionInReact(data: RegionData, format?: string): void;
 	mapWasEdited(): void;
