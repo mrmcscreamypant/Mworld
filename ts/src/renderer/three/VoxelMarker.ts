@@ -21,7 +21,11 @@ namespace Renderer {
 			}
 
 			addMesh(x: number, y: number, z: number): THREE.Mesh {
-				const geometry = new THREE.BoxGeometry(1.01, 1.01, 1.01);
+				const geometry = new THREE.BoxGeometry(
+					Renderer.Three.getTileSize().x / 64 + 0.01,
+					1.01,
+					Renderer.Three.getTileSize().y / 64
+				);
 				const material = new THREE.MeshBasicMaterial({
 					color: 0xff0000,
 					opacity: 0.5,
@@ -45,7 +49,8 @@ namespace Renderer {
 
 					raycaster.setFromCamera(Renderer.Three.getPointer(), renderer.camera.instance);
 					const intersect = renderer.raycastFloor();
-
+					intersect.x *= 64 / Renderer.Three.getTileSize().x;
+					intersect.z *= 64 / Renderer.Three.getTileSize().y;
 					if (!force && (!intersect || (this.lastPoint !== undefined && this.lastPoint.equals(intersect.floor())))) {
 						return;
 					}
@@ -55,9 +60,9 @@ namespace Renderer {
 				this.removeMeshes();
 				if (taro.developerMode.activeButton === 'eraser') {
 					this.addMesh(
-						Math.floor(this.lastPoint.x) + 0.5,
+						((this.lastPoint.x + 0.5) * Renderer.Three.getTileSize().x) / 64,
 						renderer.voxelEditor.voxels.layerLookupTable[renderer.voxelEditor.currentLayerIndex],
-						Math.floor(this.lastPoint.z) + 0.5
+						((this.lastPoint.z + 0.5) * Renderer.Three.getTileSize().y) / 64
 					);
 					voxels.add(this.preview);
 					return;
