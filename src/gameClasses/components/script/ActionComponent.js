@@ -2471,21 +2471,6 @@ var ActionComponent = TaroEntity.extend({
 						}
 						break;
 
-					case 'rotateUnitClockwise':
-						var torque = self._script.param.getValue(action.torque, vars);
-						if (entity && entity._category == 'unit' && entity.body && !isNaN(torque)) {
-							entity.body.m_torque = torque;
-						}
-						break;
-
-					// is deprecated ?
-					case 'rotateUnitCounterClockwise':
-						var torque = self._script.param.getValue(action.torque, vars);
-						if (entity && entity._category == 'unit' && entity.body && !isNaN(torque)) {
-							entity.body.m_torque = -1 * torque;
-						}
-						break;
-
 					case 'makeUnitToAlwaysFacePosition':
 						if (entity && entity._category == 'unit') {
 							var position = self._script.param.getValue(action.position, vars);
