@@ -1,15 +1,4 @@
-const createMetaData = (obj: { [key: string]: any }, body: Box2D.b2Body) => {
-	const metaData: any = {};
-	// @author Moe'Thun, it's safe, trust me
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	metaData[body] = Object.setPrototypeOf(obj, body);
-	return metaData;
-};
-
-// FIXME: add more types to the physics part of taro2
 const box2dwasmWrapper: PhysicsDistProps = {
-	// added by Moe'Thun for fixing memory leak bug
 	init: async function (component) {
 		const box2D = (await box2dwasm()) as typeof Box2D & EmscriptenModule;
 		const { freeLeaked, recordLeak } = new box2D.LeakMitigator();
