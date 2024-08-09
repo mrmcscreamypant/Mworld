@@ -8,8 +8,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 		TaroEntity.prototype.init.call(this, defaultData);
 		var self = this;
 
-		this._b2dRef = taro.physics;
-
 		if (taro.isClient) {
 			self.addComponent(TaroAnimationComponent);
 			// don't create body on clientside if CSP is disabled
@@ -17,7 +15,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 		// Check if box2d is enabled in the engine
 		if (taro.physics) {
-			if (!this._b2dRef._networkDebugMode) {
+			if (!taro.physics._networkDebugMode) {
 				// Store the existing transform methods
 				this._translateToProto = this.translateTo;
 				this._translateByProto = this.translateBy;
