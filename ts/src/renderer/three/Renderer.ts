@@ -28,6 +28,12 @@ namespace Renderer {
 			return Renderer.getEntitiesLayer();
 		}
 
+		export function getTileSize() {
+			return taro.game.data.defaultData.dontResize
+				? { x: taro.game.data.map.tilewidth, y: taro.game.data.map.tileheight }
+				: { x: 64, y: 64 };
+		}
+
 		class Renderer {
 			private static _instance: Renderer;
 			renderer: THREE.WebGLRenderer;
@@ -427,10 +433,7 @@ namespace Renderer {
 														},
 														undo: () => {
 															this.entityManager.initEntities
-																.find(
-																	(v) =>
-																		v.action.actionId === nowActionId
-																)
+																.find((v) => v.action.actionId === nowActionId)
 																?.delete(false);
 														},
 														mergedUuid: uuid,
@@ -808,9 +811,9 @@ namespace Renderer {
 				});
 			}
 
-			private onEnterEntitiesMode() { }
+			private onEnterEntitiesMode() {}
 
-			private onExitEntitiesMode() { }
+			private onExitEntitiesMode() {}
 
 			private showEntities() {
 				this.setEntitiesVisible(true);
