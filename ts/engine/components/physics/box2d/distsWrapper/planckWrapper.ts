@@ -87,7 +87,7 @@ const planckWrapper: PhysicsDistProps = {
 			return;
 		}
 
-		if (entity.bodyId) {
+		if (entity.hasPhysicsBody()) {
 			PhysicsComponent.prototype.log('body already exists, destroying body');
 			self.destroyBody(entity);
 		}
@@ -252,7 +252,7 @@ const planckWrapper: PhysicsDistProps = {
 	},
 
 	destroyBody: function (self, entity) {
-		if (!entity?.bodyId) {
+		if (!entity?.hasPhysicsBody()) {
 			self.log("failed to destroy body - body doesn't exist.");
 			return;
 		}

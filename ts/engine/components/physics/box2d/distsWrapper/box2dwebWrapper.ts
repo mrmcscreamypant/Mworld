@@ -146,7 +146,7 @@ const box2dwebWrapper: PhysicsDistProps = {
 			return;
 		}
 
-		if (entity.bodyId) {
+		if (entity.hasPhysicsBody()) {
 			self.destroyBody(entity);
 		}
 
@@ -351,7 +351,7 @@ const box2dwebWrapper: PhysicsDistProps = {
 	},
 
 	destroyBody: function (self, entity) {
-		if (!entity?.bodyId) {
+		if (!entity?.hasPhysicsBody()) {
 			self.log("failed to destroy body - body doesn't exist.");
 			return;
 		}

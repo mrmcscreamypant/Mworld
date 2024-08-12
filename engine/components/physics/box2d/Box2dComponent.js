@@ -435,7 +435,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 				if (tempBod.m_type !== 'static' && tempBod.isAwake() && (!tempBod.GetType || tempBod.GetType() !== 0)) {
 					if (entity && !entity._stats.isHidden) {
 						// apply movement if it's either human-controlled unit, or ai unit that's currently moving
-						if (entity.bodyId && entity.vector && (entity.vector.x != 0 || entity.vector.y != 0)) {
+						if (entity.hasPhysicsBody() && entity.vector && (entity.vector.x != 0 || entity.vector.y != 0)) {
 							if (entity._stats.controls) {
 								switch (
 									entity._stats.controls.movementMethod // velocity-based movement

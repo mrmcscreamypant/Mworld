@@ -217,7 +217,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			}
 		}
 
-		if (entity.bodyId) {
+		if (entity.hasPhysicsBody()) {
 			self.destroyBody(entity);
 			delete self.metaData[box2D.getPointer(self.bodies.get(entity.bodyId))];
 		}
@@ -435,7 +435,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 	},
 
 	destroyBody: function (self, entity) {
-		if (!entity?.bodyId) {
+		if (!entity?.hasPhysicsBody()) {
 			self.log("failed to destroy body - body doesn't exist.");
 			return;
 		}
