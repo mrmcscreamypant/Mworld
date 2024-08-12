@@ -202,12 +202,6 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		return self.recordLeak(body.GetPosition());
 	},
 
-	queryAABB: function (self, aabb, callback) {
-		self.world().QueryAABB(callback, aabb);
-		taro.physics.destroyB2dObj?.(callback);
-		taro.physics.destroyB2dObj?.(aabb);
-	},
-
 	createBody: function (self, entity, body, isLossTolerant) {
 		const box2D = self.box2D as typeof Box2D & EmscriptenModule;
 		PhysicsComponent.prototype.log(`createBody of ${entity._stats.name}`);
@@ -490,6 +484,36 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			entityA.jointsAttached[entityB.id()] = joint;
 			entityB.jointsAttached[entityA.id()] = joint;
 		}
+	},
+
+	getBodiesInRegion: function (self, region) {
+		var aabb = new self.b2AABB();
+		aabb.lowerBound.set(region.x / self._scaleRatio, region.y / self._scaleRatio);
+		aabb.upperBound.set((region.x + region.width) / self._scaleRatio, (region.y + region.height) / self._scaleRatio);
+
+		var entities = [];
+		const callback = Object.assign(new self.JSQueryCallback(), {
+			ReportFixture: (fixture_p) => {
+				const fixture = self.recordLeak(self.wrapPointer(fixture_p, self.b2Fixture));
+				const body = self.recordLeak(fixture.GetBody());
+				const entityId = self.metaData[self.getPointer(body)].taroId;
+				var entity = taro.$(entityId);
+				if (entity) {
+					entities.push(entity);
+				}
+				return true;
+			},
+		});
+
+		this.queryAABB(self, aabb, callback);
+
+		return entities;
+	},
+
+	queryAABB: function (self, aabb, callback) {
+		self.world().QueryAABB(callback, aabb);
+		taro.physics.destroyB2dObj?.(callback);
+		taro.physics.destroyB2dObj?.(aabb);
 	},
 };
 

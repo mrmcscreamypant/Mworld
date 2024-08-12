@@ -59,6 +59,10 @@ const rapierWrapper: PhysicsDistProps = {
 		console.log('getBodyPosition not implemented');
 	},
 
+	getBodiesInRegion: function (self, region) {
+		return [];
+	},
+
 	queryAABB: (self: any, aabb: any, callback: (...args: any) => any) => {
 		console.log('queryAABB not implemented');
 	},

@@ -235,51 +235,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 	},
 
-	// get entities within a region
 	getBodiesInRegion: function (region) {
-		var self = this;
-
-		var aabb = new self.b2AABB();
-
-		aabb.lowerBound.set(region.x / self._scaleRatio, region.y / self._scaleRatio);
-		aabb.upperBound.set((region.x + region.width) / self._scaleRatio, (region.y + region.height) / self._scaleRatio);
-
-		var entities = [];
-		if (self.engine === 'BOX2DWASM') {
-			const callback = Object.assign(new self.JSQueryCallback(), {
-				ReportFixture: (fixture_p) => {
-					const fixture = self.recordLeak(self.wrapPointer(fixture_p, self.b2Fixture));
-					const body = self.recordLeak(fixture.GetBody());
-					entityId = self.metaData[self.getPointer(body)].taroId;
-					var entity = taro.$(entityId);
-					if (entity) {
-						// taro.devLog("found", entity._category, entity._translate.x, entity._translate.y)
-						var entity = taro.$(entityId);
-						entities.push(taro.$(entityId));
-					}
-					return true;
-				},
-			});
-			dists[this.engine].queryAABB(self, aabb, callback);
-		} else {
-			function getBodyCallback(fixture) {
-				if (fixture && fixture.m_body && fixture.m_body.m_fixtureList) {
-					entityId = fixture.m_body.m_fixtureList.taroId;
-					var entity = taro.$(entityId);
-					if (entity) {
-						// taro.devLog("found", entity._category, entity._translate.x, entity._translate.y)
-						var entity = taro.$(entityId);
-						entities.push(taro.$(entityId));
-					}
-				}
-				return true;
-			}
-
-			dists[this.engine].queryAABB(self, aabb, getBodyCallback);
-		}
-		// Query the world for overlapping shapes.
-
-		return entities;
+		return dists[this.engine].getBodiesInRegion(this, region);
 	},
 
 	/**

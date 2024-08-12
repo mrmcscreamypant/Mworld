@@ -89,6 +89,28 @@ const nativeWrapper: PhysicsDistProps = {
 		return body.m_xf.p;
 	},
 
+	getBodiesInRegion: function (self, region) {
+		const aabb = new self.b2AABB();
+		aabb.lowerBound.set(region.x / self._scaleRatio, region.y / self._scaleRatio);
+		aabb.upperBound.set((region.x + region.width) / self._scaleRatio, (region.y + region.height) / self._scaleRatio);
+
+		const entities = [];
+		function getBodyCallback(fixture) {
+			if (fixture && fixture.m_body && fixture.m_body.m_fixtureList) {
+				const entityId = fixture.m_body.m_fixtureList.taroId;
+				const entity = taro.$(entityId);
+				if (entity) {
+					entities.push(entity);
+				}
+			}
+			return true;
+		}
+
+		this.queryAABB(self, aabb, getBodyCallback);
+
+		return entities;
+	},
+
 	queryAABB: function (self, aabb, callback) {
 		var cb = {
 			ReportFixture: function (fixture) {

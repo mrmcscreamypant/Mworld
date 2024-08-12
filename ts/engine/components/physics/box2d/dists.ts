@@ -24,6 +24,7 @@ type PhysicsDistProps = {
 		preSolve: (contact: any) => any,
 		postSolve: (contact: any) => any
 	) => void;
+	getBodiesInRegion: (self: any, region: { x: number; y: number; width: number; height: number }) => TaroEntity[];
 };
 
 const dists: PhysicsDists & { defaultEngine: PhysicsDistsEnum } = {
