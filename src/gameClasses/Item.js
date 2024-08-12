@@ -1311,7 +1311,7 @@ var Item = TaroEntityPhysics.extend({
 			var y = ownerUnit._translate.y + self.anchoredOffset.y;
 
 			if (taro.isServer) {
-				if (ownerUnit.body) {
+				if (ownerUnit.bodyId) {
 					// on server, add anchoredOffset to the position of the physics body, not Unit._translate
 					x = ownerUnit.getPosition().x * taro.physics._scaleRatio + self.anchoredOffset.x;
 					y = ownerUnit.getPosition().y * taro.physics._scaleRatio + self.anchoredOffset.y;

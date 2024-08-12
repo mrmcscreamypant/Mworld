@@ -941,7 +941,7 @@ var ParameterComponent = TaroEntity.extend({
 						break;
 
 					case 'getEntityVelocityX':
-						if (entity && entity.body) {
+						if (entity && entity.bodyId) {
 							const velocity = entity.getLinearVelocity();
 							returnValue = parseFloat(velocity.x).toFixed(2) || 0;
 						}
@@ -949,7 +949,7 @@ var ParameterComponent = TaroEntity.extend({
 						break;
 
 					case 'getEntityVelocityY':
-						if (entity && entity.body) {
+						if (entity && entity.bodyId) {
 							const velocity = entity.getLinearVelocity();
 							returnValue = parseFloat(velocity.y).toFixed(2) || 0;
 						}

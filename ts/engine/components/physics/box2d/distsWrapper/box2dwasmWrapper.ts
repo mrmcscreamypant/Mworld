@@ -203,11 +203,12 @@ const box2dwasmWrapper: PhysicsDistProps = {
 	createBody: function (self, entity, body, isLossTolerant) {
 		const box2D = self.box2D as typeof Box2D & EmscriptenModule;
 		PhysicsComponent.prototype.log(`createBody of ${entity._stats.name}`);
-		// immediately destroy body if entity already has box2dBody
+
 		if (!entity) {
 			PhysicsComponent.prototype.log('warning: creating body for non-existent entity');
 			return;
 		}
+
 		let ownerEntity = undefined;
 		if (body.fixtures[0].isSensor) {
 			ownerEntity = taro.$(entity.ownerUnitId);
@@ -216,11 +217,11 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			}
 		}
 
-		// if there's already a body, destroy it first
-		if (entity.body) {
+		if (entity.bodyId) {
 			self.destroyBody(entity);
-			delete self.metaData[box2D.getPointer(entity.body)];
+			delete self.metaData[box2D.getPointer(self.bodies.get(entity.bodyId))];
 		}
+
 		var tempDef: Box2D.b2BodyDef = self.recordLeak(new self.b2BodyDef());
 		var param;
 		let tempBod: Box2D.b2Body;
@@ -418,27 +419,28 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			}
 		}
 
-		// Store the entity that is linked to self body
 		self.metaData[bodyId]._entity = entity;
 		tempBod.SetEnabled(true);
-		// Add the body to the world with the passed fixture
-		entity.body = tempBod;
+
+		entity.bodyId = entity.id();
+		self.bodies.set(entity.bodyId, tempBod);
+
 		entity.gravitic(!!body.affectedByGravity);
-		// rotate body to its previous value
 		entity.rotateTo(0, 0, entity._rotate.z);
-		// Add the body to the world with the passed fixture
+
 		self.destroyB2dObj(tempDef);
 		self.freeLeaked();
+
 		return tempBod;
 	},
 
 	destroyBody: function (self, entity) {
-		if (!entity?.body) {
+		if (!entity?.bodyId) {
 			self.log("failed to destroy body - body doesn't exist.");
 			return;
 		}
 
-		const body = entity.body;
+		const body = self.bodies.get(entity.bodyId);
 		let fixture = self.recordLeak(body.GetFixtureList());
 		while (fixture !== undefined && self.getPointer(fixture) !== self.getPointer(self.nullPtr)) {
 			body.DestroyFixture(fixture);
@@ -449,7 +451,9 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		delete self.metaData[self.getPointer(body)];
 		self.freeFromCache(body);
 
-		entity.body = null;
+		self.bodies.delete(entity.bodyId);
+		entity.bodyId = null;
+
 		entity._box2dOurContactFixture = null;
 		entity._box2dTheirContactFixture = null;
 	},

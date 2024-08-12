@@ -90,7 +90,7 @@ var Sensor = TaroEntityPhysics.extend({
 	_behaviour: function (ctx) {
 		var ownerUnit = this.getOwnerUnit();
 		if (ownerUnit) {
-			if (this.body) {
+			if (this.bodyId) {
 				this.translateTo(ownerUnit._translate.x, ownerUnit._translate.y); // keep sensor following its owner unit
 			}
 		} else {

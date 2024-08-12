@@ -82,14 +82,12 @@ const planckWrapper: PhysicsDistProps = {
 	createBody: function (self, entity, body, isLossTolerant) {
 		PhysicsComponent.prototype.log(`createBody of ${entity._stats.name}`);
 
-		// immediately destroy body if entity already has box2dBody
 		if (!entity) {
 			PhysicsComponent.prototype.log('warning: creating body for non-existent entity');
 			return;
 		}
 
-		// if there's already a body, destroy it first
-		if (entity.body) {
+		if (entity.bodyId) {
 			PhysicsComponent.prototype.log('body already exists, destroying body');
 			self.destroyBody(entity);
 		}
@@ -238,14 +236,12 @@ const planckWrapper: PhysicsDistProps = {
 			}
 		}
 
-		// Store the entity that is linked to self body
 		tempBod._entity = entity;
 
-		// Add the body to the world with the passed fixture
-		entity.body = tempBod;
+		entity.bodyId = entity.id();
+		self.bodies.set(entity.bodyId, tempBod);
 
 		entity.gravitic(!!body.affectedByGravity);
-		// rotate body to its previous value
 		entity.rotateTo(0, 0, entity._rotate.z);
 
 		PhysicsComponent.prototype.log(
@@ -256,14 +252,16 @@ const planckWrapper: PhysicsDistProps = {
 	},
 
 	destroyBody: function (self, entity) {
-		if (!entity?.body) {
+		if (!entity?.bodyId) {
 			self.log("failed to destroy body - body doesn't exist.");
 			return;
 		}
 
-		const isBodyDestroyed = self._world.destroyBody.apply(self._world, [entity.body]);
+		const isBodyDestroyed = self._world.destroyBody.apply(self._world, [self.bodies.get(entity.bodyId)]);
 		if (isBodyDestroyed) {
-			entity.body = null;
+			self.bodies.delete(entity.bodyId);
+			entity.bodyId = null;
+
 			entity._box2dOurContactFixture = null;
 			entity._box2dTheirContactFixture = null;
 		}

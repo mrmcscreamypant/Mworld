@@ -948,7 +948,7 @@ var TaroEntity = TaroObject.extend({
 		// get bounds of spriteOnly item carried by unit
 		if (this._category == 'item') {
 			var ownerUnit = this.getOwnerUnit();
-			if (ownerUnit && this._stats && this._stats.currentBody.type == 'spriteOnly' && !this.body) {
+			if (ownerUnit && this._stats && this._stats.currentBody.type == 'spriteOnly' && !this.bodyId) {
 				bounds = {
 					x: ownerUnit._translate.x + this.anchorOffset.x - this._stats.currentBody.width / 2,
 					y: ownerUnit._translate.y + this.anchorOffset.y - this._stats.currentBody.height / 2,
