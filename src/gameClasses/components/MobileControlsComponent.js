@@ -156,6 +156,7 @@ var MobileControlsComponent = TaroEntity.extend({
 	},
 
 	generateHTMLButton: function (type, x, y, keybinding, abilities) {
+		console.log(type,keybinding,abilities)
 		if (document.getElementById(type + '_button')) {
 			return;
 		}
