@@ -805,7 +805,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 	getPosition: function (body) {
 		if (!body) {
-			return;
+			return { x: 0, y: 0 };
 		}
 
 		const position = body.getPosition();
