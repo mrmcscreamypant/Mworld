@@ -62,22 +62,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 		console.log('PhysicsComponent:', msg);
 	},
 
-	useWorker: function (val) {
-		if (typeof Worker !== 'undefined') {
-			if (val !== undefined) {
-				this._useWorker = val;
-				return this._entity;
-			}
-
-			return this._useWorker;
-		} else {
-			PhysicsComponent.prototype.log(
-				'Web workers were not detected on this browser. Cannot access useWorker() method.',
-				'warning'
-			);
-		}
-	},
-
 	/**
 	 * Gets / sets the world interval mode. In mode 0 (zero) the
 	 * box2d simulation is synced to the framerate of the engine's
