@@ -45,14 +45,6 @@ const box2dWrapper: PhysicsDistProps = {
 			component.b2World.prototype.getFixtureList = component.b2World.prototype.GetFixtureList;
 			component.b2World.prototype.step = component.b2World.prototype.Step;
 			component.b2World.prototype.rayCast = component.b2World.prototype.RayCast;
-
-			// signature is backwards!
-			/*
-				component.b2World.prototype.queryAABB = function(aabb, queryCallback){
-					return component.b2World.prototype.QueryAABB(queryCallback,aabb);
-				}
-				*/
-
 			component.b2Body.prototype.getNext = component.b2Body.prototype.GetNext;
 			component.b2Body.prototype.getAngle = component.b2Body.prototype.GetAngle;
 			component.b2Body.prototype.setPosition = component.b2Body.prototype.SetPosition;

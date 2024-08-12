@@ -55,13 +55,6 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		) => {
 			component._world.RayCast(callback, start, end);
 		};
-		// signature is backwards!
-		/*
-			component.b2World.prototype.queryAABB = function(aabb, queryCallback){
-				return component.b2World.prototype.QueryAABB(queryCallback,aabb);
-			}
-			*/
-
 		component.b2Transform = box2D.b2Transform;
 		component.b2Body.prototype.getNext = component.b2Body.prototype.GetNext;
 		component.b2Body.prototype.getAngle = component.b2Body.prototype.GetAngle;
