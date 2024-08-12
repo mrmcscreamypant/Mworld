@@ -360,7 +360,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 
 		if (taro.isServer || (taro.isClient && taro.physics)) {
-			self._enableContactListener();
+			self.contactListener(this._beginContactCallback, this._endContactCallback);
 		}
 	},
 
@@ -1010,12 +1010,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 			taro.physics._triggerLeaveEvent(entityA, entityB);
 			taro.physics._triggerLeaveEvent(entityB, entityA);
 		}
-	},
-
-	_enableContactListener: function () {
-		// Set the contact listener methods to detect when
-		// contacts (collisions) begin and end
-		taro.physics.contactListener(this._beginContactCallback, this._endContactCallback);
 	},
 });
 
