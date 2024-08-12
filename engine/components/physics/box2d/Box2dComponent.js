@@ -181,10 +181,10 @@ var PhysicsComponent = TaroEventingClass.extend({
 		return dists[this.engine].createBody(this, entity, body, isLossTolerant);
 	},
 
-	destroyBody: function (entity, body) {
+	destroyBody: function (entity) {
 		// immediately destroy body if entity already has box2dBody
-		if (body || (entity && entity.body)) {
-			body = body || entity.body;
+		if (entity && entity.body) {
+			body = entity.body;
 			if (this.engine === 'BOX2DWASM') {
 				var fixture = taro.physics.recordLeak(body.GetFixtureList());
 				while (

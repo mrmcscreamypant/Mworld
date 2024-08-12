@@ -201,7 +201,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 			}
 		}
 
-		taro.physics && taro.physics.queueAction({ type: 'destroyBody', entity: this, body: this.body });
+		taro.physics && taro.physics.queueAction({ type: 'destroyBody', entity: this });
 	},
 	/**
 	 * Gets / sets the box2d body's gravitic value. If set to false,
