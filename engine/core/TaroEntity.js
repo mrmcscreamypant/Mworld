@@ -3249,23 +3249,6 @@ var TaroEntity = TaroObject.extend({
 				taro.client.emit('camera-instant-move', [x, y]);
 			}
 		}
-
-		if (this._category == 'unit') {
-			// teleport unit's attached items as well. otherwise, the attached bodies (using joint) can cause a drag and
-			// teleport the unit to a location that's between the origin and the destination
-			for (entityId in this.jointsAttached) {
-				if ((attachedEntity = taro.$(entityId))) {
-					if (attachedEntity._category == 'item') {
-						// to prevent infinite loop, only move items that are attached to unit
-						attachedEntity.teleportTo(
-							attachedEntity._translate.x + offsetX,
-							attachedEntity._translate.y + offsetY,
-							attachedEntity._rotate.z
-						);
-					}
-				}
-			}
-		}
 	},
 
 	/**

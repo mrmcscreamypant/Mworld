@@ -1567,8 +1567,6 @@ var Unit = TaroEntityPhysics.extend({
 					self.updateStats(item.id(), true);
 				}
 
-				self.detachEntity(item.id()); // taroEntityPhysics comment: not working right now
-
 				const triggerParams = { itemId: item.id(), unitId: self.id() };
 				//we cant use queueTrigger here because it will be called after entity scripts and item or unit probably no longer exists
 				item.script.trigger('thisItemIsDropped', triggerParams); // this entity (item)
@@ -1797,18 +1795,6 @@ var Unit = TaroEntityPhysics.extend({
 					case 'scaleBody':
 						self._stats[attrName] = newValue;
 						if (taro.isServer) {
-							// finding all attach entities before changing body dimensions
-							if (self.jointsAttached) {
-								var attachedEntities = {};
-								for (var entityId in self.jointsAttached) {
-									var entity = self.jointsAttached[entityId];
-									if (entityId != self.id()) {
-										attachedEntities[entityId] = true;
-									}
-								}
-							}
-
-							// changing body dimensions
 							self.scaleBodyBy(newValue);
 						} else if (taro.isClient) {
 							if (taro.physics) {

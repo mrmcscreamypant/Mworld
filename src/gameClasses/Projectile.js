@@ -279,16 +279,6 @@ var Projectile = TaroEntityPhysics.extend({
 					case 'scaleBody':
 						this._stats[attrName] = newValue;
 						if (taro.isServer) {
-							// finding all attach entities before changing body dimensions
-							if (this.jointsAttached) {
-								var attachedEntities = {};
-								for (var entityId in this.jointsAttached) {
-									if (entityId != this.id()) {
-										attachedEntities[entityId] = true;
-									}
-								}
-							}
-
 							this.scaleBodyBy(newValue);
 						} else if (taro.isClient) {
 							this._stats.scale = newValue;

@@ -4000,22 +4000,6 @@ var ActionComponent = TaroEntity.extend({
 						if (entity && torque) {
 							entity.applyTorque(torque);
 						}
-						// apply torque on entity here
-
-						break;
-					case 'attachEntityToEntity':
-						var entity = self._script.param.getValue(action.entity, vars);
-						var targetEntity = self._script.param.getValue(action.targetingEntity, vars);
-
-						if (
-							entity &&
-							self.entityCategories.indexOf(entity._category) > -1 &&
-							targetEntity &&
-							self.entityCategories.indexOf(targetEntity._category) > -1
-						) {
-							entity.attachTo(targetEntity);
-						}
-
 						break;
 
 					case 'changeScaleOfEntitySprite':

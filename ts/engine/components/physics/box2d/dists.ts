@@ -17,7 +17,6 @@ type PhysicsDistProps = {
 	queryAABB: (self: any, aabb: any, callback: (...args: any) => any) => void;
 	createBody: (self: any, entity: any, body: any, isLossTolerant: boolean) => any;
 	destroyBody: (self: any, entity: any) => void;
-	createJoint: (self: any, entityA: any, entityB: any, anchorA: any, anchorB: any) => void;
 	contactListener: (
 		self: any,
 		beginContactCallback: (contact: any) => any,

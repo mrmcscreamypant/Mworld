@@ -128,29 +128,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 		dists[this.engine].destroyBody(this, entity);
 	},
 
-	// move entityA to entityB's position and create joint
-	createJoint: function (entityA, entityB, anchorA, anchorB) {
-		// taro.devLog("joint created", entityA._category, entityA._translate.x, entityA._translate.y, entityB._category, entityB._translate.x, entityB._translate.y)
-		// dists[this.engine].createJoint(this, entityA, entityB, anchorA, anchorB);
-	},
-
-	destroyJoint: function (entityA, entityB) {
-		if (entityA && entityA.body && entityB && entityB.body) {
-			var joint = entityA.jointsAttached[entityB.id()];
-			if (joint) {
-				this._world.destroyJoint(joint);
-				if (this.engine === 'BOX2DWASM') {
-					this.freeFromCache(joint);
-				}
-				// console.log("joint destroyed")
-				delete entityA.jointsAttached[entityB.id()];
-				delete entityB.jointsAttached[entityA.id()];
-			}
-		} else {
-			PhysicsComponent.prototype.log('joint cannot be destroyed: one or more bodies missing');
-		}
-	},
-
 	getEntitiesInRegion: function (region) {
 		return dists[this.engine].getEntitiesInRegion(this, region);
 	},
@@ -430,14 +407,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 						case 'destroyBody':
 							self.destroyBody(action.entity);
-							break;
-
-						case 'createJoint':
-							self.createJoint(action.entityA, action.entityB, action.anchorA, action.anchorB);
-							break;
-
-						case 'destroyJoint':
-							self.destroyJoint(action.entityA, action.entityB);
 							break;
 					}
 				}

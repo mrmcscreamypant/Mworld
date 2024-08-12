@@ -38,7 +38,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 				this._updateProto = this.update;
 			}
-			this.jointsAttached = {};
 			this.isOutOfBounds = false;
 		}
 
@@ -194,13 +193,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	destroyBody: function () {
 		TaroEntityPhysics.prototype.log('destroyBody');
-
-		if (this.jointsAttached) {
-			for (var entityId in this.jointsAttached) {
-				this.detachEntity(entityId);
-			}
-		}
-
 		taro.physics && taro.physics.queueAction({ type: 'destroyBody', entity: this });
 	},
 	/**
@@ -273,36 +265,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 		if (arguments.length === 3) {
 		} else {
 			TaroEntity.prototype.off.apply(this, arguments);
-		}
-	},
-
-	// move entity in front of the unit, and then create joint between them
-	attachTo: function (entityB, anchorA, anchorB) {
-		// Check if the entity has a box2d body attached
-		// and if so, is it updating or not
-		for (entityId in this.jointsAttached) {
-			this.detachEntity(entityId);
-		}
-		var self = this;
-		taro.physics.queueAction({
-			type: 'createJoint',
-			entityA: self,
-			entityB: entityB,
-			anchorA: anchorA,
-			anchorB: anchorB,
-		});
-	},
-
-	detachEntity: function (entityId) {
-		var attachedEntity = taro.$(entityId);
-		if (entityId && attachedEntity) {
-			TaroEntityPhysics.prototype.log(`detachEntity ${this._stats.name} ${attachedEntity._stats.name}`);
-
-			taro.physics.queueAction({
-				type: 'destroyJoint',
-				entityA: this,
-				entityB: attachedEntity,
-			});
 		}
 	},
 

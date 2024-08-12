@@ -41,8 +41,6 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		component.b2World.prototype.isLocked = component.b2World.prototype.IsLocked;
 		component.b2World.prototype.createBody = component.b2World.prototype.CreateBody;
 		component.b2World.prototype.destroyBody = component.b2World.prototype.DestroyBody;
-		component.b2World.prototype.createJoint = component.b2World.prototype.CreateJoint;
-		component.b2World.prototype.destroyJoint = component.b2World.prototype.DestroyJoint;
 		component.b2World.prototype.clearForces = component.b2World.prototype.ClearForces;
 		component.b2World.prototype.getBodyList = component.b2World.prototype.GetBodyList;
 		component.b2World.prototype.getJointList = component.b2World.prototype.GetJointList;
@@ -454,57 +452,6 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		entity.body = null;
 		entity._box2dOurContactFixture = null;
 		entity._box2dTheirContactFixture = null;
-	},
-
-	createJoint: function (self, entityA, entityB, anchorA, anchorB) {
-		// if joint type none do nothing
-		var aBody = entityA._stats.currentBody;
-		var bBody = entityB._stats.currentBody;
-
-		if (!aBody || aBody.jointType == 'none' || aBody.type == 'none') return;
-
-		// create a joint only if there isn't pre-existing joint
-		PhysicsComponent.prototype.log(
-			`creating ${aBody.jointType} joint between ${entityA._stats.name} and ${entityB._stats.name}`
-		);
-
-		if (
-			entityA &&
-			entityA.body &&
-			entityB &&
-			entityB.body &&
-			entityA.id() != entityB.id() // im not creating joint to myself!
-		) {
-			let joint_def: Box2D.b2RevoluteJointDef | Box2D.b2WeldJointDef;
-			if (aBody.jointType == 'revoluteJoint') {
-				let joint_def: Box2D.b2RevoluteJointDef = self.recordLeak(new self.b2RevoluteJointDef());
-
-				joint_def.Initialize(entityA.body, entityB.body, self.recordLeak(entityB.body.GetWorldCenter()));
-
-				// joint_def.enableLimit = true;
-				// joint_def.lowerAngle = aBody.itemAnchor.lowerAngle * 0.0174533; // degree to rad
-				// joint_def.upperAngle = aBody.itemAnchor.upperAngle * 0.0174533; // degree to rad
-
-				joint_def.get_localAnchorA().Set(anchorA.x / self._scaleRatio, anchorA.y / self._scaleRatio); // item anchor
-				joint_def.get_localAnchorB().Set(anchorB.x / self._scaleRatio, -anchorB.y / self._scaleRatio); // unit anchor
-			} // weld joint
-			else {
-				let joint_def: Box2D.b2WeldJointDef = self.recordLeak(new self.b2WeldJointDef());
-				const pos = self.recordLeak(entityA.body.GetWorldCenter());
-				joint_def.Initialize(entityA.body, entityB.body, pos);
-
-				self.destroyB2dObj(pos);
-			}
-
-			var joint = self._world.CreateJoint(joint_def); // joint between two pieces
-			self.destroyB2dObj(joint_def);
-			self.freeLeaked();
-			// var serverStats = taro.status.getSummary()
-			PhysicsComponent.prototype.log('joint created ', aBody.jointType);
-
-			entityA.jointsAttached[entityB.id()] = joint;
-			entityB.jointsAttached[entityA.id()] = joint;
-		}
 	},
 
 	getEntitiesInRegion: function (self, region) {

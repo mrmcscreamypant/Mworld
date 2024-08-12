@@ -32,8 +32,6 @@ const box2dninjaWrapper: PhysicsDistProps = {
 		component.b2World.prototype.isLocked = component.b2World.prototype.IsLocked;
 		component.b2World.prototype.createBody = component.b2World.prototype.CreateBody;
 		component.b2World.prototype.destroyBody = component.b2World.prototype.DestroyBody;
-		// component.b2World.prototype.createJoint = component.b2World.prototype.CreateJoint;
-		component.b2World.prototype.destroyJoint = component.b2World.prototype.DestroyJoint;
 		component.b2World.prototype.createFixture = component.b2World.prototype.CreateFixture;
 		component.b2World.prototype.clearForces = component.b2World.prototype.ClearForces;
 		component.b2World.prototype.getBodyList = component.b2World.prototype.GetBodyList;
@@ -377,48 +375,6 @@ const box2dninjaWrapper: PhysicsDistProps = {
 			entity.body = null;
 			entity._box2dOurContactFixture = null;
 			entity._box2dTheirContactFixture = null;
-		}
-	},
-
-	createJoint: function (self, entityA, entityB, anchorA, anchorB) {
-		// if joint type none do nothing
-		var aBody = entityA._stats.currentBody;
-		var bBody = entityB._stats.currentBody;
-
-		if (!aBody || aBody.jointType == 'none' || aBody.type == 'none') return;
-
-		// create a joint only if there isn't pre-existing joint
-		PhysicsComponent.prototype.log(
-			`creating ${aBody.jointType} joint between ${entityA._stats.name} and ${entityB._stats.name}`
-		);
-
-		if (
-			entityA &&
-			entityA.body &&
-			entityB &&
-			entityB.body &&
-			entityA.id() != entityB.id() // im not creating joint to myself!
-		) {
-			if (aBody.jointType == 'revoluteJoint') {
-				var joint_def = new box2dninja.Dynamics.Joints.b2RevoluteJointDef();
-
-				joint_def.Initialize(entityA.body, entityB.body, entityA.body.GetWorldCenter(), entityB.body.GetWorldCenter());
-
-				joint_def.localAnchorA.Set(anchorA.x / self._scaleRatio, anchorA.y / self._scaleRatio); // item anchor
-				joint_def.localAnchorB.Set(anchorB.x / self._scaleRatio, -anchorB.y / self._scaleRatio); // unit anchor
-			} // weld joint
-			else {
-				var joint_def = new box2dninja.Dynamics.Joints.b2WeldJointDef();
-				joint_def.Initialize(entityA.body, entityB.body, entityA.body.GetWorldCenter(), entityB.body.GetWorldCenter());
-			}
-
-			var joint = self._world.CreateJoint(joint_def); // joint between two pieces
-
-			// var serverStats = taro.status.getSummary()
-			PhysicsComponent.prototype.log('joint created ', aBody.jointType);
-
-			entityA.jointsAttached[entityB.id()] = joint;
-			entityB.jointsAttached[entityA.id()] = joint;
 		}
 	},
 };

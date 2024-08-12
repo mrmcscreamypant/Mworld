@@ -1193,16 +1193,6 @@ var Item = TaroEntityPhysics.extend({
 							self._stats.scale = newValue;
 							self._scaleTexture();
 						} else {
-							// finding all attach entities before changing body dimensions
-							if (self.jointsAttached) {
-								var attachedEntities = {};
-								for (var entityId in self.jointsAttached) {
-									if (entityId != self.id()) {
-										attachedEntities[entityId] = true;
-									}
-								}
-							}
-							// attaching entities
 							self.scaleBodyBy(newValue);
 						}
 						break;
