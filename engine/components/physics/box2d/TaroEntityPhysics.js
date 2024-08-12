@@ -197,7 +197,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	},
 
 	hasPhysicsBody: function () {
-		return !!this.bodyId;
+		return taro.physics?.hasBody(this);
 	},
 
 	/**

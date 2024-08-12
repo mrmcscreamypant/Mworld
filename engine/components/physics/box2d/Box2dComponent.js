@@ -130,6 +130,10 @@ var PhysicsComponent = TaroEventingClass.extend({
 		dists[this.engine].destroyBody(this, entity);
 	},
 
+	hasBody(entity) {
+		return this.bodies.has(entity.id());
+	},
+
 	getEntitiesInRegion: function (region) {
 		return dists[this.engine].getEntitiesInRegion(this, region);
 	},
