@@ -141,11 +141,6 @@ var TaroEntity = TaroObject.extend({
 
 		var newState = (self._stats.states && self._stats.states[stateId]) || {};
 		if (newState && newState.body) {
-			/*
-			* if state is 'unselected' newState.body = 'none'
-				will evaluate to currentBody = undefined
-
-			*/
 			self._stats.currentBody = self._stats.bodies[newState.body];
 		}
 
