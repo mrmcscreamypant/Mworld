@@ -300,7 +300,7 @@ var MenuUiComponent = TaroEntity.extend({
 					// did user tried to change server
 					var isServerChanged = window.connectedServer && taro.client.server.id !== window.connectedServer.id;
 
-					if (isServerChanged) {
+					if (isServerChanged && taro.game.hasStarted) {
 						window.location = `${window.location.pathname}?serverId=${taro.client.server.id}&joinGame=true`;
 						return;
 					}
@@ -817,11 +817,27 @@ var MenuUiComponent = TaroEntity.extend({
 
 		return vars;
 	},
-	onDisconnectFromServer: function (src, message) {
+	onDisconnectFromServer: function (src, message = '') {
 		console.log('modal shown from', src, message);
 
 		if (message === 'switching_map') {
 			return;
+		}
+
+		message = message || 'Lost connection to the game server. Please refresh this page or visit our homepage.';
+
+		const autoRejoinReasons = [
+			'Server not accepting players, refresh to join another server.',
+			'Error trying to contact server. Please refresh this page or visit our homepage.',
+			'Lost connection to the game server. Please refresh this page or visit our homepage.', // if reason is empty
+		];
+
+		if (!window.attemptedRejoin && !taro.game?.hasStarted && autoRejoinReasons.includes(message)) {
+			console.log('Attempting rejoin', window.attemptedRejoin, taro.network?._io?._socket?.readyState, taro.game?.hasStarted, message);
+			window.silentRejoin(message);
+			return;
+		} else {
+			console.log('Not attempting rejoin', window.attemptedRejoin, taro.network?._io?._socket?.readyState, taro.game?.hasStarted, message);
 		}
 
 		if ('Guest players not allowed to join this game.' === message) {
@@ -832,13 +848,12 @@ var MenuUiComponent = TaroEntity.extend({
 		if (taro.isMobile) return;
 
 		taro.client.disconnected = true;
-		var defaultContent = 'Lost connection to the game server. Please refresh this page or visit our homepage.';
 
 		if (window.selfRepublishing && message.includes('Game has been republished')) {
 			return;
 		}
 
-		$('#server-disconnect-modal .modal-body').html(message || defaultContent);
+		$('#server-disconnect-modal .modal-body').html(message);
 
 		if (window.STATIC_EXPORT_ENABLED || window.IS_CRAZY_GAMES_ENV) {
 			$('#return-to-homepage-server').hide();
@@ -864,49 +879,49 @@ var MenuUiComponent = TaroEntity.extend({
 
 		// user is disconnected and we no longer trying to reconnect them silently
 		// let's reload the page and try autojoining them instead
-		if (!window.reconnectInProgress) {
-			const reason = message;
-			// const whitelistedReasons = [
-			// 	'Game has been unpublished',
-			// 	'You have been banned',
-			// 	'Restricted IP detected',
-			// 	'Duplicate IP detected',
-			// 	'Client already exists',
-			// 	'User connected to another server',
-			// 	'You do not have permission to join this game',
-			// 	'Guest players not allowed to join this game',
-			// 	'User kicked for spamming network commands',
-			// 	'Your IP has been banned for command spamming',
-			// 	'Your IP has been blacklisted',
-			// ];
+		// if (!window.reconnectInProgress) {
+		// 	const reason = message;
+		// 	// const whitelistedReasons = [
+		// 	// 	'Game has been unpublished',
+		// 	// 	'You have been banned',
+		// 	// 	'Restricted IP detected',
+		// 	// 	'Duplicate IP detected',
+		// 	// 	'Client already exists',
+		// 	// 	'User connected to another server',
+		// 	// 	'You do not have permission to join this game',
+		// 	// 	'Guest players not allowed to join this game',
+		// 	// 	'User kicked for spamming network commands',
+		// 	// 	'Your IP has been banned for command spamming',
+		// 	// 	'Your IP has been blacklisted',
+		// 	// ];
 
-			const blacklistedReasons = [
-				'Server not accepting players, refresh to join another server.',
-			];
+		// 	const blacklistedReasons = [
+		// 		// 'Server not accepting players, refresh to join another server.',
+		// 	];
 
-			if (blacklistedReasons.findIndex((m) => m.includes(reason)) !== -1) {
-				const autojoinAttempted = window.sessionStorage.getItem('autojoinAttempted');
-				const isTabActive = document.hasFocus();
-				if (
-					(!autojoinAttempted ||
-						Date.now() - autojoinAttempted > 15 * 60 * 1000 ||
-						message.includes('Game has been republished')) &&
-					isTabActive
-				) {
-					if (window.trackEvent) {
-						window.trackEvent('Auto Refresh', {
-							reason,
-							gameSlug: window.gameSlug,
-						});
-					}
-					// store in sessionStorage
-					window.sessionStorage.setItem('autojoinAttempted', Date.now());
+		// 	if (blacklistedReasons.findIndex((m) => m.includes(reason)) !== -1) {
+		// 		const autojoinAttempted = window.sessionStorage.getItem('autojoinAttempted');
+		// 		const isTabActive = document.hasFocus();
+		// 		if (
+		// 			(!autojoinAttempted ||
+		// 				Date.now() - autojoinAttempted > 15 * 60 * 1000 ||
+		// 				message.includes('Game has been republished')) &&
+		// 			isTabActive
+		// 		) {
+		// 			if (window.trackEvent) {
+		// 				window.trackEvent('Auto Refresh', {
+		// 					reason,
+		// 					gameSlug: window.gameSlug,
+		// 				});
+		// 			}
+		// 			// store in sessionStorage
+		// 			window.sessionStorage.setItem('autojoinAttempted', Date.now());
 
-					// autojoin in 5 seconds
-					this.refreshIn('connection-lost-refresh', 5);
-				}
-			}
-		}
+		// 			// autojoin in 5 seconds
+		// 			this.refreshIn('connection-lost-refresh', 5);
+		// 		}
+		// 	}
+		// }
 	},
 
 	refreshIn: function (id, seconds) {
