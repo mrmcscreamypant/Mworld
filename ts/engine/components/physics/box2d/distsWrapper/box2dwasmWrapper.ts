@@ -321,8 +321,17 @@ const box2dwasmWrapper: PhysicsDistProps = {
 								// Grab the fixture definition
 								fixtureDef = body.fixtures[i];
 								// Create the fixture
-								tempFixture = self.createFixture(fixtureDef);
-								// console.log(tempFixture.get_density());
+								tempFixture = new self.b2FixtureDef();
+								for (const param in fixtureDef) {
+									if (fixtureDef.hasOwnProperty(param)) {
+										if (param !== 'shape' && param !== 'filter') {
+											if (tempFixture[`set_${param}`]) {
+												tempFixture[`set_${param}`](fixtureDef[param]);
+											}
+										}
+									}
+								}
+
 								// Check for a shape definition for the fixture
 								if (fixtureDef.shape) {
 									// Create based on the shape type

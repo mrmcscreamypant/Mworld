@@ -220,7 +220,15 @@ const box2dninjaWrapper: PhysicsDistProps = {
 								fixtureDef = body.fixtures[i];
 
 								// Create the fixture
-								tempFixture = self.createFixture(fixtureDef);
+								tempFixture = new self.b2FixtureDef();
+								for (const param in fixtureDef) {
+									if (fixtureDef.hasOwnProperty(param)) {
+										if (param !== 'shape' && param !== 'filter') {
+											tempFixture[param] = fixtureDef[param];
+										}
+									}
+								}
+
 								tempFixture.taroId = fixtureDef.taroId;
 
 								// Check for a shape definition for the fixture

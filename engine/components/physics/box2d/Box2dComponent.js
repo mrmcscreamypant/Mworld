@@ -145,30 +145,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 		return this._world;
 	},
 
-	createFixture: function (params) {
-		var tempDef = new this.b2FixtureDef();
-		var param;
-		for (param in params) {
-			if (params.hasOwnProperty(param)) {
-				if (param !== 'shape' && param !== 'filter') {
-					if (taro.physics.engine !== 'BOX2DWASM') {
-						tempDef[param] = params[param];
-					} else {
-						if (tempDef[`set_${param}`]) {
-							// call the setter, so it will update the box2d wasm runtime
-							tempDef[`set_${param}`](params[param]);
-						} else {
-							// this for something like taroId (which is only useful in js, and won't do anything in box2d)
-							// tempDef[param] = params[param];
-						}
-					}
-				}
-			}
-		}
-
-		return tempDef;
-	},
-
 	/**
 	 * Creates a Box2d body and attaches it to an taro entity
 	 * based on the supplied body definition.
