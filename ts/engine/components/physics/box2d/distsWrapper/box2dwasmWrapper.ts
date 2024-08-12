@@ -425,7 +425,6 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		tempBod.SetEnabled(true);
 		// Add the body to the world with the passed fixture
 		entity.body = tempBod;
-		this.component.bodies.set(entity.id(), tempBod);
 		entity.gravitic(!!body.affectedByGravity);
 		// rotate body to its previous value
 		entity.rotateTo(0, 0, entity._rotate.z);
@@ -433,6 +432,28 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		self.destroyB2dObj(tempDef);
 		self.freeLeaked();
 		return tempBod;
+	},
+
+	destroyBody: function (self, entity) {
+		if (!entity?.body) {
+			self.log("failed to destroy body - body doesn't exist.");
+			return;
+		}
+
+		const body = entity.body;
+		let fixture = self.recordLeak(body.GetFixtureList());
+		while (fixture !== undefined && self.getPointer(fixture) !== self.getPointer(self.nullPtr)) {
+			body.DestroyFixture(fixture);
+			fixture = self.recordLeak(fixture.GetNext());
+		}
+
+		self._world.destroyBody.apply(self._world, [body]);
+		delete self.metaData[self.getPointer(body)];
+		self.freeFromCache(body);
+
+		entity.body = null;
+		entity._box2dOurContactFixture = null;
+		entity._box2dTheirContactFixture = null;
 	},
 
 	createJoint: function (self, entityA, entityB, anchorA, anchorB) {

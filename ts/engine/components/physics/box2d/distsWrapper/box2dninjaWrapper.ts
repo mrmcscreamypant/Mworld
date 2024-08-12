@@ -366,6 +366,20 @@ const box2dninjaWrapper: PhysicsDistProps = {
 		return tempBod;
 	},
 
+	destroyBody: function (self, entity) {
+		if (!entity?.body) {
+			self.log("failed to destroy body - body doesn't exist.");
+			return;
+		}
+
+		const isBodyDestroyed = self._world.destroyBody.apply(self._world, [entity.body]);
+		if (isBodyDestroyed) {
+			entity.body = null;
+			entity._box2dOurContactFixture = null;
+			entity._box2dTheirContactFixture = null;
+		}
+	},
+
 	createJoint: function (self, entityA, entityB, anchorA, anchorB) {
 		// if joint type none do nothing
 		var aBody = entityA._stats.currentBody;

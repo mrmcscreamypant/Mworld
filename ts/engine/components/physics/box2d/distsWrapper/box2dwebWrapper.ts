@@ -356,6 +356,40 @@ const box2dwebWrapper: PhysicsDistProps = {
 		return tempBod;
 	},
 
+	destroyBody: function (self, entity) {
+		if (!entity?.body) {
+			self.log("failed to destroy body - body doesn't exist.");
+			return;
+		}
+
+		const isBodyDestroyed = self._world.destroyBody.apply(self._world, [entity.body]);
+
+		self._world.m_contactSolver.m_constraints = [];
+		self._world.m_island.m_bodies = [];
+		self._world.m_island.m_contacts = [];
+		self._world.m_island.m_joints = [];
+		self._world.m_contactManager.m_broadPhase.m_pairBuffer = [];
+		self._world.m_contactManager.m_broadPhase.m_tree.m_freeList = null;
+
+		for (let i = 0; i < box2dweb.Dynamics.b2World.s_queue.length; i++) {
+			if (box2dweb.Dynamics.b2World.s_queue[i]._entity._id == entity._id) {
+				box2dweb.Dynamics.b2World.s_queue.splice(i, 1);
+			}
+		}
+
+		for (let i = 0; i < self._world.m_contactManager.m_contactFactory.m_registers.length; i++) {
+			for (let j = 0; j < self._world.m_contactManager.m_contactFactory.m_registers[i].length; j++) {
+				delete self._world.m_contactManager.m_contactFactory.m_registers[i][j].pool;
+			}
+		}
+
+		if (isBodyDestroyed) {
+			entity.body = null;
+			entity._box2dOurContactFixture = null;
+			entity._box2dTheirContactFixture = null;
+		}
+	},
+
 	createJoint: function (self, entityA, entityB, anchorA, anchorB) {
 		// if joint type none do nothing
 		var aBody = entityA._stats.currentBody;

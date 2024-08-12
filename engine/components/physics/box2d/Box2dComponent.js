@@ -32,8 +32,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 		this.getPointer = undefined;
 		this.engine = dists.defaultEngine;
 
-		this.bodies = new Map();
-
 		if (taro.game && taro.game.data && taro.game.data.defaultData) {
 			if (taro.isServer) {
 				this.engine = taro.game.data.defaultData.physicsEngine;
@@ -58,6 +56,10 @@ var PhysicsComponent = TaroEventingClass.extend({
 				// alert('no physics engine selected');
 			}
 		}
+	},
+
+	log: function (msg) {
+		console.log('PhysicsComponent:', msg);
 	},
 
 	useWorker: function (val) {
@@ -158,58 +160,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 	},
 
 	destroyBody: function (entity) {
-		// immediately destroy body if entity already has box2dBody
-		if (entity && entity.body) {
-			body = entity.body;
-			if (this.engine === 'BOX2DWASM') {
-				var fixture = taro.physics.recordLeak(body.GetFixtureList());
-				while (
-					fixture !== undefined &&
-					taro.physics.getPointer(fixture) !== taro.physics.getPointer(taro.physics.nullPtr)
-				) {
-					body.DestroyFixture(fixture);
-					var fixture = taro.physics.recordLeak(fixture.GetNext());
-				}
-			}
-			destroyBody = this._world.destroyBody;
-			var isBodyDestroyed = destroyBody.apply(this._world, [body]);
-			if (this.engine === 'BOX2DWASM') {
-				delete this.metaData[this.getPointer(body)];
-				this.freeFromCache(body);
-			}
-			// clear references to prevent memory leak
-			if (this.engine === 'BOX2DWEB') {
-				this._world.m_contactSolver.m_constraints = [];
-				this._world.m_island.m_bodies = [];
-				this._world.m_island.m_contacts = [];
-				this._world.m_island.m_joints = [];
-				this._world.m_contactManager.m_broadPhase.m_pairBuffer = []; // clear Dynamic Tree
-				this._world.m_contactManager.m_broadPhase.m_tree.m_freeList = null; // clear Dynamic Tree
-
-				for (var i = 0; i < box2dweb.Dynamics.b2World.s_queue.length; i++) {
-					if (box2dweb.Dynamics.b2World.s_queue[i]._entity._id == entity._id) {
-						// box2dweb.Dynamics.b2World.s_queue[i].m_prev.m_next = box2dweb.Dynamics.b2World.s_queue[i].m_next
-						// box2dweb.Dynamics.b2World.s_queue[i].m_next.m_prev = box2dweb.Dynamics.b2World.s_queue[i].m_prev
-						box2dweb.Dynamics.b2World.s_queue.splice(i, 1);
-					}
-				}
-
-				for (var i = 0; i < this._world.m_contactManager.m_contactFactory.m_registers.length; i++) {
-					for (var j = 0; j < this._world.m_contactManager.m_contactFactory.m_registers[i].length; j++) {
-						delete this._world.m_contactManager.m_contactFactory.m_registers[i][j].pool;
-					}
-				}
-			}
-
-			if (isBodyDestroyed || this.engine === 'BOX2DWASM') {
-				entity.body = null;
-				this.bodies.delete(entity.id());
-				entity._box2dOurContactFixture = null;
-				entity._box2dTheirContactFixture = null;
-			}
-		} else {
-			PhysicsComponent.prototype.log("failed to destroy body - body doesn't exist.");
-		}
+		dists[this.engine].destroyBody(this, entity);
 	},
 
 	// move entityA to entityB's position and create joint
