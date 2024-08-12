@@ -15,7 +15,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 		this._entity = entity;
 		this._options = options;
-		this._mode = 0;
 		this._actionQueue = [];
 		this.physicsTickDuration = 0;
 		this.avgPhysicsTickDuration = 0;
@@ -60,24 +59,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 	log: function (msg) {
 		console.log('PhysicsComponent:', msg);
-	},
-
-	/**
-	 * Gets / sets the world interval mode. In mode 0 (zero) the
-	 * box2d simulation is synced to the framerate of the engine's
-	 * renderer. In mode 1 the box2d simulation is stepped at a constant
-	 * speed regardless of the engine's renderer. This must be set *before*
-	 * calling the start() method in order for the setting to take effect.
-	 * @param {Integer} val The mode, either 0 or 1.
-	 * @returns {*}
-	 */
-	mode: function (val) {
-		if (val !== undefined) {
-			this._mode = val;
-			return this._entity;
-		}
-
-		return this._mode;
 	},
 
 	/**
@@ -391,15 +372,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 			this._active = true;
 
 			if (!this._networkDebugMode) {
-				if (this._mode === 0) {
-					// Add the box2d behaviour to the taro
-					// console.log('starting box2d', this._entity.id(), this._entity._category);
-					this._entity.addBehaviour('box2dStep', this._behaviour);
-				} else {
-					// this._intervalTimer = setInterval(this._behaviour, 1000 / 60);
-					console.log('b2d start');
-					// this._intervalTimer = setInterval(this._behaviour, taro._tickDelta);
-				}
+				this._entity.addBehaviour('box2dStep', this._behaviour);
 			}
 		}
 
@@ -411,15 +384,9 @@ var PhysicsComponent = TaroEventingClass.extend({
 	stop: function () {
 		if (this._active) {
 			this._active = false;
-
-			if (this._mode === 0) {
-				// Add the box2d behaviour to the taro
-				this._entity.removeBehaviour('box2dStep');
-				if (taro.isClient) {
-					clearInterval(this._intervalTimer);
-				}
-			} else {
-				// clearInterval(this._intervalTimer);
+			this._entity.removeBehaviour('box2dStep');
+			if (taro.isClient) {
+				clearInterval(this._intervalTimer);
 			}
 		}
 	},
