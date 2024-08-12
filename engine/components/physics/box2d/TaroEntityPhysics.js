@@ -853,6 +853,10 @@ var TaroEntityPhysics = TaroEntity.extend({
 							this.setLinearVelocityLT(action.x, action.y);
 							break;
 
+						case 'scaleBy':
+							this.scaleBodyBy(action.scale);
+							break;
+
 						case 'destroy':
 							this.destroy();
 							break;

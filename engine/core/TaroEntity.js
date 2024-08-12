@@ -3594,6 +3594,7 @@ var TaroEntity = TaroObject.extend({
 			} else {
 				this.height(height);
 				this.width(width);
+				this._scaleTexture();
 			}
 		}
 	},
@@ -5012,13 +5013,14 @@ var TaroEntity = TaroObject.extend({
 						'flip',
 						'skin',
 						'anim',
-						'scale',
 						'cellSheet',
 						'width',
 						'height',
-						'scaleDimensions',
 						'isHidden',
 						'opacity',
+						'scale',
+						'scaleBody',
+						'scaleDimensions',
 					];
 					data = {
 						attributes: {},
@@ -5040,11 +5042,13 @@ var TaroEntity = TaroObject.extend({
 						'isBeingUsed',
 						'width',
 						'height',
-						'scaleDimensions',
 						'description',
 						'slotIndex',
 						'isHidden',
 						'opacity',
+						'scale',
+						'scaleBody',
+						'scaleDimensions',
 					];
 					data = {
 						attributes: {},
@@ -5060,11 +5064,13 @@ var TaroEntity = TaroObject.extend({
 						'flip',
 						'width',
 						'height',
-						'scaleDimensions',
 						'sourceItemId',
 						'streamMode',
 						'isHidden',
 						'opacity',
+						'scale',
+						'scaleBody',
+						'scaleDimensions',
 					];
 					data = {
 						attributes: {},

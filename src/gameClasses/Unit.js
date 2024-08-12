@@ -79,14 +79,11 @@ var Unit = TaroEntityPhysics.extend({
 		// initialize body & texture of the unit
 		self.changeUnitType(data.type, data.defaultData, true);
 
-		if (self._stats.scaleBody) {
-			self._stats.scale = parseFloat(self._stats.scaleBody);
-		} else {
-			if (!self._stats.scale) {
-				self._stats.scale =
-					self._stats.currentBody && self._stats.currentBody.spriteScale > 0 ? self._stats.currentBody.spriteScale : 1;
-			}
+		if (!self._stats.scale) {
+			self._stats.scale =
+				self._stats.currentBody && self._stats.currentBody.spriteScale > 0 ? self._stats.currentBody.spriteScale : 1;
 		}
+
 		self._stats.fadingTextQueue = [];
 
 		self._stats.buffs = [];
@@ -1815,8 +1812,6 @@ var Unit = TaroEntityPhysics.extend({
 							if (taro.physics) {
 								self._scaleBox2dBody(newValue);
 							}
-							self._stats.scale = newValue;
-							self._scaleTexture();
 						}
 						break;
 					case 'isNameLabelHidden':

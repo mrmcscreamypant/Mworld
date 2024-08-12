@@ -4066,6 +4066,7 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'changeScaleOfEntityBody':
+						console.log('ActionComponent.js: changeScaleOfEntityBody');
 						var entity = self._script.param.getValue(action.entity, vars);
 						var scale = self._script.param.getValue(action.scale, vars);
 						if (entity && self.entityCategories.indexOf(entity._category) > -1 && !isNaN(scale)) {
