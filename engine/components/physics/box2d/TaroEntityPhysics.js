@@ -208,7 +208,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	 * @returns {*}
 	 */
 	gravitic: function (val) {
-		taro.physics.gravitic(this.bodyId, val);
+		taro.physics.gravitic(this, val);
 	},
 
 	on: function () {
@@ -299,7 +299,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	setLinearVelocityLT: function (x, y) {
 		try {
-			taro.physics.setLinearVelocity(this.bodyId, x, y);
+			taro.physics.setLinearVelocity(this, x, y);
 		} catch (e) {
 			console.log(`TaroEntityBox2d.js: setLinearVelocityLT ${e}`);
 		}
@@ -324,7 +324,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	// loss tolerant applyForce
 	applyForceLT: function (x, y) {
 		try {
-			taro.physics.applyForce(this.bodyId, x, y);
+			taro.physics.applyForce(this, x, y);
 		} catch (e) {
 			TaroEntityPhysics.prototype.log(`taroEntityBox2d.js: applyForce ${e}`);
 		}
@@ -347,7 +347,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	// loss tolerant applyForce
 	applyImpulseLT: function (x, y) {
 		try {
-			taro.physics.applyImpulse(this.bodyId, x, y);
+			taro.physics.applyImpulse(this, x, y);
 		} catch (e) {
 			TaroEntityPhysics.prototype.log(`taroEntityBox2d.js: applyForce ${e}`);
 		}
@@ -355,7 +355,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	applyTorqueLT: function (torque) {
 		try {
-			taro.physics.applyTorque(this.bodyId, torque);
+			taro.physics.applyTorque(this, torque);
 		} catch (e) {
 			TaroEntityPhysics.prototype.log(`taroEntityBox2d.js: applyTorque ${e}`);
 		}
@@ -364,11 +364,11 @@ var TaroEntityPhysics = TaroEntity.extend({
 	// TODO(nick): Move to TaroEntity eventually when position is decoupled from
 	// physics, as it has nothing to do with physics.
 	getPosition: function () {
-		return taro.physics.getPosition(this.bodyId);
+		return taro.physics.getPosition(this);
 	},
 
 	getLinearVelocity: function () {
-		return taro.physics.getLinearVelocity(this.bodyId);
+		return taro.physics.getLinearVelocity(this);
 	},
 
 	_setupContactListeners: function () {
@@ -470,7 +470,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	// loss tolerent
 	translateToLT: function (x, y) {
-		taro.physics.translateTo(this.bodyId, x / taro.physics._scaleRatio, y / taro.physics._scaleRatio);
+		taro.physics.translateTo(this, x / taro.physics._scaleRatio, y / taro.physics._scaleRatio);
 	},
 
 	/**
@@ -521,7 +521,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	},
 
 	rotateToLT: function (angle) {
-		taro.physics.rotateTo(this.bodyId, angle);
+		taro.physics.rotateTo(this, angle);
 	},
 
 	_scaleTexture: function () {

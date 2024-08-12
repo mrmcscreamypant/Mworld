@@ -131,7 +131,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 	},
 
 	hasBody(entity) {
-		return this.bodies.has(entity.id());
+		return this.bodies.has(entity?.id());
 	},
 
 	getEntitiesInRegion: function (region) {
@@ -717,8 +717,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		// Destroy all box2d world bodies
 	},
 
-	gravitic: function (bodyId, toggle) {
-		const body = this.bodies.get(bodyId);
+	gravitic: function (entity, toggle) {
+		const body = this.bodies.get(entity?.id());
 
 		if (!body || toggle === undefined) {
 			return;
@@ -733,8 +733,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 	},
 
-	applyForce: function (bodyId, x, y) {
-		const body = this.bodies.get(bodyId);
+	applyForce: function (entity, x, y) {
+		const body = this.bodies.get(entity?.id());
 
 		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
 			return;
@@ -748,8 +748,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 	},
 
-	applyImpulse: function (bodyId, x, y) {
-		const body = this.bodies.get(bodyId);
+	applyImpulse: function (entity, x, y) {
+		const body = this.bodies.get(entity?.id());
 
 		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
 			return;
@@ -763,8 +763,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 	},
 
-	applyTorque: function (bodyId, torque) {
-		const body = this.bodies.get(bodyId);
+	applyTorque: function (entity, torque) {
+		const body = this.bodies.get(entity?.id());
 
 		if (!body || isNaN(torque) || !isFinite(torque)) {
 			return;
@@ -773,8 +773,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		body.applyTorque(torque);
 	},
 
-	translateTo: function (bodyId, x, y) {
-		const body = this.bodies.get(bodyId);
+	translateTo: function (entity, x, y) {
+		const body = this.bodies.get(entity?.id());
 
 		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
 			return;
@@ -784,8 +784,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		body.setAwake(true);
 	},
 
-	rotateTo: function (bodyId, angle) {
-		const body = this.bodies.get(bodyId);
+	rotateTo: function (entity, angle) {
+		const body = this.bodies.get(entity?.id());
 
 		if (!body || isNaN(angle) || !isFinite(angle)) {
 			return;
@@ -795,8 +795,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		body.setAwake(true);
 	},
 
-	setLinearVelocity: function (bodyId, x, y) {
-		const body = this.bodies.get(bodyId);
+	setLinearVelocity: function (entity, x, y) {
+		const body = this.bodies.get(entity?.id());
 
 		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
 			return;
@@ -811,8 +811,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 	},
 
-	getLinearVelocity: function (bodyId) {
-		const body = this.bodies.get(bodyId);
+	getLinearVelocity: function (entity) {
+		const body = this.bodies.get(entity?.id());
 
 		if (!body) {
 			return { x: 0, y: 0 };
@@ -825,8 +825,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		};
 	},
 
-	getPosition: function (bodyId) {
-		const body = this.bodies.get(bodyId);
+	getPosition: function (entity) {
+		const body = this.bodies.get(entity?.id());
 
 		if (!body) {
 			return { x: 0, y: 0 };

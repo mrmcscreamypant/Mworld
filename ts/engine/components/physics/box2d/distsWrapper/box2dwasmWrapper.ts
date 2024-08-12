@@ -217,9 +217,9 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			}
 		}
 
-		if (entity.hasPhysicsBody()) {
+		if (self.hasBody(entity)) {
 			self.destroyBody(entity);
-			delete self.metaData[box2D.getPointer(self.bodies.get(entity.bodyId))];
+			delete self.metaData[box2D.getPointer(self.bodies.get(entity.id()))];
 		}
 
 		var tempDef: Box2D.b2BodyDef = self.recordLeak(new self.b2BodyDef());
@@ -422,8 +422,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		self.metaData[bodyId]._entity = entity;
 		tempBod.SetEnabled(true);
 
-		entity.bodyId = entity.id();
-		self.bodies.set(entity.bodyId, tempBod);
+		self.bodies.set(entity.id(), tempBod);
 
 		entity.gravitic(!!body.affectedByGravity);
 		entity.rotateTo(0, 0, entity._rotate.z);
@@ -440,7 +439,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			return;
 		}
 
-		const body = self.bodies.get(entity.bodyId);
+		const body = self.bodies.get(entity.id());
 		let fixture = self.recordLeak(body.GetFixtureList());
 		while (fixture !== undefined && self.getPointer(fixture) !== self.getPointer(self.nullPtr)) {
 			body.DestroyFixture(fixture);
@@ -451,8 +450,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 		delete self.metaData[self.getPointer(body)];
 		self.freeFromCache(body);
 
-		self.bodies.delete(entity.bodyId);
-		entity.bodyId = null;
+		self.bodies.delete(entity.id());
 
 		entity._box2dOurContactFixture = null;
 		entity._box2dTheirContactFixture = null;

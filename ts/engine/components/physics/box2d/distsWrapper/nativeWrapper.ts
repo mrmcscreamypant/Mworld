@@ -346,8 +346,7 @@ const nativeWrapper: PhysicsDistProps = {
 
 		tempBod._entity = entity;
 
-		entity.bodyId = entity.id();
-		self.bodies.set(entity.bodyId, tempBod);
+		self.bodies.set(entity.id(), tempBod);
 
 		entity.gravitic(!!body.affectedByGravity);
 		entity.rotateTo(0, 0, entity._rotate.z);
@@ -361,10 +360,9 @@ const nativeWrapper: PhysicsDistProps = {
 			return;
 		}
 
-		const isBodyDestroyed = self._world.destroyBody.apply(self._world, [self.bodies.get(entity.bodyId)]);
+		const isBodyDestroyed = self._world.destroyBody.apply(self._world, [self.bodies.get(entity.id())]);
 		if (isBodyDestroyed) {
-			self.bodies.delete(entity.bodyId);
-			entity.bodyId = null;
+			self.bodies.delete(entity.id());
 
 			entity._box2dOurContactFixture = null;
 			entity._box2dTheirContactFixture = null;
