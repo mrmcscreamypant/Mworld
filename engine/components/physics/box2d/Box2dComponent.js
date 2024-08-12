@@ -20,10 +20,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 		this.avgPhysicsTickDuration = 0;
 		this.totalBodiesCreated = 0;
 		this.lastSecondAt = Date.now();
-		this.totalDisplacement = 0;
-		this.totalTimeElapsed = 0;
-		this.exponent = 2;
-		this.divisor = 80;
 		this.metaData = {};
 		this.tryRecordLeak = (p) => p;
 		this.walls = [];
@@ -697,8 +693,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 			if (timeEnd - self.lastSecondAt > 1000) {
 				self.lastSecondAt = timeEnd;
 				self.avgPhysicsTickDuration = self.physicsTickDuration / taro._fpsRate;
-				self.totalDisplacement = 0;
-				self.totalTimeElapsed = 0;
 				self.physicsTickDuration = 0;
 			}
 
