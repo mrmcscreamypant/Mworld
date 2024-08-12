@@ -235,8 +235,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 	},
 
-	getBodiesInRegion: function (region) {
-		return dists[this.engine].getBodiesInRegion(this, region);
+	getEntitiesInRegion: function (region) {
+		return dists[this.engine].getEntitiesInRegion(this, region);
 	},
 
 	/**

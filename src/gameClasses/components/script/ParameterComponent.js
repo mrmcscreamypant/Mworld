@@ -74,7 +74,7 @@ var ParameterComponent = TaroEntity.extend({
 			width: 100,
 		};
 
-		var entities = taro.physics.getBodiesInRegion({
+		var entities = taro.physics.getEntitiesInRegion({
 			x: position.x,
 			y: position.y,
 			width: defaultArea.width,
@@ -322,7 +322,7 @@ var ParameterComponent = TaroEntity.extend({
 								}
 							} else {
 								// region is either dynamic or a variable with {x, y, height, width} properties
-								returnValue = taro.physics.getBodiesInRegion(region).filter(function (entity) {
+								returnValue = taro.physics.getEntitiesInRegion(region).filter(function (entity) {
 									return entity.id() === unit.id();
 								}).length;
 
@@ -369,7 +369,7 @@ var ParameterComponent = TaroEntity.extend({
 								}
 							} else {
 								// region is either dynamic or a variable with {x, y, height, width} properties
-								returnValue = taro.physics.getBodiesInRegion(region).filter(function (entity) {
+								returnValue = taro.physics.getEntitiesInRegion(region).filter(function (entity) {
 									return entity.id() === item.id();
 								}).length;
 
@@ -1162,26 +1162,6 @@ var ParameterComponent = TaroEntity.extend({
 						}
 
 						break;
-
-					// case 'getUnitInFrontOfUnit':
-					// 	if (entity && entity._category == 'unit') {
-					// 		var entities = taro.physics.getBodiesInRegion({
-					// 			x: entity._translate.x - 7 + (35 * Math.cos(entity._rotate.z + Math.radians(-90))),
-					// 			y: entity._translate.y - 7 + (35 * Math.sin(entity._rotate.z + Math.radians(-90))),
-					// 			width: 14,
-					// 			height: 14
-					// 		},
-					// 			entity.id()
-					// 		)
-					// 		for (i = 0; i < entities.length; i++) {
-					// 			var entity = entities[i]
-					// 			if (entity && entity._category == 'unit') {
-					// 				return entity;
-					// 			}
-					// 		}
-					// 	}
-
-					// 	break;
 
 					case 'squareRoot':
 						var numberValue = self.getValue(text.number, vars);
@@ -2501,7 +2481,7 @@ var ParameterComponent = TaroEntity.extend({
 								region.height &&
 								!isNaN(region.height)
 							) {
-								returnValue = taro.physics.getBodiesInRegion(region).filter(({ _category }) => {
+								returnValue = taro.physics.getEntitiesInRegion(region).filter(({ _category }) => {
 									return self._entity.script.action.entityCategories.includes(_category) || !_category;
 								});
 							} else {
@@ -2571,11 +2551,11 @@ var ParameterComponent = TaroEntity.extend({
 						if (region) {
 							// region represent some instance of TaroRegion
 							if (region._stats) {
-								returnValue = taro.physics.getBodiesInRegion(region._stats.default).filter(({ _category }) => {
+								returnValue = taro.physics.getEntitiesInRegion(region._stats.default).filter(({ _category }) => {
 									return self._entity.script.action.entityCategories.includes(_category) || !_category;
 								});
 							} else {
-								returnValue = taro.physics.getBodiesInRegion(region).filter(({ _category }) => {
+								returnValue = taro.physics.getEntitiesInRegion(region).filter(({ _category }) => {
 									return self._entity.script.action.entityCategories.includes(_category) || !_category;
 								});
 							}
@@ -2870,7 +2850,7 @@ var ParameterComponent = TaroEntity.extend({
 
 				if (region) {
 					var regionBounds = region._stats ? region._stats.default : region;
-					return taro.physics.getBodiesInRegion(regionBounds).filter(({ _category }) => {
+					return taro.physics.getEntitiesInRegion(regionBounds).filter(({ _category }) => {
 						return _category === 'unit';
 					});
 				} else {

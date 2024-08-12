@@ -114,7 +114,7 @@ const box2dwebWrapper: PhysicsDistProps = {
 		return body.m_xf.position;
 	},
 
-	getBodiesInRegion: function (self, region) {
+	getEntitiesInRegion: function (self, region) {
 		const aabb = new self.b2AABB();
 		aabb.lowerBound.set(region.x / self._scaleRatio, region.y / self._scaleRatio);
 		aabb.upperBound.set((region.x + region.width) / self._scaleRatio, (region.y + region.height) / self._scaleRatio);

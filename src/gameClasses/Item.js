@@ -626,9 +626,8 @@ var Item = TaroEntityPhysics.extend({
 								unitAttributes: this._stats.damage.unitAttributes,
 								playerAttributes: this._stats.damage.playerAttributes,
 							};
-							// console.log(owner._translate.x, owner._translate.y, hitbox);                                              //////////Hitbox log
 
-							entities = taro.physics.getBodiesInRegion(hitbox);
+							entities = taro.physics.getEntitiesInRegion(hitbox);
 
 							while (entities.length > 0) {
 								var entity = entities.shift();

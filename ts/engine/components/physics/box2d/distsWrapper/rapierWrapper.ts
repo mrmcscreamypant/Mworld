@@ -59,7 +59,7 @@ const rapierWrapper: PhysicsDistProps = {
 		console.log('getBodyPosition not implemented');
 	},
 
-	getBodiesInRegion: function (self, region) {
+	getEntitiesInRegion: function (self, region) {
 		return [];
 	},
 
