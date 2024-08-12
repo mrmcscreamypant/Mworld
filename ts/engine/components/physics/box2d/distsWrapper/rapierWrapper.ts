@@ -71,8 +71,8 @@ const rapierWrapper: PhysicsDistProps = {
 		console.log('createBody not implemented');
 	},
 
-	createJoint: (self: any, entityA: any, entityB: any, anchorA: any, anchorB: any) => {
-		console.log('createJoint not implemented');
+	destroyBody: (self: any, entity: any) => {
+		console.log('destroyBody not implemented');
 	},
 
 	contactListener: (
