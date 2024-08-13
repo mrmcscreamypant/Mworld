@@ -94,7 +94,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 				shapeData.y = offsetY;
 			}
 			if (this._stats.scaleBody) {
-				// b2d expects halfs
+				// b2d expects halves
 				let scaleBody2 = Number(this._stats.scaleBody) / 2;
 				shapeData.halfWidth = (sizeX ?? body.width) * scaleBody2;
 				shapeData.halfHeight = (sizeY ?? body.height) * scaleBody2;
@@ -685,8 +685,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 		// console.log(self._stats.name,'->',self._stats.scale)
 		var newWidth = ((body && body.width) || 1) * self._stats.scale;
 		var newHeight = ((body && body.height) || 1) * self._stats.scale;
-
-		console.log(newWidth, newHeight);
 
 		self.width(newWidth, false);
 		self.height(newHeight, false);

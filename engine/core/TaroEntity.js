@@ -859,7 +859,6 @@ var TaroEntity = TaroObject.extend({
 	 * chaining or the current value if no arguments are specified.
 	 */
 	width: function (px, lockAspect) {
-		console.log(px);
 		if (px !== undefined) {
 			if (lockAspect) {
 				// Calculate the height from the change in width
