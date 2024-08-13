@@ -88,8 +88,8 @@ var TaroEntityPhysics = TaroEntity.extend({
 			if (this._stats.scaleBody) {
 				// b2d expects halves
 				let scaleBody2 = Number(this._stats.scaleBody) / 2;
-				shapeData.halfWidth = (sizeX ?? body.width) * scaleBody2;
-				shapeData.halfHeight = (sizeY ?? body.height) * scaleBody2;
+				shapeData.halfWidth = (sizeX ?? bodyDef.width) * scaleBody2;
+				shapeData.halfHeight = (sizeY ?? bodyDef.height) * scaleBody2;
 			}
 		}
 
