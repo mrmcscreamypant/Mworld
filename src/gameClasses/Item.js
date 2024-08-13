@@ -1194,10 +1194,10 @@ var Item = TaroEntityPhysics.extend({
 						this._stats[attrName] = newValue;
 						if (taro.isClient) {
 							if (taro.physics) {
-								self.scaleBodyBy(newValue);
+								this.scaleBodyBy(newValue);
 							}
 						} else {
-							self.scaleBodyBy(newValue);
+							this.scaleBodyBy(newValue);
 						}
 						break;
 
