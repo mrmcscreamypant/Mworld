@@ -305,13 +305,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 			// Set the debug draw for the world
 			this._world.SetDebugDraw(debugDraw);
-
-			// Create the debug painter entity and mount
-			// it to the passed scene
-			new taroClassStore.TaroBox2dDebugPainter(this._entity)
-				.depth(40000) // Set a really high depth
-				.drawBounds(false)
-				.mount(mountScene);
 		} else {
 			PhysicsComponent.prototype.log(
 				'Cannot enable box2d debug drawing because the passed argument is not an object on the scenegraph.',
