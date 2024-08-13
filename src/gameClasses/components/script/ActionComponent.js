@@ -568,9 +568,7 @@ var ActionComponent = TaroEntity.extend({
 
 					case 'sendPostRequest':
 						if (!taro.tierFeaturesToggle[taro.game.data.defaultData.tier]?.postRequests) {
-							self._script.errorLog(
-								'Indie+ tier is needed to send post request'
-							);
+							self._script.errorLog('Indie+ tier is needed to send post request');
 							break;
 						}
 						var obj = self._script.param.getValue(action.string, vars);
@@ -632,9 +630,7 @@ var ActionComponent = TaroEntity.extend({
 
 					case 'requestPost':
 						if (!taro.tierFeaturesToggle[taro.game.data.defaultData.tier]?.postRequests) {
-							self._script.errorLog(
-								'Indie+ tier is needed to send post request'
-							);
+							self._script.errorLog('Indie+ tier is needed to send post request');
 							break;
 						}
 						var data = self._script.param.getValue(action.data, vars) || {};
@@ -697,9 +693,7 @@ var ActionComponent = TaroEntity.extend({
 
 					case 'sendSecurePostRequest':
 						if (!taro.tierFeaturesToggle[taro.game.data.defaultData.tier]?.postRequests) {
-							self._script.errorLog(
-								'Indie+ tier is needed to send post request'
-							);
+							self._script.errorLog('Indie+ tier is needed to send post request');
 							break;
 						}
 						var data = self._script.param.getValue(action.data, vars) || {};
@@ -2089,9 +2083,6 @@ var ActionComponent = TaroEntity.extend({
 						var radians = self._script.param.getValue(action.angle, vars); // entity's facing angle
 						if (entity && radians !== undefined && !isNaN(radians) && !isNaN(speed)) {
 							radians -= Math.radians(90);
-							// console.log("2. setting linear velocity", radians, speed)
-							// entity.body.setLinearVelocity(new TaroPoint3d(Math.cos(radians) * speed, Math.sin(radians) * speed, 0));
-							// entity.setLinearVelocityLT(Math.cos(radians) * speed, Math.sin(radians) * speed);
 							entity.setLinearVelocity(Math.cos(radians) * speed, Math.sin(radians) * speed);
 						}
 
@@ -2480,27 +2471,6 @@ var ActionComponent = TaroEntity.extend({
 						}
 						break;
 
-					case 'rotateUnitClockwise':
-						var torque = self._script.param.getValue(action.torque, vars);
-						if (entity && entity._category == 'unit' && entity.body && !isNaN(torque)) {
-							// entity.body.m_torque = entity._stats.body.rotationSpeed
-							entity.body.m_torque = torque;
-						} else {
-							// throw new Error( action.type + " - invalid unit")
-						}
-						break;
-
-					// is deprecated ?
-					case 'rotateUnitCounterClockwise':
-						var torque = self._script.param.getValue(action.torque, vars);
-						if (entity && entity._category == 'unit' && entity.body && !isNaN(torque)) {
-							// entity.body.m_torque = -1 * entity._stats.body.rotationSpeed
-							entity.body.m_torque = -1 * torque;
-						} else {
-							// throw new Error( action.type + " - invalid unit")
-						}
-						break;
-
 					case 'makeUnitToAlwaysFacePosition':
 						if (entity && entity._category == 'unit') {
 							var position = self._script.param.getValue(action.position, vars);
@@ -2750,26 +2720,26 @@ var ActionComponent = TaroEntity.extend({
 								Object.keys(itemData?.bonus?.passive?.playerAttribute || {}) || []
 							);
 
-							let itemGivesBonuses = false;
-							for (const itemAttribute of itemAttributes) {
-								var attributeData = taro.game.getAsset('attributeTypes', itemAttribute);
-								if (attributeData.isWorld) {
-									itemGivesBonuses = true;
-									break;
-								}
-							}
+							// let itemGivesBonuses = false;
+							// for (const itemAttribute of itemAttributes) {
+							// 	var attributeData = taro.game.getAsset('attributeTypes', itemAttribute);
+							// 	if (attributeData.isWorld) {
+							// 		itemGivesBonuses = true;
+							// 		break;
+							// 	}
+							// }
 
-							if (itemGivesBonuses) {
-								self._script.errorLog(
-									`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`
-								);
-								console.log(
-									`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`,
-									path,
-									itemTypeId
-								);
-								break;
-							}
+							// if (itemGivesBonuses) {
+							// 	self._script.errorLog(
+							// 		`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`
+							// 	);
+							// 	console.log(
+							// 		`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`,
+							// 		path,
+							// 		itemTypeId
+							// 	);
+							// 	break;
+							// }
 						}
 
 						if (itemData) {
@@ -2811,26 +2781,26 @@ var ActionComponent = TaroEntity.extend({
 								Object.keys(itemData?.bonus?.passive?.playerAttribute || {}) || []
 							);
 
-							let itemGivesBonuses = false;
-							for (const itemAttribute of itemAttributes) {
-								var attributeData = taro.game.getAsset('attributeTypes', itemAttribute);
-								if (attributeData.isWorld) {
-									itemGivesBonuses = true;
-									break;
-								}
-							}
+							// let itemGivesBonuses = false;
+							// for (const itemAttribute of itemAttributes) {
+							// 	var attributeData = taro.game.getAsset('attributeTypes', itemAttribute);
+							// 	if (attributeData.isWorld) {
+							// 		itemGivesBonuses = true;
+							// 		break;
+							// 	}
+							// }
 
-							if (itemGivesBonuses) {
-								self._script.errorLog(
-									`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`
-								);
-								console.log(
-									`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`,
-									path,
-									itemTypeId
-								);
-								break;
-							}
+							// if (itemGivesBonuses) {
+							// 	self._script.errorLog(
+							// 		`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`
+							// 	);
+							// 	console.log(
+							// 		`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`,
+							// 		path,
+							// 		itemTypeId
+							// 	);
+							// 	break;
+							// }
 						}
 
 						if (itemData) {
@@ -2868,26 +2838,26 @@ var ActionComponent = TaroEntity.extend({
 								Object.keys(itemData?.bonus?.passive?.playerAttribute || {}) || []
 							);
 
-							let itemGivesBonuses = false;
-							for (const itemAttribute of itemAttributes) {
-								var attributeData = taro.game.getAsset('attributeTypes', itemAttribute);
-								if (attributeData.isWorld) {
-									itemGivesBonuses = true;
-									break;
-								}
-							}
+							// 	let itemGivesBonuses = false;
+							// 	for (const itemAttribute of itemAttributes) {
+							// 		var attributeData = taro.game.getAsset('attributeTypes', itemAttribute);
+							// 		if (attributeData.isWorld) {
+							// 			itemGivesBonuses = true;
+							// 			break;
+							// 		}
+							// 	}
 
-							if (itemGivesBonuses) {
-								self._script.errorLog(
-									`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`
-								);
-								console.log(
-									`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`,
-									path,
-									itemTypeId
-								);
-								break;
-							}
+							// 	if (itemGivesBonuses) {
+							// 		self._script.errorLog(
+							// 			`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`
+							// 		);
+							// 		console.log(
+							// 			`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`,
+							// 			path,
+							// 			itemTypeId
+							// 		);
+							// 		break;
+							// 	}
 						}
 
 						if (itemData) {
@@ -3422,25 +3392,25 @@ var ActionComponent = TaroEntity.extend({
 										Object.keys(data?.bonus?.passive?.playerAttribute || {}) || []
 									);
 
-									let itemGivesBonuses = false;
-									for (const itemAttribute of itemAttributes) {
-										var attributeData = taro.game.getAsset('attributeTypes', itemAttribute);
-										if (attributeData.isWorld) {
-											itemGivesBonuses = true;
-											break;
-										}
-									}
+									// let itemGivesBonuses = false;
+									// for (const itemAttribute of itemAttributes) {
+									// 	var attributeData = taro.game.getAsset('attributeTypes', itemAttribute);
+									// 	if (attributeData.isWorld) {
+									// 		itemGivesBonuses = true;
+									// 		break;
+									// 	}
+									// }
 
-									if (itemGivesBonuses) {
-										self._script.errorLog(
-											`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`
-										);
-										console.log(
-											`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`,
-											path
-										);
-										break;
-									}
+									// if (itemGivesBonuses) {
+									// 	self._script.errorLog(
+									// 		`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`
+									// 	);
+									// 	console.log(
+									// 		`can not create item that gives world attribute bonuses from map (item: ${itemData?.name})`,
+									// 		path
+									// 	);
+									// 	break;
+									// }
 								}
 
 								data.itemTypeId = entityToCreate;
@@ -3889,20 +3859,7 @@ var ActionComponent = TaroEntity.extend({
 						) {
 							if (taro.isServer) {
 								var oldFacingAngle = entity._rotate.z;
-
-								// var rotateDiff = (newFacingAngle - (oldFacingAngle % (Math.PI * 2))) % (Math.PI * 2)
-								// if (rotateDiff > Math.PI) {
-								//     rotateDiff = - (2 * Math.PI) % rotateDiff
-								// }
-								// else if (rotateDiff < -Math.PI) {
-								//     rotateDiff = (2 * Math.PI) % rotateDiff
-								// }
-
-								// if (!isNaN(rotateDiff)) {
-								//     entity.rotateBy(0, 0, -rotateDiff);
-								// }
 								entity.streamUpdateData([{ rotate: newFacingAngle }]);
-								// console.log('rotating')
 							}
 							// &&
 							else if (
@@ -3948,7 +3905,6 @@ var ActionComponent = TaroEntity.extend({
 								var torque = degDiff > 0 ? Math.min(degDiff, rotationSpeed) : Math.max(degDiff, rotationSpeed * -1);
 
 								entity.applyTorque(torque);
-								// entity.body.applyTorque(torque);
 							} else {
 								throw new Error(`${action.type} - invalid position`);
 							}
@@ -3966,6 +3922,7 @@ var ActionComponent = TaroEntity.extend({
 						var player = taro.game.createPlayer({
 							controlledBy: 'human',
 							name: name,
+							clientId: -1, // -1 means the player is a bot
 						});
 						player._stats.isBot = true;
 						player.joinGame();
@@ -4044,22 +4001,6 @@ var ActionComponent = TaroEntity.extend({
 						if (entity && torque) {
 							entity.applyTorque(torque);
 						}
-						// apply torque on entity here
-
-						break;
-					case 'attachEntityToEntity':
-						var entity = self._script.param.getValue(action.entity, vars);
-						var targetEntity = self._script.param.getValue(action.targetingEntity, vars);
-
-						if (
-							entity &&
-							self.entityCategories.indexOf(entity._category) > -1 &&
-							targetEntity &&
-							self.entityCategories.indexOf(targetEntity._category) > -1
-						) {
-							entity.attachTo(targetEntity);
-						}
-
 						break;
 
 					case 'changeScaleOfEntitySprite':

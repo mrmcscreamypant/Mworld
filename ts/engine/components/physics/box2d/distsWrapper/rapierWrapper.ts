@@ -55,8 +55,12 @@ const rapierWrapper: PhysicsDistProps = {
 		};
 	},
 
-	getmxfp: (body: any, self: any) => {
-		console.log('getmxfp not implemented');
+	getBodyPosition: (body: any, self: any) => {
+		console.log('getBodyPosition not implemented');
+	},
+
+	getEntitiesInRegion: function (self, region) {
+		return [];
 	},
 
 	queryAABB: (self: any, aabb: any, callback: (...args: any) => any) => {
@@ -67,8 +71,8 @@ const rapierWrapper: PhysicsDistProps = {
 		console.log('createBody not implemented');
 	},
 
-	createJoint: (self: any, entityA: any, entityB: any, anchorA: any, anchorB: any) => {
-		console.log('createJoint not implemented');
+	destroyBody: (self: any, entity: any) => {
+		console.log('destroyBody not implemented');
 	},
 
 	contactListener: (

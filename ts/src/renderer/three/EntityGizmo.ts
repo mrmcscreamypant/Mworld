@@ -138,19 +138,23 @@ namespace Renderer {
 							renderer.entityEditor.selectedEntities.forEach((e, idx) => {
 								const editedAction = this.generateEditedAction(e);
 								if (editedAction && e instanceof InitEntity) {
-									const nowUndoAction = JSON.parse(JSON.stringify(this.undoAction[idx]));
-									const nowEntity = e;
+									const undoAction = JSON.stringify(this.undoAction[idx]);
+									const nowEditedAction = JSON.stringify(editedAction);
 									const nowSelectedGroupPosition = renderer.entityEditor.selectedGroup.position.clone();
 									const prevSelectedGroupPosition = this.prevSelectedGroupPosition.clone();
 									renderer.voxelEditor.commandController.addCommand(
 										{
 											func: () => {
+												const editedAction = JSON.parse(nowEditedAction);
+												const nowEntity = renderer.entityManager.initEntities.find((e) => e.action.actionId === editedAction.actionId);
 												renderer.entityEditor.selectedGroup.position.copy(nowSelectedGroupPosition);
-												(nowEntity as InitEntity).edit(editedAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
+												(nowEntity as InitEntity).edit(editedAction, (nowEntity.parent as any)?.tag === Three.EntityEditor.TAG ? nowEntity.parent.position.clone().multiplyScalar(-1) : undefined);
 											},
 											undo: () => {
+												const nowUndoAction = JSON.parse(undoAction);
+												const nowEntity = renderer.entityManager.initEntities.find((e) => e.action.actionId === nowUndoAction.actionId);
 												renderer.entityEditor.selectedGroup.position.copy(prevSelectedGroupPosition);
-												(nowEntity as InitEntity).edit(nowUndoAction, (e.parent as any)?.tag === Three.EntityEditor.TAG ? e.parent.position.clone().multiplyScalar(-1) : undefined);
+												(nowEntity as InitEntity).edit(nowUndoAction, (nowEntity.parent as any)?.tag === Three.EntityEditor.TAG ? nowEntity.parent.position.clone().multiplyScalar(-1) : undefined);
 											},
 											mergedUuid: uuid,
 										},
@@ -209,7 +213,7 @@ namespace Renderer {
 				});
 
 				window.addEventListener('keyup', function (event) {
-					if(!Utils.isFocusOnPlayPage()) {
+					if (!Utils.isFocusOnPlayPage()) {
 						return;
 					}
 					switch (event.key) {

@@ -36,26 +36,8 @@ namespace Renderer {
 						break;
 					}
 					case 'region': {
-						const renderer = Renderer.Three.instance();
-						renderer.voxelEditor.commandController.addCommand(
-							{
-								func: () => {
-									entity = new Region(taroEntity._id, taroEntity._stats.ownerId, taroEntity);
-									this.regions.push(entity);
-								},
-								undo: () => {
-									const data = {
-										name: taroEntity._stats.id,
-										delete: true,
-									};
-									inGameEditor.updateRegionInReact &&
-										!window.isStandalone &&
-										inGameEditor.updateRegionInReact(data, 'threejs');
-								},
-							},
-							true
-						);
-
+						entity = new Region(taroEntity._id, taroEntity._stats.ownerId, taroEntity);
+						this.regions.push(entity);
 						break;
 					}
 				}
@@ -70,12 +52,7 @@ namespace Renderer {
 
 			destroyInitEntity(initEntity: InitEntity) {
 				const renderer = Three.instance();
-				if (
-					renderer.entityEditor.selectedEntities instanceof InitEntity &&
-					renderer.entityEditor.selectedEntities.action.actionId === initEntity.action.actionId
-				) {
-					renderer.entityEditor.selectEntity(null);
-				}
+				renderer.entityEditor.selectEntity(initEntity, 'remove');
 				this.initEntities = this.initEntities.filter((e) => e.action.actionId !== initEntity.action.actionId);
 				initEntity.destroy();
 			}

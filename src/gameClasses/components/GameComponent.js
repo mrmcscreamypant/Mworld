@@ -127,7 +127,7 @@ var GameComponent = TaroEntity.extend({
 
 			const { isOwner, isInvitedUser, isUserMod, isUserAdmin, isModerationAllowed } = taro.workerComponent
 				? taro.workerComponent.getUserPermissions(data)
-				: { isOwner: true };
+				: { isOwner: true }; // if worker component is not available, assume the user is the owner (for local env)
 
 			player._stats.isUserAdmin = isUserAdmin;
 			player._stats.isUserMod = isUserMod;
@@ -394,19 +394,13 @@ var GameComponent = TaroEntity.extend({
 					'<tr>' +
 					'<td>Bodies</td>' +
 					`<td>${data.status.physics.bodyCount}</td>` +
-					`<td>${taro.physics && taro.physics._world ? taro.physics._world.m_bodyCount : ''}</td>` +
-					'<td></td>' +
-					'</tr>' +
-					'<tr>' +
-					'<td>Joints</td>' +
-					`<td>${data.status.physics.jointCount}</td>` +
-					`<td>${taro.physics && taro.physics._world ? taro.physics._world.m_jointCount : ''}</td>` +
+					`<td>${taro.physics ? taro.physics.getBodyCount() : ''}</td>` +
 					'<td></td>' +
 					'</tr>' +
 					'<tr>' +
 					'<td>Contacts</td>' +
 					`<td>${data.status.physics.contactCount}</td>` +
-					`<td>${taro.physics && taro.physics._world ? taro.physics._world.m_contactCount : ''}</td>` +
+					`<td>${taro.physics ? taro.physics.getContactCount() : ''}</td>` +
 					'<td></td>' +
 					'</tr>' +
 					'<tr>' +
@@ -418,7 +412,7 @@ var GameComponent = TaroEntity.extend({
 					'<tr>' +
 					'<td>Avg Step Duration(ms)</td>' +
 					`<td>${data.status.physics.stepDuration}</td>` +
-					`<td>${taro.physics && taro.physics._world ? taro.physics.avgPhysicsTickDuration.toFixed(2) : ''}</td>` +
+					`<td>${taro.physics ? taro.physics.avgPhysicsTickDuration.toFixed(2) : ''}</td>` +
 					'<td></td>' +
 					'</tr>' +
 					'<tr>' +
@@ -471,7 +465,7 @@ var GameComponent = TaroEntity.extend({
 					'<tr>' +
 					'<td>Total Bodies Created</td>' +
 					`<td>${data.status.physics.totalBodiesCreated}</td>` +
-					`<td>${taro.physics && taro.physics._world ? taro.physics.totalBodiesCreated : ''}</td>` +
+					`<td>${taro.physics ? taro.physics.totalBodiesCreated : ''}</td>` +
 					'<td></td>' +
 					'</tr>' +
 					'<tr>' +

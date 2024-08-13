@@ -29,9 +29,14 @@ var AttributeComponent = TaroEntity.extend({
 
 		self.now = Date.now();
 
+		let lastRegenInterval = self.now - self.lastRegenerated;
 		// reneration happens every 200ms
-		if (self.now - self.lastRegenerated > 200) {
-			self.lastRegenerated = self.now + (self.now - self.lastRegenerated - 200);
+		if (lastRegenInterval > 200) {
+			// if lastRegenInterval is more than 300ms, cap it to 300ms (happen when entity was hidden)
+			if (lastRegenInterval > 300) {
+				lastRegenInterval = 300;
+			}
+			self.lastRegenerated = self.now + (lastRegenInterval - 200);
 
 			var attributes = self._entity._stats.attributes;
 			for (attributeTypeId in attributes) {

@@ -266,6 +266,13 @@ var TaroNetIoServer = {
 	 * @param {Boolean} skipQueue
 	 */
 	send: function (commandName, data, clientId, skipQueue = false) {
+		// don't send anything to bot players
+		// dont send msg to bots or computer players
+		if (clientId === -1 || clientId < 20) {
+			// console.log('no comm for bots!', clientId, commandName);
+			return;
+		}
+
 		var self = this;
 		var commandIndex = this._networkCommandsLookup[commandName];
 		var ciEncoded;
