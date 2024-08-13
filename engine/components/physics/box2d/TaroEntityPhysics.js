@@ -67,9 +67,6 @@ var TaroEntityPhysics = TaroEntity.extend({
 			return;
 		}
 
-		this.width(parseFloat(body.width * (this._stats.scaleBody || 1)));
-		this.height(parseFloat(body.height * (this._stats.scaleBody || 1)));
-
 		var shapeData =
 			body.fixtures && body.fixtures[0] && body.fixtures[0].shape && body.fixtures[0].shape.data
 				? body.fixtures[0].shape.data
@@ -95,6 +92,12 @@ var TaroEntityPhysics = TaroEntity.extend({
 			}
 			if (offsetY) {
 				shapeData.y = offsetY;
+			}
+			if (this._stats.scaleBody) {
+				// b2d expects halfs
+				let scaleBody2 = Number(this._stats.scaleBody) / 2;
+				shapeData.halfWidth = (sizeX ?? body.width) * scaleBody2;
+				shapeData.halfHeight = (sizeY ?? body.height) * scaleBody2;
 			}
 		}
 
@@ -682,6 +685,8 @@ var TaroEntityPhysics = TaroEntity.extend({
 		// console.log(self._stats.name,'->',self._stats.scale)
 		var newWidth = ((body && body.width) || 1) * self._stats.scale;
 		var newHeight = ((body && body.height) || 1) * self._stats.scale;
+
+		console.log(newWidth, newHeight);
 
 		self.width(newWidth, false);
 		self.height(newHeight, false);
