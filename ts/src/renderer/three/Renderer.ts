@@ -42,6 +42,22 @@ namespace Renderer {
 			mode = Mode.Play;
 			selectionBox: SelectionBox;
 			selectionHelper: SelectionHelper;
+			frustum = new THREE.Frustum();
+			cameraViewProjectionMatrix = new THREE.Matrix4();
+
+			updateFrustumCulling() {
+				this.scene.traverse((object: any) => {
+					const entity = object.taroEntity;
+					if (entity && object.body && (object.body.sprite ?? object.body.mesh)?.isMesh) {
+						if (!this.frustum.intersectsObject(object.body.sprite ?? object.body.mesh)) {
+							entity.culled = true;
+						} else {
+							entity.culled = false;
+						}
+					}
+				});
+			}
+
 			voxels: Voxels;
 			projectilPool: ProjectilePool;
 			private clock = new THREE.Clock();
@@ -1061,7 +1077,14 @@ namespace Renderer {
 
 			private render() {
 				window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
-
+				// Call this function before rendering
+				this.camera.instance.updateMatrixWorld(); // Ensure the camera matrix is updated
+				this.cameraViewProjectionMatrix.multiplyMatrices(
+					this.camera.instance.projectionMatrix,
+					this.camera.instance.matrixWorldInverse
+				);
+				this.frustum.setFromProjectionMatrix(this.cameraViewProjectionMatrix);
+				this.updateFrustumCulling();
 				taro.client.emit('tick');
 				if (this.entityEditor) this.entityEditor.update();
 				if (this.camera.target) {
