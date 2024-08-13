@@ -302,8 +302,8 @@ class VoxelEditor {
 		if (!intersect) {
 			return;
 		}
-		const _x = Math.floor(intersect.x);
-		const _y = Math.floor(intersect.z);
+		const _x = Math.floor((intersect.x * 64) / Renderer.Three.getTileSize().x);
+		const _y = Math.floor((intersect.z * 64) / Renderer.Three.getTileSize().y);
 		const selectedTiles = {};
 		const tileId = renderer.tmp_tileId;
 		selectedTiles[_x] = {};
