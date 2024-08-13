@@ -3569,7 +3569,7 @@ var TaroEntity = TaroObject.extend({
 			} else {
 				this.height(height);
 				this.width(width);
-				this._scaleTexture();
+				// this._scaleTexture();
 			}
 		}
 	},
