@@ -289,7 +289,7 @@ var Projectile = TaroEntityPhysics.extend({
 							this.scaleBodyBy(newValue);
 						} else if (taro.isClient) {
 							if (taro.physics) {
-								this._scaleBox2dBody(newValue);
+								this.scaleBodyBy(newValue);
 							}
 						}
 						break;
