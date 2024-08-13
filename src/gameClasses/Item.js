@@ -81,7 +81,7 @@ var Item = TaroEntityPhysics.extend({
 		}
 		self.setState(self._stats.stateId, self._stats.defaultData);
 
-		self.scaleRatio = taro.physics && taro.physics.scaleRatio();
+		self.scaleRatio = taro.physics && taro.physics.getScaleRatio();
 		if (taro.isServer) {
 			if (self._stats.streamMode == 1 || self._stats.streamMode == undefined) {
 				this.streamMode(1);
@@ -1312,8 +1312,8 @@ var Item = TaroEntityPhysics.extend({
 
 			if (taro.isServer) {
 				if (ownerUnit.hasPhysicsBody()) {
-					x = ownerUnit.getPosition().x * taro.physics._scaleRatio + self.anchoredOffset.x;
-					y = ownerUnit.getPosition().y * taro.physics._scaleRatio + self.anchoredOffset.y;
+					x = ownerUnit.getPosition().x * taro.physics.getScaleRatio() + self.anchoredOffset.x;
+					y = ownerUnit.getPosition().y * taro.physics.getScaleRatio() + self.anchoredOffset.y;
 				}
 				// for client-side, translate+rotate is handled in entitiesToRender.ts
 				self.translateTo(x, y);

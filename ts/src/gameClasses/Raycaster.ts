@@ -16,7 +16,7 @@ type bulletReturn = {
 class Raycaster {
 	engine = taro.physics.engine;
 	world = taro.physics.world();
-	scaleRatio = taro.physics._scaleRatio;
+	scaleRatio = taro.physics.getScaleRatio();
 
 	data: any = {};
 	closest = RayCastClosest();
@@ -169,8 +169,8 @@ const RayCastClosest = function () {
 					const entity = taro.$(taroId);
 					if (entity && (entity._category === 'unit' || entity._category === 'wall')) {
 						entity.lastRaycastCollisionPosition = {
-							x: point.x * taro.physics._scaleRatio,
-							y: point.y * taro.physics._scaleRatio,
+							x: point.x * taro.physics.getScaleRatio(),
+							y: point.y * taro.physics.getScaleRatio(),
 						};
 
 						entity.raycastFraction = fraction;
@@ -197,8 +197,8 @@ const RayCastClosest = function () {
 				var entity = fixtureList && fixtureList.taroId && taro.$(fixtureList.taroId);
 				if (entity && (entity._category === 'unit' || entity._category === 'wall')) {
 					entity.lastRaycastCollisionPosition = {
-						x: point.x * taro.physics._scaleRatio,
-						y: point.y * taro.physics._scaleRatio,
+						x: point.x * taro.physics.getScaleRatio(),
+						y: point.y * taro.physics.getScaleRatio(),
 					};
 
 					entity.raycastFraction = fraction;
@@ -262,8 +262,8 @@ const RayCastMultiple = function () {
 					const entity = taro.$(taroId);
 					if (entity && (entity._category === 'unit' || entity._category === 'wall')) {
 						entity.lastRaycastCollisionPosition = {
-							x: point.x * taro.physics._scaleRatio,
-							y: point.y * taro.physics._scaleRatio,
+							x: point.x * taro.physics.getScaleRatio(),
+							y: point.y * taro.physics.getScaleRatio(),
 						};
 
 						entity.raycastFraction = fraction;
@@ -285,8 +285,8 @@ const RayCastMultiple = function () {
 				var entity = fixtureList && fixtureList.taroId && taro.$(fixtureList.taroId);
 				if (entity && (entity._category === 'unit' || entity._category === 'wall')) {
 					entity.lastRaycastCollisionPosition = {
-						x: point.x * taro.physics._scaleRatio,
-						y: point.y * taro.physics._scaleRatio,
+						x: point.x * taro.physics.getScaleRatio(),
+						y: point.y * taro.physics.getScaleRatio(),
 					};
 
 					entity.raycastFraction = fraction;

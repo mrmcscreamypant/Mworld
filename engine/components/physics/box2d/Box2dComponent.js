@@ -26,6 +26,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 		this.nullPtr = undefined;
 		this.getPointer = undefined;
 		this.engine = dists.defaultEngine;
+		this._scaleRatio = 30;
 
 		this.bodies = new Map();
 
@@ -38,7 +39,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 
 		this.engine = this.engine.toUpperCase();
-		this._scaleRatio = 30;
+
 		console.log('Physics engine: ', this.engine);
 
 		if (this.engine) {
@@ -71,20 +72,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 
 		return this._sleep;
-	},
-
-	/**
-	 * Gets / sets the current engine to box2d scaling ratio.
-	 * @param val
-	 * @return {*}
-	 */
-	scaleRatio: function (val) {
-		if (val !== undefined) {
-			this._scaleRatio = val;
-			return this._entity;
-		}
-
-		return this._scaleRatio;
 	},
 
 	/**
@@ -839,6 +826,10 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 	getContactCount: function () {
 		return this._world?.m_contactCount || this._world?.GetContactCount?.() || 0;
+	},
+
+	getScaleRatio: function () {
+		return this._scaleRatio;
 	},
 
 	_triggerContactEvent: function (entityA, entityB) {

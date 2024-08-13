@@ -95,7 +95,7 @@ const box2dwasmWrapper: PhysicsDistProps = {
 			component.enableDebug = (flags = 1) => {
 				console.log('please make sure clientPhyscisEngine is not "", and enabled csp');
 				if (!component.renderer) {
-					const scale = taro.physics._scaleRatio;
+					const scale = component._scaleRatio;
 					let debugDrawer;
 					if (taro.game.data.defaultData.defaultRenderer !== '3d') {
 						const canvas = taro.renderer.scene.getScene('Game');

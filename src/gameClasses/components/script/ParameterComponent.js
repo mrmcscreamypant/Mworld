@@ -1689,13 +1689,13 @@ var ParameterComponent = TaroEntity.extend({
 
 						if (positionA && positionB) {
 							positionA = {
-								x: positionA.x / taro.physics._scaleRatio,
-								y: positionA.y / taro.physics._scaleRatio,
+								x: positionA.x / taro.physics.getScaleRatio(),
+								y: positionA.y / taro.physics.getScaleRatio(),
 							};
 
 							positionB = {
-								x: positionB.x / taro.physics._scaleRatio,
-								y: positionB.y / taro.physics._scaleRatio,
+								x: positionB.x / taro.physics.getScaleRatio(),
+								y: positionB.y / taro.physics.getScaleRatio(),
 							};
 
 							taro.raycaster.raycastLine(positionA, positionB);
