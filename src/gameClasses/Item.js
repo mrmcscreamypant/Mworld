@@ -1184,14 +1184,18 @@ var Item = TaroEntityPhysics.extend({
 						break;
 
 					case 'scale':
+						this._stats[attrName] = newValue;
+						if (taro.isClient) {
+							this._scaleTexture();
+						}
+						break;
+
 					case 'scaleBody':
 						this._stats[attrName] = newValue;
 						if (taro.isClient) {
 							if (taro.physics) {
 								self.scaleBodyBy(newValue);
 							}
-							self._stats.scale = newValue;
-							self._scaleTexture();
 						} else {
 							self.scaleBodyBy(newValue);
 						}

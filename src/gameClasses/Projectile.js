@@ -276,13 +276,21 @@ var Projectile = TaroEntityPhysics.extend({
 				var newValue = data[attrName];
 
 				switch (attrName) {
+					case 'scale':
+						this._stats[attrName] = newValue;
+						if (taro.isClient) {
+							this._scaleTexture();
+						}
+						break;
+
 					case 'scaleBody':
 						this._stats[attrName] = newValue;
 						if (taro.isServer) {
 							this.scaleBodyBy(newValue);
 						} else if (taro.isClient) {
-							this._stats.scale = newValue;
-							this._scaleTexture();
+							if (taro.physics) {
+								this._scaleBox2dBody(newValue);
+							}
 						}
 						break;
 
