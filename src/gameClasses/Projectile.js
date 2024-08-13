@@ -181,7 +181,7 @@ var Projectile = TaroEntityPhysics.extend({
 			}
 		}
 
-		this.processBox2dQueue();
+		this.processQueue();
 	},
 
 	changeProjectileType: function (type, defaultData) {
@@ -279,17 +279,7 @@ var Projectile = TaroEntityPhysics.extend({
 					case 'scaleBody':
 						this._stats[attrName] = newValue;
 						if (taro.isServer) {
-							// finding all attach entities before changing body dimensions
-							if (this.jointsAttached) {
-								var attachedEntities = {};
-								for (var entityId in this.jointsAttached) {
-									if (entityId != this.id()) {
-										attachedEntities[entityId] = true;
-									}
-								}
-							}
-
-							this._scaleBox2dBody(newValue);
+							this.scaleBodyBy(newValue);
 						} else if (taro.isClient) {
 							this._stats.scale = newValue;
 							this._scaleTexture();

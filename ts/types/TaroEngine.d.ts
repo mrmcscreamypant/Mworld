@@ -79,7 +79,7 @@ declare class TaroEngine extends TaroClass {
 		tryRecordLeak?: (...args: any) => any;
 		destroyB2dObj?: (...args: any) => any;
 		box2D?: typeof Box2D & EmscriptenModule;
-		_scaleRatio: number;
+		getScaleRatio: () => number;
 	};
 
 	$(item: number | string | object): any;

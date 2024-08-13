@@ -81,7 +81,7 @@ var Item = TaroEntityPhysics.extend({
 		}
 		self.setState(self._stats.stateId, self._stats.defaultData);
 
-		self.scaleRatio = taro.physics && taro.physics.scaleRatio();
+		self.scaleRatio = taro.physics && taro.physics.getScaleRatio();
 		if (taro.isServer) {
 			if (self._stats.streamMode == 1 || self._stats.streamMode == undefined) {
 				this.streamMode(1);
@@ -166,33 +166,29 @@ var Item = TaroEntityPhysics.extend({
 
 	/* mount the item on unit. if it has box2d body, then create an appropriate joint */
 	mount: function (obj) {
-		var state = (this._stats.states && this._stats.states[this._stats.stateId]) || {};
-		var body = this._stats.currentBody;
+		var bodyDef = this._stats.currentBody;
 
-		// console.log("mounting on", obj._category)
 		if (obj && obj._category == 'unit') {
-			if (body && body.type != 'none') {
-				taro.devLog('mounting item to unit ', body.unitAnchor.x, -1 * body.unitAnchor.y);
+			if (bodyDef && bodyDef.type != 'none') {
+				taro.devLog('mounting item to unit ', bodyDef.unitAnchor.x, -1 * bodyDef.unitAnchor.y);
 
-				this.width(body.width);
-				this.height(body.height);
+				this.width(bodyDef.width);
+				this.height(bodyDef.height);
 
 				// mount texture on the unit in a correct position
 				if (taro.isClient) {
 					// avoid transforming box2d body by calling prototype
-
-					var unitAnchorX = body.unitAnchor.x;
-					var unitAnchorY = body.unitAnchor.y;
+					var unitAnchorX = bodyDef.unitAnchor.x;
+					var unitAnchorY = bodyDef.unitAnchor.y;
 					TaroEntity.prototype.translateTo.call(this, unitAnchorX, -1 * unitAnchorY, 0);
-					// TaroEntity.prototype.rotateTo.call(this, 0, 0, body.unitAnchor.rotation || 0)
 				}
 			}
 		} else {
 			taro.devLog("there's no unit to attach!");
 			// item is dropped
-			if (body && body.type != 'none') {
-				this.width(body.width);
-				this.height(body.height);
+			if (bodyDef && bodyDef.type != 'none') {
+				this.width(bodyDef.width);
+				this.height(bodyDef.height);
 			}
 			if (taro.isServer) {
 				TaroEntity.prototype.mount.call(this, obj);
@@ -630,9 +626,8 @@ var Item = TaroEntityPhysics.extend({
 								unitAttributes: this._stats.damage.unitAttributes,
 								playerAttributes: this._stats.damage.playerAttributes,
 							};
-							// console.log(owner._translate.x, owner._translate.y, hitbox);                                              //////////Hitbox log
 
-							entities = taro.physics.getBodiesInRegion(hitbox);
+							entities = taro.physics.getEntitiesInRegion(hitbox);
 
 							while (entities.length > 0) {
 								var entity = entities.shift();
@@ -1193,22 +1188,12 @@ var Item = TaroEntityPhysics.extend({
 						this._stats[attrName] = newValue;
 						if (taro.isClient) {
 							if (taro.physics) {
-								self._scaleBox2dBody(newValue);
+								self.scaleBodyBy(newValue);
 							}
 							self._stats.scale = newValue;
 							self._scaleTexture();
 						} else {
-							// finding all attach entities before changing body dimensions
-							if (self.jointsAttached) {
-								var attachedEntities = {};
-								for (var entityId in self.jointsAttached) {
-									if (entityId != self.id()) {
-										attachedEntities[entityId] = true;
-									}
-								}
-							}
-							// attaching entities
-							self._scaleBox2dBody(newValue);
+							self.scaleBodyBy(newValue);
 						}
 						break;
 
@@ -1326,10 +1311,9 @@ var Item = TaroEntityPhysics.extend({
 			var y = ownerUnit._translate.y + self.anchoredOffset.y;
 
 			if (taro.isServer) {
-				if (ownerUnit.body) {
-					// on server, add anchoredOffset to the position of the physics body, not Unit._translate
-					x = ownerUnit.body.getPosition().x * ownerUnit._b2dRef._scaleRatio + self.anchoredOffset.x;
-					y = ownerUnit.body.getPosition().y * ownerUnit._b2dRef._scaleRatio + self.anchoredOffset.y;
+				if (ownerUnit.hasPhysicsBody()) {
+					x = ownerUnit.getPosition().x * taro.physics.getScaleRatio() + self.anchoredOffset.x;
+					y = ownerUnit.getPosition().y * taro.physics.getScaleRatio() + self.anchoredOffset.y;
 				}
 				// for client-side, translate+rotate is handled in entitiesToRender.ts
 				self.translateTo(x, y);
@@ -1396,7 +1380,7 @@ var Item = TaroEntityPhysics.extend({
 			}
 		}
 
-		this.processBox2dQueue();
+		this.processQueue();
 	},
 
 	loadPersistentData: function (persistData) {
