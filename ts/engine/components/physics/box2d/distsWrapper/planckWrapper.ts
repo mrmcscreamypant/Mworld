@@ -49,8 +49,30 @@ const planckWrapper: PhysicsDistProps = {
 		component._gravity = new component.b2Vec2(0, 0);
 	},
 
-	getmxfp: function (body) {
+	getBodyPosition: function (body) {
 		return body.m_xf.p;
+	},
+
+	getEntitiesInRegion: function (self, region) {
+		const aabb = new self.b2AABB();
+		aabb.lowerBound.set(region.x / self._scaleRatio, region.y / self._scaleRatio);
+		aabb.upperBound.set((region.x + region.width) / self._scaleRatio, (region.y + region.height) / self._scaleRatio);
+
+		const entities = [];
+		function getBodyCallback(fixture) {
+			if (fixture && fixture.m_body && fixture.m_body.m_fixtureList) {
+				const entityId = fixture.m_body.m_fixtureList.taroId;
+				const entity = taro.$(entityId);
+				if (entity) {
+					entities.push(entity);
+				}
+			}
+			return true;
+		}
+
+		this.queryAABB(self, aabb, getBodyCallback);
+
+		return entities;
 	},
 
 	queryAABB: function (self, aabb, callback) {
@@ -60,14 +82,12 @@ const planckWrapper: PhysicsDistProps = {
 	createBody: function (self, entity, body, isLossTolerant) {
 		PhysicsComponent.prototype.log(`createBody of ${entity._stats.name}`);
 
-		// immediately destroy body if entity already has box2dBody
 		if (!entity) {
 			PhysicsComponent.prototype.log('warning: creating body for non-existent entity');
 			return;
 		}
 
-		// if there's already a body, destroy it first
-		if (entity.body) {
+		if (entity.hasPhysicsBody()) {
 			PhysicsComponent.prototype.log('body already exists, destroying body');
 			self.destroyBody(entity);
 		}
@@ -216,14 +236,11 @@ const planckWrapper: PhysicsDistProps = {
 			}
 		}
 
-		// Store the entity that is linked to self body
 		tempBod._entity = entity;
 
-		// Add the body to the world with the passed fixture
-		entity.body = tempBod;
+		self.bodies.set(entity.id(), tempBod);
 
 		entity.gravitic(!!body.affectedByGravity);
-		// rotate body to its previous value
 		entity.rotateTo(0, 0, entity._rotate.z);
 
 		PhysicsComponent.prototype.log(
@@ -233,67 +250,18 @@ const planckWrapper: PhysicsDistProps = {
 		return tempBod;
 	},
 
-	createJoint: function (self, entityA, entityB, anchorA, anchorB) {
-		// if joint type none do nothing
-		var aBody = entityA._stats.currentBody;
-		var bBody = entityB._stats.currentBody;
+	destroyBody: function (self, entity) {
+		if (!entity?.hasPhysicsBody()) {
+			self.log("failed to destroy body - body doesn't exist.");
+			return;
+		}
 
-		if (!aBody || aBody.jointType == 'none' || aBody.type == 'none') return;
-		// create a joint only if there isn't pre-existing joint
-		// console.log("creating joint between "+entityA._stats.name+ " and " + entityB._stats.name)
-		if (
-			entityA &&
-			entityA.body &&
-			entityB &&
-			entityB.body && // make sure both entities have bodies
-			entityA.id() != entityB.id() // im not creating joint to myself!
-		) {
-			if (aBody.jointType == 'revoluteJoint' && anchorA && anchorB) {
-				var localAnchorA = planck.Vec2(anchorA.x / aBody.width, anchorA.y / aBody.height);
-				var localAnchorB = planck.Vec2(anchorB.x / bBody.width, anchorB.y / bBody.height);
+		const isBodyDestroyed = self._world.destroyBody.apply(self._world, [self.bodies.get(entity.id())]);
+		if (isBodyDestroyed) {
+			self.bodies.delete(entity.id());
 
-				// we have to divide the localAnchors by self._tilesizeRatio because the effect of
-				// 0,1 on 64x64 tilesize in anchor is equal to
-				// 0,0.5 on 32x32 tilesized map or
-				// 0,0.25 on 16x16 tilesized map
-
-				localAnchorA.x = localAnchorA.x / self._scaleRatio;
-				localAnchorA.y = localAnchorA.y / self._scaleRatio;
-				localAnchorB.x = localAnchorB.x / self._scaleRatio;
-				localAnchorB.y = localAnchorB.y / self._scaleRatio;
-
-				var joint_def = planck.RevoluteJoint(
-					{
-						// lowerAngle: aBody.itemAnchor.lowerAngle * 0.0174533, // degree to rad
-						// upperAngle: aBody.itemAnchor.upperAngle * 0.0174533, // degree to rad
-						// enableLimit: true,
-						localAnchorA: localAnchorA,
-						localAnchorB: localAnchorB,
-					},
-					entityA.body,
-					entityB.body
-				);
-			} // weld joint
-			else {
-				var joint_def = planck.WeldJoint(
-					{
-						frequencyHz: 0, // The mass-spring-damper frequency in Hertz. Rotation only. Disable softness with a value of 0.
-						dampingRatio: 0, // The damping ratio. 0 = no damping, 1 = critical damping
-					},
-					entityA.body,
-					entityB.body,
-					entityA.body.getWorldCenter()
-				);
-			}
-
-			var joint = self._world.createJoint(joint_def); // joint between two pieces
-
-			// console.log("joint created "+ aBody.jointType)
-
-			entityA.jointsAttached[entityB.id()] = joint;
-			entityB.jointsAttached[entityA.id()] = joint;
-		} else {
-			// console.log("joint cannot be created: one or more bodies missing")
+			entity._box2dOurContactFixture = null;
+			entity._box2dTheirContactFixture = null;
 		}
 	},
 

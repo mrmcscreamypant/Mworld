@@ -33,13 +33,6 @@ var StatusComponent = TaroEntity.extend({
 			taro._lastCpuUsage = cpuDelta = process.cpuUsage();
 		}
 
-		var jointCount = 0;
-		var jointList = taro.physics._world && taro.physics._world.getJointList();
-		let getPointer = taro.physics.getPointer;
-		while (jointList && (!getPointer || getPointer(jointList) !== getPointer(taro.physics.nullPtr))) {
-			jointCount++;
-			jointList = jointList.getNext();
-		}
 		var returnData = {
 			clientCount: Object.keys(taro.network._socketById).length,
 			entityCount: {
@@ -57,9 +50,8 @@ var StatusComponent = TaroEntity.extend({
 			currentTime: taro._currentTime,
 			physics: {
 				engine: taro.physics.engine,
-				bodyCount: taro.physics._world?.m_bodyCount || taro.physics._world?.GetBodyCount?.() || 0,
-				contactCount: taro.physics._world?.m_contactCount || taro.physics._world?.GetContactCount?.() || 0,
-				jointCount: taro.physics._world?.m_jointCount || taro.physics._world?.GetJointCount?.() || 0,
+				bodyCount: taro.physics.getBodyCount(),
+				contactCount: taro.physics.getContactCount(),
 				stepDuration: taro.physics.avgPhysicsTickDuration.toFixed(2),
 				stepsPerSecond: taro._physicsFPS,
 				totalBodiesCreated: taro.physics.totalBodiesCreated,

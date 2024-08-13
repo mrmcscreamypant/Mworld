@@ -141,11 +141,6 @@ var TaroEntity = TaroObject.extend({
 
 		var newState = (self._stats.states && self._stats.states[stateId]) || {};
 		if (newState && newState.body) {
-			/*
-			* if state is 'unselected' newState.body = 'none'
-				will evaluate to currentBody = undefined
-
-			*/
 			self._stats.currentBody = self._stats.bodies[newState.body];
 		}
 
@@ -953,7 +948,7 @@ var TaroEntity = TaroObject.extend({
 		// get bounds of spriteOnly item carried by unit
 		if (this._category == 'item') {
 			var ownerUnit = this.getOwnerUnit();
-			if (ownerUnit && this._stats && this._stats.currentBody.type == 'spriteOnly' && !this.body) {
+			if (ownerUnit && this._stats && this._stats.currentBody.type == 'spriteOnly' && !this.hasPhysicsBody()) {
 				bounds = {
 					x: ownerUnit._translate.x + this.anchorOffset.x - this._stats.currentBody.width / 2,
 					y: ownerUnit._translate.y + this.anchorOffset.y - this._stats.currentBody.height / 2,
@@ -2086,10 +2081,7 @@ var TaroEntity = TaroObject.extend({
 					var projectile = taro.game.cloneAsset('projectileTypes', effect.projectileType);
 
 					if (projectile) {
-						var position =
-							taro.game.lastProjectileHitPosition ||
-							// (this.body && taro.physics.engine === 'BOX2DWASM' ? taro.physics.recordLeak(this.body.getPosition()) : this.body.getPosition()) || // this was causing client to crash
-							this._translate;
+						var position = taro.game.lastProjectileHitPosition || this._translate;
 
 						projectile.defaultData = {
 							//type: effect.projectileType,
@@ -3252,23 +3244,6 @@ var TaroEntity = TaroObject.extend({
 				taro.client.emit('camera-instant-move', [x, y]);
 			}
 		}
-
-		if (this._category == 'unit') {
-			// teleport unit's attached items as well. otherwise, the attached bodies (using joint) can cause a drag and
-			// teleport the unit to a location that's between the origin and the destination
-			for (entityId in this.jointsAttached) {
-				if ((attachedEntity = taro.$(entityId))) {
-					if (attachedEntity._category == 'item') {
-						// to prevent infinite loop, only move items that are attached to unit
-						attachedEntity.teleportTo(
-							attachedEntity._translate.x + offsetX,
-							attachedEntity._translate.y + offsetY,
-							attachedEntity._rotate.z
-						);
-					}
-				}
-			}
-		}
 	},
 
 	/**
@@ -3594,6 +3569,7 @@ var TaroEntity = TaroObject.extend({
 			} else {
 				this.height(height);
 				this.width(width);
+				this._scaleTexture();
 			}
 		}
 	},
@@ -5012,13 +4988,14 @@ var TaroEntity = TaroObject.extend({
 						'flip',
 						'skin',
 						'anim',
-						'scale',
 						'cellSheet',
 						'width',
 						'height',
-						'scaleDimensions',
 						'isHidden',
 						'opacity',
+						'scale',
+						'scaleBody',
+						'scaleDimensions',
 					];
 					data = {
 						attributes: {},
@@ -5040,11 +5017,13 @@ var TaroEntity = TaroObject.extend({
 						'isBeingUsed',
 						'width',
 						'height',
-						'scaleDimensions',
 						'description',
 						'slotIndex',
 						'isHidden',
 						'opacity',
+						'scale',
+						'scaleBody',
+						'scaleDimensions',
 					];
 					data = {
 						attributes: {},
@@ -5060,11 +5039,13 @@ var TaroEntity = TaroObject.extend({
 						'flip',
 						'width',
 						'height',
-						'scaleDimensions',
 						'sourceItemId',
 						'streamMode',
 						'isHidden',
 						'opacity',
+						'scale',
+						'scaleBody',
+						'scaleDimensions',
 					];
 					data = {
 						attributes: {},

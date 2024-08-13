@@ -26,8 +26,6 @@ const box2dwebWrapper: PhysicsDistProps = {
 		component.b2World.prototype.isLocked = component.b2World.prototype.IsLocked;
 		component.b2World.prototype.createBody = component.b2World.prototype.CreateBody;
 		component.b2World.prototype.destroyBody = component.b2World.prototype.DestroyBody;
-		// component.b2World.prototype.createJoint = component.b2World.prototype.CreateJoint;
-		component.b2World.prototype.destroyJoint = component.b2World.prototype.DestroyJoint;
 		component.b2World.prototype.createFixture = component.b2World.prototype.CreateFixture;
 		component.b2World.prototype.clearForces = component.b2World.prototype.ClearForces;
 		component.b2World.prototype.getBodyList = component.b2World.prototype.GetBodyList;
@@ -35,14 +33,6 @@ const box2dwebWrapper: PhysicsDistProps = {
 		component.b2World.prototype.getFixtureList = component.b2World.prototype.GetFixtureList;
 		component.b2World.prototype.step = component.b2World.prototype.Step;
 		component.b2World.prototype.rayCast = component.b2World.prototype.RayCast;
-
-		// signature is backwards!
-		/*
-			component.b2World.prototype.queryAABB = function(aabb, queryCallback){
-				return component.b2World.prototype.QueryAABB(queryCallback,aabb);
-			}
-			*/
-
 		component.b2Body.prototype.getNext = component.b2Body.prototype.GetNext;
 		component.b2Body.prototype.getAngle = component.b2Body.prototype.GetAngle;
 		component.b2Body.prototype.setPosition = component.b2Body.prototype.SetPosition;
@@ -118,8 +108,30 @@ const box2dwebWrapper: PhysicsDistProps = {
 		self._world.SetContactListener(contactListener);
 	},
 
-	getmxfp: function (body) {
+	getBodyPosition: function (body) {
 		return body.m_xf.position;
+	},
+
+	getEntitiesInRegion: function (self, region) {
+		const aabb = new self.b2AABB();
+		aabb.lowerBound.set(region.x / self._scaleRatio, region.y / self._scaleRatio);
+		aabb.upperBound.set((region.x + region.width) / self._scaleRatio, (region.y + region.height) / self._scaleRatio);
+
+		const entities = [];
+		function getBodyCallback(fixture) {
+			if (fixture && fixture.m_body && fixture.m_body.m_fixtureList) {
+				const entityId = fixture.m_body.m_fixtureList.taroId;
+				const entity = taro.$(entityId);
+				if (entity) {
+					entities.push(entity);
+				}
+			}
+			return true;
+		}
+
+		this.queryAABB(self, aabb, getBodyCallback);
+
+		return entities;
 	},
 
 	queryAABB: function (self, aabb, callback) {
@@ -129,16 +141,15 @@ const box2dwebWrapper: PhysicsDistProps = {
 	createBody: function (self, entity, body, isLossTolerant) {
 		PhysicsComponent.prototype.log(`createBody of ${entity._stats.name}`);
 
-		// immediately destroy body if entity already has box2dBody
 		if (!entity) {
 			PhysicsComponent.prototype.log('warning: creating body for non-existent entity');
 			return;
 		}
 
-		// if there's already a body, destroy it first
-		if (entity.body) {
+		if (entity.hasPhysicsBody()) {
 			self.destroyBody(entity);
 		}
+
 		var tempDef = new self.b2BodyDef();
 		var param;
 		var tempBod;
@@ -218,7 +229,15 @@ const box2dwebWrapper: PhysicsDistProps = {
 								fixtureDef = body.fixtures[i];
 
 								// Create the fixture
-								tempFixture = self.createFixture(fixtureDef);
+								tempFixture = new self.b2FixtureDef();
+								for (const param in fixtureDef) {
+									if (fixtureDef.hasOwnProperty(param)) {
+										if (param !== 'shape' && param !== 'filter') {
+											tempFixture[param] = fixtureDef[param];
+										}
+									}
+								}
+
 								tempFixture.taroId = fixtureDef.taroId;
 
 								// Check for a shape definition for the fixture
@@ -320,63 +339,48 @@ const box2dwebWrapper: PhysicsDistProps = {
 			}
 		}
 
-		// Store the entity that is linked to self body
 		tempBod._entity = entity;
 
-		// Add the body to the world with the passed fixture
-		entity.body = tempBod;
+		self.bodies.set(entity.id(), tempBod);
 
 		entity.gravitic(!!body.affectedByGravity);
-		// rotate body to its previous value
-		// console.log('box2dweb',entity._rotate.z)
 		entity.rotateTo(0, 0, entity._rotate.z);
-		// Add the body to the world with the passed fixture
+
 		return tempBod;
 	},
 
-	createJoint: function (self, entityA, entityB, anchorA, anchorB) {
-		// if joint type none do nothing
-		var aBody = entityA._stats.currentBody;
-		var bBody = entityB._stats.currentBody;
+	destroyBody: function (self, entity) {
+		if (!entity?.hasPhysicsBody()) {
+			self.log("failed to destroy body - body doesn't exist.");
+			return;
+		}
 
-		if (!aBody || aBody.jointType == 'none' || aBody.type == 'none') return;
+		const isBodyDestroyed = self._world.destroyBody.apply(self._world, [self.bodies.get(entity.id())]);
 
-		// create a joint only if there isn't pre-existing joint
-		PhysicsComponent.prototype.log(
-			`creating ${aBody.jointType} joint between ${entityA._stats.name} and ${entityB._stats.name}`
-		);
+		self._world.m_contactSolver.m_constraints = [];
+		self._world.m_island.m_bodies = [];
+		self._world.m_island.m_contacts = [];
+		self._world.m_island.m_joints = [];
+		self._world.m_contactManager.m_broadPhase.m_pairBuffer = [];
+		self._world.m_contactManager.m_broadPhase.m_tree.m_freeList = null;
 
-		if (
-			entityA &&
-			entityA.body &&
-			entityB &&
-			entityB.body &&
-			entityA.id() != entityB.id() // im not creating joint to myself!
-		) {
-			if (aBody.jointType == 'revoluteJoint') {
-				var joint_def = new box2dweb.Dynamics.Joints.b2RevoluteJointDef();
-
-				joint_def.Initialize(entityA.body, entityB.body, entityB.body.GetWorldCenter());
-
-				// joint_def.enableLimit = true;
-				// joint_def.lowerAngle = aBody.itemAnchor.lowerAngle * 0.0174533; // degree to rad
-				// joint_def.upperAngle = aBody.itemAnchor.upperAngle * 0.0174533; // degree to rad
-
-				joint_def.localAnchorA.Set(anchorA.x / self._scaleRatio, anchorA.y / self._scaleRatio); // item anchor
-				joint_def.localAnchorB.Set(anchorB.x / self._scaleRatio, -anchorB.y / self._scaleRatio); // unit anchor
-			} // weld joint
-			else {
-				var joint_def = new box2dweb.Dynamics.Joints.b2WeldJointDef();
-				joint_def.Initialize(entityA.body, entityB.body, entityA.body.GetWorldCenter(), entityB.body.GetWorldCenter());
+		for (let i = 0; i < box2dweb.Dynamics.b2World.s_queue.length; i++) {
+			if (box2dweb.Dynamics.b2World.s_queue[i]._entity._id == entity._id) {
+				box2dweb.Dynamics.b2World.s_queue.splice(i, 1);
 			}
+		}
 
-			var joint = self._world.CreateJoint(joint_def); // joint between two pieces
+		for (let i = 0; i < self._world.m_contactManager.m_contactFactory.m_registers.length; i++) {
+			for (let j = 0; j < self._world.m_contactManager.m_contactFactory.m_registers[i].length; j++) {
+				delete self._world.m_contactManager.m_contactFactory.m_registers[i][j].pool;
+			}
+		}
 
-			// var serverStats = taro.status.getSummary()
-			PhysicsComponent.prototype.log('joint created ', aBody.jointType);
+		if (isBodyDestroyed) {
+			self.bodies.delete(entity.id());
 
-			entityA.jointsAttached[entityB.id()] = joint;
-			entityB.jointsAttached[entityA.id()] = joint;
+			entity._box2dOurContactFixture = null;
+			entity._box2dTheirContactFixture = null;
 		}
 	},
 };

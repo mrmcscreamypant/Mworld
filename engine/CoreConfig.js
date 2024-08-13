@@ -87,7 +87,6 @@ var taroCoreConfig = {
 		/* Physics Libraries */
 		['csap', 'PhysicsComponent', './components/physics/box2d/Box2dComponent.js'],
 		['csap', 'TaroEntityPhysics', './components/physics/box2d/TaroEntityPhysics.js'],
-		['csap', 'TaroBox2dWorld', './components/physics/box2d/TaroBox2dDebugPainter.js'],
 		['csap', 'Box2dHelpers', './components/physics/box2d/debugDrawWrapper/box2dwasmHelper.js'],
 		['csap', 'Box2dDebugDrawerPhaser', './components/physics/box2d/debugDrawWrapper/box2dwasmDebugDrawerPhaser.js'],
 		['csap', 'Box2dDebugDrawerThree', './components/physics/box2d/debugDrawWrapper/box2dwasmDebugDrawerThree.js'],
