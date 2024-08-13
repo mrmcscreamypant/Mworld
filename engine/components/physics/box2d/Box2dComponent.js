@@ -833,6 +833,10 @@ var PhysicsComponent = TaroEventingClass.extend({
 		};
 	},
 
+	isLocked: function () {
+		return this._world?.isLocked();
+	},
+
 	_triggerContactEvent: function (entityA, entityB) {
 		var triggeredBy = {};
 

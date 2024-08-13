@@ -274,7 +274,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	},
 
 	applyTorque: function (torque) {
-		if (taro.physics._world.isLocked() || !this.hasPhysicsBody()) {
+		if (taro.physics.isLocked() || !this.hasPhysicsBody()) {
 			this.queueAction({
 				type: 'applyTorque',
 				torque: torque,
@@ -286,7 +286,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	setLinearVelocity: function (x, y, z, isLossTolerant) {
 		// if body doesn't exist yet, queue
-		if ((!taro.physics._world.isLocked() && this.hasPhysicsBody()) || isLossTolerant) {
+		if ((!taro.physics.isLocked() && this.hasPhysicsBody()) || isLossTolerant) {
 			this.setLinearVelocityLT(x, y);
 		} else {
 			this.queueAction({
@@ -310,7 +310,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 		// if body doesn't exist yet, queue
 		if (!taro.physics) return;
 
-		if (!taro.physics._world.isLocked() && this.hasPhysicsBody()) {
+		if (!taro.physics.isLocked() && this.hasPhysicsBody()) {
 			this.applyForceLT(x, y);
 		} else {
 			this.queueAction({
@@ -333,7 +333,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	// lossless applyForce
 	applyImpulse: function (x, y) {
 		// if body doesn't exist yet, queue
-		if (!taro.physics._world.isLocked() && this.hasPhysicsBody()) {
+		if (!taro.physics.isLocked() && this.hasPhysicsBody()) {
 			this.applyImpulseLT(x, y);
 		} else {
 			this.queueAction({
@@ -448,7 +448,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 		this._translateToProto(x, y);
 
 		if (this.hasPhysicsBody()) {
-			if (taro.physics._world && !taro.physics._world.isLocked()) {
+			if (!taro.physics.isLocked()) {
 				this.translateToLT(x, y);
 			} else {
 				this.queueAction({
@@ -507,7 +507,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 		if (bodyDef && bodyDef.type !== 'none' && bodyDef.type !== 'spriteOnly') {
 			// Check if the entity has a box2d body attached
 			// and if so, is it updating or not
-			if ((taro.physics._world && taro.physics._world.isLocked()) || !this.hasPhysicsBody()) {
+			if (taro.physics.isLocked() || !this.hasPhysicsBody()) {
 				this.queueAction({
 					type: 'rotateTo',
 					angle: z,
@@ -551,7 +551,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 		if (bodyDef && bodyDef.type !== 'none' && bodyDef.type !== 'spriteOnly') {
 			// Check if the entity has a box2d body attached
 			// and if so, is it updating or not
-			if ((taro.physics._world && taro.physics._world.isLocked()) || !this.hasPhysicsBody()) {
+			if (taro.physics.isLocked() || !this.hasPhysicsBody()) {
 				this.queueAction({
 					type: 'scaleBy',
 					scale: scale,
