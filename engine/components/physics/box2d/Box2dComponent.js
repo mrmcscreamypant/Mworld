@@ -344,19 +344,22 @@ var PhysicsComponent = TaroEventingClass.extend({
 		return this._updateCallback;
 	},
 
-	start: function () {
+	start: function (continuousPhysics) {
 		var self = this;
 
 		if (!this._active) {
 			this._active = true;
 
+			this.setContinuousPhysics(!!continuousPhysics);
+			this.createWorld();
+
 			if (!this._networkDebugMode) {
 				this._entity.addBehaviour('box2dStep', this._behaviour);
 			}
-		}
 
-		if (taro.isServer || (taro.isClient && taro.physics)) {
-			self.contactListener(this._beginContactCallback, this._endContactCallback);
+			if (taro.isServer || (taro.isClient && taro.physics)) {
+				self.contactListener(this._beginContactCallback, this._endContactCallback);
+			}
 		}
 	},
 

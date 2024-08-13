@@ -576,9 +576,7 @@ var Server = TaroClass.extend({
 									taro.physics.gravity(gravity.x, gravity.y);
 								}
 							}
-							taro.physics.setContinuousPhysics(!!game?.data?.settings?.continuousPhysics);
-							taro.physics.createWorld();
-							taro.physics.start();
+							taro.physics.start(!!game?.data?.settings?.continuousPhysics);
 							taro.raycaster = new Raycaster();
 							taro.developerMode = new DeveloperMode();
 

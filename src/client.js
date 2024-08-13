@@ -569,7 +569,6 @@ const Client = TaroEventingClass.extend({
 		let minPlayerCount = Number.MAX_SAFE_INTEGER; // ok this seems really unnecessary
 
 		for (let server of validServers) {
-
 			const playerCount = server.clientCount || server.playerCount;
 
 			const capacity = playerCount / server.maxPlayers;
@@ -714,9 +713,7 @@ const Client = TaroEventingClass.extend({
 		if (gravity) {
 			taro.physics.gravity(gravity.x, gravity.y);
 		}
-		taro.physics.setContinuousPhysics(!!taro?.game?.data?.settings?.continuousPhysics);
-		taro.physics.createWorld();
-		taro.physics.start();
+		taro.physics.start(!!taro?.game?.data?.settings?.continuousPhysics);
 		taro.raycaster = new Raycaster();
 	},
 
