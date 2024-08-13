@@ -34,7 +34,7 @@ var StatusComponent = TaroEntity.extend({
 		}
 
 		var jointCount = 0;
-		var jointList = taro.physics._world && taro.physics._world.getJointList();
+		var jointList = taro.physics._world.getJointList();
 		let getPointer = taro.physics.getPointer;
 		while (jointList && (!getPointer || getPointer(jointList) !== getPointer(taro.physics.nullPtr))) {
 			jointCount++;

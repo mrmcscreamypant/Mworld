@@ -639,7 +639,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 	processQueue: function () {
 		// process box2d only when box2d world is unlocked
-		if (taro.physics && taro.physics._active && taro.physics._world) {
+		if (taro.physics && taro.physics._active) {
 			if (this.hasPhysicsBody()) {
 				var x = 0;
 

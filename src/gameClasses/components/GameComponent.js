@@ -394,19 +394,19 @@ var GameComponent = TaroEntity.extend({
 					'<tr>' +
 					'<td>Bodies</td>' +
 					`<td>${data.status.physics.bodyCount}</td>` +
-					`<td>${taro.physics && taro.physics._world ? taro.physics._world.m_bodyCount : ''}</td>` +
+					`<td>${taro.physics ? taro.physics._world.m_bodyCount : ''}</td>` +
 					'<td></td>' +
 					'</tr>' +
 					'<tr>' +
 					'<td>Joints</td>' +
 					`<td>${data.status.physics.jointCount}</td>` +
-					`<td>${taro.physics && taro.physics._world ? taro.physics._world.m_jointCount : ''}</td>` +
+					`<td>${taro.physics ? taro.physics._world.m_jointCount : ''}</td>` +
 					'<td></td>' +
 					'</tr>' +
 					'<tr>' +
 					'<td>Contacts</td>' +
 					`<td>${data.status.physics.contactCount}</td>` +
-					`<td>${taro.physics && taro.physics._world ? taro.physics._world.m_contactCount : ''}</td>` +
+					`<td>${taro.physics ? taro.physics._world.m_contactCount : ''}</td>` +
 					'<td></td>' +
 					'</tr>' +
 					'<tr>' +
