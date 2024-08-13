@@ -101,6 +101,8 @@ const box2dtsWrapper: PhysicsDistProps = {
 			this._continuousPhysics = continuousPhysics;
 		};
 		component._continuousPhysics = false;
+		component._sleep = true;
+		component._gravity = new component.b2Vec2(0, 0);
 	},
 
 	contactListener: function (self, beginContactCallback, endContactCallback, preSolve, postSolve) {
