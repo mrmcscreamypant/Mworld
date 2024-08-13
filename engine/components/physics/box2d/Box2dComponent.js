@@ -837,7 +837,15 @@ var PhysicsComponent = TaroEventingClass.extend({
 	},
 
 	isLocked: function () {
-		return this._world?.isLocked();
+		return !!this._world?.isLocked();
+	},
+
+	getBodyCount: function () {
+		return this._world?.m_bodyCount || this._world?.GetBodyCount?.() || 0;
+	},
+
+	getContactCount: function () {
+		return this._world?.m_contactCount || this._world?.GetContactCount?.() || 0;
 	},
 
 	_triggerContactEvent: function (entityA, entityB) {
