@@ -398,12 +398,6 @@ var GameComponent = TaroEntity.extend({
 					'<td></td>' +
 					'</tr>' +
 					'<tr>' +
-					'<td>Joints</td>' +
-					`<td>${data.status.physics.jointCount}</td>` +
-					`<td>${taro.physics ? taro.physics._world.m_jointCount : ''}</td>` +
-					'<td></td>' +
-					'</tr>' +
-					'<tr>' +
 					'<td>Contacts</td>' +
 					`<td>${data.status.physics.contactCount}</td>` +
 					`<td>${taro.physics ? taro.physics._world.m_contactCount : ''}</td>` +
