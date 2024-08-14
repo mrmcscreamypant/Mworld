@@ -2203,7 +2203,11 @@ var Unit = TaroEntityPhysics.extend({
 			self.script.trigger(trigger.name, trigger.params);
 		});
 
-		if (taro.isServer || (taro.isClient && (taro.client.selectedUnit == this || this._stats.streamMode !== 1))) {
+		// don't apply movement logic for this unit on client if it's not streaming its position
+		if (
+			taro.isServer ||
+			(taro.isClient && (taro.client.selectedUnit == this || this._stats.streamMode !== 1)) // streams position, create & destroy
+		) {
 			// ability component behaviour method call
 			this.ability._behaviour();
 
@@ -2267,20 +2271,20 @@ var Unit = TaroEntityPhysics.extend({
 
 					// ignore client-side movement input if cspMode is 2 (client-authoritative),
 					// this unit's position is now dictated by the position streamed by its owner
-					if (
-						!taro.game.data.defaultData.clientPhysicsEngine ||
-						!(taro.isServer && self._stats.controls?.cspMode == 2)
-					) {
-						// moving diagonally should reduce speed
-						if (self.direction.x != 0 && self.direction.y != 0) {
-							speed = speed / 1.41421356237;
-						}
-
-						self.vector = {
-							x: self.direction.x * speed,
-							y: self.direction.y * speed,
-						};
+					// if (
+					// 	!taro.game.data.defaultData.clientPhysicsEngine ||
+					// 	!(taro.isServer && self._stats.controls?.cspMode == 2)
+					// ) {
+					// moving diagonally should reduce speed
+					if (self.direction.x != 0 && self.direction.y != 0) {
+						speed = speed / 1.41421356237;
 					}
+
+					self.vector = {
+						x: self.direction.x * speed,
+						y: self.direction.y * speed,
+					};
+					// }
 				}
 
 				// update AI

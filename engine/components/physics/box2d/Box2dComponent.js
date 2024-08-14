@@ -418,21 +418,24 @@ var PhysicsComponent = TaroEventingClass.extend({
 				if (tempBod.m_type !== 'static' && tempBod.isAwake() && (!tempBod.GetType || tempBod.GetType() !== 0)) {
 					if (entity && !entity._stats.isHidden) {
 						// apply movement if it's either human-controlled unit, or ai unit that's currently moving
-						if (entity.hasPhysicsBody() && entity.vector && (entity.vector.x != 0 || entity.vector.y != 0)) {
-							if (entity._stats.controls) {
-								switch (
-									entity._stats.controls.movementMethod // velocity-based movement
-								) {
-									case 'velocity':
-										entity.setLinearVelocity(entity.vector.x, entity.vector.y);
-										break;
-									case 'force':
-										entity.applyForce(entity.vector.x, entity.vector.y);
-										break;
-									case 'impulse':
-										entity.applyImpulse(entity.vector.x, entity.vector.y);
-										break;
-								}
+						if (
+							entity.hasPhysicsBody() &&
+							entity._stats.controls &&
+							entity.vector &&
+							(entity.vector.x != 0 || entity.vector.y != 0)
+						) {
+							switch (
+								entity._stats.controls.movementMethod // velocity-based movement
+							) {
+								case 'velocity':
+									entity.setLinearVelocity(entity.vector.x, entity.vector.y);
+									break;
+								case 'force':
+									entity.applyForce(entity.vector.x, entity.vector.y);
+									break;
+								case 'impulse':
+									entity.applyImpulse(entity.vector.x, entity.vector.y);
+									break;
 							}
 						}
 
@@ -527,14 +530,24 @@ var PhysicsComponent = TaroEventingClass.extend({
 									// as the client's position isn't as reliable. for the next 3s, the client's position will be dictated by the server stream
 									if (now - clientStreamReceivedAt < 200 && now - player.tabBecameActiveAt > 1000) {
 										let clientStreamedPosition = entity.clientStreamedKeyFrame[1];
-										x += clientStreamedPosition[0] - x;
-										y += clientStreamedPosition[1] - y;
-										angle = clientStreamedPosition[2];
 
-										if (!isNaN(clientStreamedPosition[3]) && !isNaN(clientStreamedPosition[4])) {
-											// console.log(clientStreamedPosition[3], clientStreamedPosition[4]);
-											entity.setLinearVelocity(clientStreamedPosition[3], clientStreamedPosition[4]);
+										let xDiff = clientStreamedPosition[0] - x;
+										let yDiff = clientStreamedPosition[1] - y;
+
+										// if difference is less than 100, then rubberband, otherwise instantly teleport
+										if (Math.abs(xDiff) < 100 && Math.abs(yDiff) < 100) {
+											x += xDiff / 6;
+											y += yDiff / 6;
+										} else {
+											x = clientStreamedPosition[0];
+											y = clientStreamedPosition[1];
 										}
+
+										angle = clientStreamedPosition[2];
+										// if (!isNaN(clientStreamedPosition[3]) && !isNaN(clientStreamedPosition[4])) {
+										// 	// console.log(clientStreamedPosition[3], clientStreamedPosition[4]);
+										// 	entity.setLinearVelocity(clientStreamedPosition[3] / 2, clientStreamedPosition[4] / 2);
+										// }
 									}
 								}
 							} else if (taro.isClient) {
