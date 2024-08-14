@@ -517,6 +517,10 @@ var Player = TaroEntity.extend({
 			if (taro.isServer) {
 				const i = taro.server.developerClientIds.indexOf(this._stats.clientId);
 				if (i != -1) taro.server.developerClientIds.splice(i, 1);
+
+				if (this.isTrading) {
+					taro.server._onTrade({ type: 'cancel', cancleBy: this.tradingWith, cancleTo: this.id() });
+				}
 			}
 
 			taro.script.trigger('playerLeavesGame', { playerId: this.id() });
