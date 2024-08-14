@@ -99,6 +99,7 @@ namespace Renderer {
 					this.editInstancedMeshAllIdx({ position: [-Infinity, -Infinity, -Infinity] }, textureId);
 					this.add(this.pool[textureId].mesh);
 					this.pool[textureId].mesh.frustumCulled = false;
+					this.pool[textureId].mesh.instanceMatrix.setUsage(THREE.StreamDrawUsage);
 					return 0;
 				}
 				for (let i = 0; i < ProjectilePool.MaxInstancedCount; i++) {
