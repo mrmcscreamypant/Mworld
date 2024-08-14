@@ -226,7 +226,7 @@ class VoxelEditor {
 		flat = false,
 		isPreview = false
 	) {
-		const voxels = new Map<string, Renderer.Three.VoxelCell>();
+		const voxels = Renderer.Three.getVoxels().voxels[layer];
 		const allFacesVisible = [false, false, false, false, false, false];
 		const onlyBottomFaceVisible = [true, true, true, false, true, true];
 		const hiddenFaces = flat ? onlyBottomFaceVisible : allFacesVisible;
@@ -259,6 +259,12 @@ class VoxelEditor {
 						visible: true,
 						hiddenFaces: [...hiddenFaces],
 						isPreview,
+						changed: true,
+						uvs: [],
+						normals: [],
+						topIndices: [],
+						sidesIndices: [],
+						positions: [],
 					});
 					if (!isPreview) {
 						tileId += 1;
@@ -489,20 +495,28 @@ class VoxelEditor {
 			return;
 		}
 		this.currentLayerIndex = value;
-		voxels.meshes[value].visible = true;
+
+		Object.values(voxels.meshes[value]).forEach((mesh) => (mesh.visible = true));
 	}
 
 	hideLayer(layer: number, state: boolean): void {
-		Renderer.Three.getVoxels().meshes[layer].visible = !state;
+		const voxels = Renderer.Three.getVoxels();
+		Object.entries(voxels.meshes).forEach(([layer, chunkKey]) =>
+			Object.values(chunkKey).forEach((mesh) => {
+				mesh.visible = false;
+			})
+		);
 	}
 
 	showAllLayers(): void {
 		const voxels = Renderer.Three.getVoxels();
-		for (let i = 0; i < voxels.meshes.length; i++) {
-			if (voxels?.meshes[i]?.visible === false) {
-				this.hideLayer(i, false);
-			}
-		}
+		Object.entries(voxels.meshes).forEach(([layer, chunkKey]) =>
+			Object.values(chunkKey).forEach((mesh) => {
+				if (mesh.visible === false) {
+					this.hideLayer(parseInt(layer), false);
+				}
+			})
+		);
 	}
 
 	update(): void {
