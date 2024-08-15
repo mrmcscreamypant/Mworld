@@ -969,7 +969,7 @@ var ActionComponent = TaroEntity.extend({
 						var unit = self._script.param.getValue(action.unit, vars);
 						var ownerPlayer = unit.getOwner();
 						var userId = ownerPlayer._stats.userId || ownerPlayer._stats.guestUserId;
-						var isGuestUser = !!(!player._stats.userId && player._stats.guestUserId);
+						var isGuestUser = !!(!ownerPlayer._stats.userId && ownerPlayer._stats.guestUserId);
 
 						if (unit && ownerPlayer && userId && ownerPlayer.persistentDataLoaded) {
 							if (taro.game.isWorldMap && !vars.isWorldScript) {
