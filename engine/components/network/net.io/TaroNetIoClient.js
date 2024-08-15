@@ -148,7 +148,7 @@ var TaroNetIoClient = {
 			self._io.disconnect('Client timed out');
 
 			defer.reject();
-		}, 7000);
+		}, 15000);
 
 		// Define connect listener
 		this._io.on('connect', function (clientId) {

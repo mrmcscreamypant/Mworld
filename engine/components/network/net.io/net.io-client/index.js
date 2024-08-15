@@ -462,14 +462,11 @@ NetIo.Client = NetIo.EventingClass.extend({
 			const bannedReason =
 				'Restricted IP detected. If you think you were wrongfully banned, please contact a staff member in our Discord: <a href="https://discord.gg/XRe8T7K">https://discord.gg/XRe8T7K</a>.';
 
-			const disconnectReason = decodedToken.isBanned
-				? bannedReason
-				: 'Error trying to contact server. Please refresh this page or visit our homepage.';
+			const disconnectReason = decodedToken.isBanned ? bannedReason : '';
 			
-			
-				taro.menuUi.onDisconnectFromServer('netio-client index:446', disconnectReason);
-			
-				this.emit('error', { reason: 'Cannot establish connection, is server running?' });
+			taro.menuUi.onDisconnectFromServer('netio-client index:446', disconnectReason);
+		
+			this.emit('error', { reason: 'Cannot establish connection, is server running?' });
 		}
 
 		// Remove the last disconnect reason
