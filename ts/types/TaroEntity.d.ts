@@ -21,7 +21,7 @@ declare class TaroEntity extends TaroObject {
 	_bornTime: number;
 	angleToTarget: number;
 	tween: TweenComponent;
-
+	culled?: boolean;
 	_deathCallBack?: () => void;
 	_behaviour?: () => void;
 	anchoredOffset: any;

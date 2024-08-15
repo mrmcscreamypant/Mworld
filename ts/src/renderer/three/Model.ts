@@ -7,8 +7,8 @@ namespace Renderer {
 			originalSize = new THREE.Vector3();
 			originalScale = new THREE.Vector3();
 			firstTime = true;
-
-			private aabb = new THREE.Box3();
+			taroEntity: TaroEntityPhysics;
+			aabb = new THREE.Box3();
 			// OBB is something just like Box3 but with rotation
 			private obb = new OBB();
 
@@ -17,9 +17,9 @@ namespace Renderer {
 			private center = new THREE.Vector3();
 			private meshSize = new THREE.Vector3(1, 1, 1);
 
-			constructor(name: string) {
+			constructor(name: string, taroEntity?: TaroEntityPhysics) {
 				super();
-
+				this.taroEntity = taroEntity;
 				this.add(this.root);
 
 				const model = gAssetManager.getModel(name);

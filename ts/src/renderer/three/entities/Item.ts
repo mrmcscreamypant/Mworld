@@ -82,7 +82,9 @@ namespace Renderer {
 						} else {
 							entity.body.mesh.rotation.y = -data.rotation;
 						}
-						entity.updateMatrix();
+						if (!entity.taroEntity.culled) {
+							entity.updateMatrix();
+						}
 					},
 					this
 				);

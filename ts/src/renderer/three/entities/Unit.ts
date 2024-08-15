@@ -31,7 +31,7 @@ namespace Renderer {
 				if (!instancedMesh) {
 					if (taroEntity._stats.is3DObject) {
 						const name = taroEntity._stats.cellSheet.url;
-						this.body = new Model(name);
+						this.body = new Model(name, taroEntity);
 					} else {
 						const key = taroEntity._stats.cellSheet.url;
 						const cols = taroEntity._stats.cellSheet.columnCount || 1;
@@ -186,7 +186,9 @@ namespace Renderer {
 								entity.body.rotation.y = -data.rotation;
 							}
 						}
-						entity.updateMatrix();
+						if (!entity.taroEntity.culled) {
+							entity.updateMatrix();
+						}
 					},
 					this
 				);
