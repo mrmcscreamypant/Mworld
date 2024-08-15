@@ -838,7 +838,7 @@ namespace Renderer {
 
 				this.selectionBox.enabled = false;
 				this.entityManager.regions.forEach((r) => r.setMode(RegionMode.Normal));
-				// this.voxelEditor.voxels.updateLayer(new Map(), this.voxelEditor.currentLayerIndex);
+				this.voxelEditor.voxels.updateLayer(new Map(), this.voxelEditor.currentLayerIndex);
 				this.voxelEditor.showAllLayers();
 
 				if (this.entityEditor.selectedEntities) {
