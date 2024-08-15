@@ -194,7 +194,6 @@ var ServerNetworkEvents = {
 						var isTradingSuccessful = false;
 
 						if (!unitB.inventory.checkAvailableSlots(unitAItems) || !unitA.inventory.checkAvailableSlots(unitBItems)) {
-							console.log('not enough slots');
 							taro.network.send('trade', { type: 'error', between: tradeBetween }, acceptedFor._stats.clientId);
 							taro.network.send('trade', { type: 'error', between: tradeBetween }, acceptedBy._stats.clientId);
 							return;
