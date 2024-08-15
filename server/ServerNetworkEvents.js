@@ -297,6 +297,7 @@ var ServerNetworkEvents = {
 							var availSlot = unitA.inventory.getFirstAvailableSlotForItem(item);
 							unitA._stats.itemIds[availSlot - 1] = unitA._stats.itemIds[i];
 							unitA._stats.itemIds[i] = undefined;
+							item.changeSlotIndex(availSlot - 1);
 						}
 					}
 					// revert items for A unit
@@ -313,6 +314,7 @@ var ServerNetworkEvents = {
 							var availSlot = unitB.inventory.getFirstAvailableSlotForItem(item);
 							unitB._stats.itemIds[availSlot - 1] = unitB._stats.itemIds[i];
 							unitB._stats.itemIds[i] = undefined;
+							item.changeSlotIndex(availSlot - 1);
 						}
 					}
 					// revert items for B unit
@@ -670,14 +672,14 @@ var ServerNetworkEvents = {
 		if (player && data) {
 			player.lastClientReceivedData = data.data
 				? Object.keys(data.data).reduce((result, key) => {
-						if (['boolean', 'number'].includes(typeof data.data[key])) {
-							result[key] = data.data[key];
-						} else if (typeof data.data[key] === 'string') {
-							result[key] = taro.sanitizer(data.data[key]);
-						}
+					if (['boolean', 'number'].includes(typeof data.data[key])) {
+						result[key] = data.data[key];
+					} else if (typeof data.data[key] === 'string') {
+						result[key] = taro.sanitizer(data.data[key]);
+					}
 
-						return result;
-					}, {})
+					return result;
+				}, {})
 				: {};
 			taro.script.trigger('whenDataReceivedFromClient', { playerId: player.id() });
 		}

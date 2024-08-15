@@ -755,10 +755,10 @@ var Player = TaroEntity.extend({
 
 								console.log(
 									`JoinGame took ${window.joinGameSent.completed}ms to join player` +
-										`, client to gs: ${self._stats.receivedJoinGame - window.joinGameSent.start}ms` +
-										`, gs loading player data: ${self._stats.totalTime}ms` +
-										`, gs processed request for: ${self._stats.processedJoinGame}ms` +
-										`, gs to client: ${streamingDiff}, client sent on: ${window.joinGameSent.start}, server sent back on: ${data.streamedOn}`
+									`, client to gs: ${self._stats.receivedJoinGame - window.joinGameSent.start}ms` +
+									`, gs loading player data: ${self._stats.totalTime}ms` +
+									`, gs processed request for: ${self._stats.processedJoinGame}ms` +
+									`, gs to client: ${streamingDiff}, client sent on: ${window.joinGameSent.start}, server sent back on: ${data.streamedOn}`
 								);
 
 								if (window.joinGameSent.completed > 7000) {
