@@ -1031,6 +1031,7 @@ namespace Renderer {
 
 				taro.client.on('stop-follow', () => this.camera.unfollow());
 				taro.client.on('camera-pitch', (deg: number) => this.camera.setElevationAngle(deg));
+				taro.client.on('camera-yaw', (deg: number) => this.camera.setAzimuthAngle(deg));
 
 				taro.client.on('camera-position', (x: number, y: number) => {
 					if (!taro.developerMode.active || taro.developerMode.activeTab === 'play') {
