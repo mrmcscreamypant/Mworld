@@ -2661,6 +2661,14 @@ var ActionComponent = TaroEntity.extend({
 						}
 						break;
 
+					case 'playerCameraSetYaw':
+						var player = self._script.param.getValue(action.player, vars);
+						var angle = self._script.param.getValue(action.angle, vars);
+						if (player && player._stats.clientId) {
+							player.setCameraYaw(angle);
+						}
+						break;
+
 					case 'playerCameraStopTracking':
 						var player = self._script.param.getValue(action.player, vars);
 						if (player && player._stats.clientId) {
