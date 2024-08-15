@@ -208,7 +208,6 @@ var SoundComponent = TaroEntity.extend({
 		xhr.responseType = 'arraybuffer';
 		xhr.onload = function () {
 			self.audioCtx.decodeAudioData(xhr.response, function (buffer) {
-				console.log(file);
 				self.cachedAudioBuffer[file].locked = false;
 				self.cachedAudioBuffer[file].buffer = buffer;
 			});
