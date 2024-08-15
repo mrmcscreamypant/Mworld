@@ -176,14 +176,6 @@ var ServerNetworkEvents = {
 				var acceptedFor = taro.$(msg.acceptedFor);
 
 				if (acceptedBy && acceptedFor) {
-					if (!acceptedBy.acceptTrading) {
-						taro.chat.sendToRoom(
-							'1',
-							`Trading has been accepted by ${acceptedBy._stats.name}`,
-							acceptedFor._stats.clientId
-						);
-						taro.network.send('trade', { type: 'accept', between: tradeBetween }, acceptedFor._stats.clientId);
-					}
 					if (acceptedBy.tradingWith === acceptedFor.id()) {
 						acceptedBy.acceptTrading = true;
 					}
@@ -200,6 +192,12 @@ var ServerNetworkEvents = {
 						var unitAItems = unitA._stats.itemIds.slice(unitAInventorySize, unitAInventorySize + 5);
 						var unitBItems = unitB._stats.itemIds.slice(unitBInventorySize, unitBInventorySize + 5);
 						var isTradingSuccessful = false;
+
+						if (!unitB.inventory.checkAvailableSlots(unitAItems) || !unitA.inventory.checkAvailableSlots(unitBItems)) {
+							taro.network.send('trade', { type: 'error', between: tradeBetween }, acceptedFor._stats.clientId);
+							taro.network.send('trade', { type: 'error', between: tradeBetween }, acceptedBy._stats.clientId);
+							return;
+						}
 
 						for (var i = 0; i < unitAItems.length; i++) {
 							if (unitAItems[i]) {
@@ -235,6 +233,14 @@ var ServerNetworkEvents = {
 							taro.network.send('trade', { type: 'error', between: tradeBetween }, acceptedFor._stats.clientId);
 							taro.network.send('trade', { type: 'error', between: tradeBetween }, acceptedBy._stats.clientId);
 							return;
+						}
+						if (!acceptedBy.acceptTrading) {
+							taro.chat.sendToRoom(
+								'1',
+								`Trading has been accepted by ${acceptedBy._stats.name}`,
+								acceptedFor._stats.clientId
+							);
+							taro.network.send('trade', { type: 'accept', between: tradeBetween }, acceptedFor._stats.clientId);
 						}
 
 						unitA.streamUpdateData([{ itemIds: unitA._stats.itemIds }]);
@@ -273,6 +279,9 @@ var ServerNetworkEvents = {
 				}
 
 				var tradeBetween = { playerA: msg.cancleBy, playerB: msg.cancleTo };
+				if (playerA) {
+					taro.network.send('trade', { type: 'cancel', between: tradeBetween }, playerA._stats.clientId);
+				}
 				if (playerB) {
 					taro.network.send('trade', { type: 'cancel', between: tradeBetween }, playerB._stats.clientId);
 					taro.chat.sendToRoom('1', `Trading has been cancel by ${playerA._stats.name}`, playerB._stats.clientId);
