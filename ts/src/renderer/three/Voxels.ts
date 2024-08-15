@@ -10,6 +10,8 @@ namespace Renderer {
 			layerLookupTable: Record<number, number> = {};
 			attrs: { positions: THREE.BufferAttribute; uvs: THREE.BufferAttribute; normals: THREE.BufferAttribute };
 			chunksNeedsUpdate: string[] = ['all'];
+			static Y_OFFSET = 0.001;
+			static CHUNK_BLOCK_COUNTS = { x: 16, y: 16 };
 			constructor(
 				private topTileset: TextureSheet,
 				private sidesTileset: TextureSheet
@@ -68,14 +70,10 @@ namespace Renderer {
 				return this.layerLookupTable[layerIdx] ?? layerIdx;
 			}
 
-			static getLayersYOffset() {
-				return 0.001;
-			}
-
 			calcLayersHeight(rawLayer: number) {
 				const renderer = Renderer.Three.instance();
 				const height = this.layerLookupTable[rawLayer ?? renderer.voxelEditor.currentLayerIndex];
-				return height + Renderer.Three.Voxels.getLayersYOffset() * height;
+				return height + Renderer.Three.Voxels.Y_OFFSET * height;
 			}
 
 			static generateVoxelsFromLayerData(data: LayerData, height: number, flat = false) {
@@ -84,13 +82,12 @@ namespace Renderer {
 				const onlyBottomFaceVisible = [true, true, true, false, true, true];
 				const hiddenFaces = flat ? onlyBottomFaceVisible : allFacesVisible;
 
-				const yOffset = 0.001;
 				for (let z = 0; z < data.height; z++) {
 					for (let x = 0; x < data.width; x++) {
 						let tileId = data.data[z * data.width + x];
 						if (tileId <= 0) continue;
 						tileId -= 1;
-						const pos = { x: x + 0.5, y: height + yOffset * height, z: z + 0.5 };
+						const pos = { x: x + 0.5, y: height + Renderer.Three.Voxels.Y_OFFSET * height, z: z + 0.5 };
 						voxels.set(getKeyFromPos(pos.x, pos.y, pos.z), {
 							position: [pos.x, pos.y, pos.z],
 							type: tileId,
@@ -117,9 +114,10 @@ namespace Renderer {
 			}
 
 			updateLayer(voxels: Map<string, VoxelCell>, layerIdx: number, isPreview = false) {
-				const chunkBlockCounts = Renderer.Three.getChunkBlockCounts();
-				const yOffset = 0.001;
-				this.voxels[layerIdx] = voxels;
+				const chunkBlockCounts = Renderer.Three.Voxels.CHUNK_BLOCK_COUNTS;
+				if (!isPreview) {
+					this.voxels[layerIdx] = voxels;
+				}
 				const renderOrder = (layerIdx + 1) * 100;
 				for (let chunkX = 0; chunkX < Math.ceil(taro.map.data.width / chunkBlockCounts.x); chunkX++) {
 					for (let chunkZ = 0; chunkZ < Math.ceil(taro.map.data.height / chunkBlockCounts.y); chunkZ++) {
@@ -131,7 +129,7 @@ namespace Renderer {
 						for (let x = chunkX * chunkBlockCounts.x; x < (1 + chunkX) * chunkBlockCounts.x; x++) {
 							for (let z = chunkZ * chunkBlockCounts.y; z < (1 + chunkZ) * chunkBlockCounts.y; z++) {
 								const height = this.calcHeight(layerIdx);
-								const pos = { x: x + 0.5, y: height + yOffset * height, z: z + 0.5 };
+								const pos = { x: x + 0.5, y: height + Renderer.Three.Voxels.Y_OFFSET * height, z: z + 0.5 };
 								const key = Renderer.Three.getKeyFromPos(pos.x, pos.y, pos.z);
 								if (!voxels.has(key)) {
 									break;
@@ -143,7 +141,7 @@ namespace Renderer {
 							continue;
 						}
 						const prunedVoxels = pruneCells(subVoxels);
-						const idxs = buildMeshDataFromCells(prunedVoxels, this.topTileset);
+						buildMeshDataFromCells(prunedVoxels, this.topTileset);
 						const voxelData = {
 							positions: [],
 							uvs: [],
@@ -161,10 +159,7 @@ namespace Renderer {
 						if (!this.meshes[layerIdx]) {
 							this.meshes[layerIdx] = {};
 						}
-						// if (!isPreview) {
-						// 	this.voxels[layerIdx] = voxels;
-						// 	this.voxelData[layerIdx] = voxelData;
-						// }
+
 						let geometry: THREE.BufferGeometry<THREE.NormalBufferAttributes>;
 						if (!this.meshes[layerIdx][chunkKey]) {
 							geometry = new THREE.BufferGeometry();
@@ -186,7 +181,6 @@ namespace Renderer {
 							geometry.addGroup(curLength, voxelData.topIndices.length, 1);
 						} else {
 							geometry = this.meshes[layerIdx][chunkKey].geometry;
-							// console.log(geometry.attributes);
 							Object.entries(geometry.attributes).forEach(([key, attr]: [string, THREE.BufferAttribute]) => {
 								attr.array.set(voxelData[`${key}s`]);
 								attr.needsUpdate = true;
@@ -236,7 +230,7 @@ namespace Renderer {
 		}
 
 		export function getChunkKeyFromBlockPos(x: number, z: number) {
-			const chunkBlockCounts = Renderer.Three.getChunkBlockCounts();
+			const chunkBlockCounts = Renderer.Three.Voxels.CHUNK_BLOCK_COUNTS;
 			return `${Math.floor(x / chunkBlockCounts.x)}.${Math.floor(z / chunkBlockCounts.y)}`;
 		}
 
@@ -418,7 +412,6 @@ namespace Renderer {
 					curCell.changed = false;
 				}
 			}
-			return changedIdx;
 		}
 
 		type LayerData = {

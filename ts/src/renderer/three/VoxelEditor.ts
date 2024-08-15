@@ -231,7 +231,6 @@ class VoxelEditor {
 		const onlyBottomFaceVisible = [true, true, true, false, true, true];
 		const hiddenFaces = flat ? onlyBottomFaceVisible : allFacesVisible;
 		const calcData = this.brushArea.calcSample(selectedTiles, brushSize, shape, true);
-		const yOffset = 0.001;
 		const sample = calcData.sample;
 		const size = brushSize === 'fitContent' ? { x: calcData.xLength, y: calcData.yLength } : brushSize;
 		const taroMap = taro.game.data.map;
@@ -251,7 +250,7 @@ class VoxelEditor {
 					let tileId = sample[x][y];
 					tileId -= 1;
 					const height = this.voxels.calcHeight(layer);
-					const pos = { x: _x, y: height + yOffset * height, z: _z };
+					const pos = { x: _x, y: height + Renderer.Three.Voxels.Y_OFFSET * height, z: _z };
 					const voxelsInstance = Renderer.Three.getVoxels();
 					voxelsInstance.chunksNeedsUpdate = [];
 					voxelsInstance.chunksNeedsUpdate.push(Renderer.Three.getChunkKeyFromBlockPos(_x - 0.5, _z - 0.5));
