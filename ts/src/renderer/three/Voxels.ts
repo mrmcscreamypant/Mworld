@@ -9,6 +9,7 @@ namespace Renderer {
 			layerPlanes: THREE.Plane[] = [];
 			layerLookupTable: Record<number, number> = {};
 			attrs: { positions: THREE.BufferAttribute; uvs: THREE.BufferAttribute; normals: THREE.BufferAttribute };
+			chunksNeedsUpdate: string[] = ['all'];
 			constructor(
 				private topTileset: TextureSheet,
 				private sidesTileset: TextureSheet
@@ -84,15 +85,12 @@ namespace Renderer {
 				const hiddenFaces = flat ? onlyBottomFaceVisible : allFacesVisible;
 
 				const yOffset = 0.001;
-
 				for (let z = 0; z < data.height; z++) {
 					for (let x = 0; x < data.width; x++) {
 						let tileId = data.data[z * data.width + x];
 						if (tileId <= 0) continue;
 						tileId -= 1;
-
 						const pos = { x: x + 0.5, y: height + yOffset * height, z: z + 0.5 };
-
 						voxels.set(getKeyFromPos(pos.x, pos.y, pos.z), {
 							position: [pos.x, pos.y, pos.z],
 							type: tileId,
@@ -119,17 +117,17 @@ namespace Renderer {
 			}
 
 			updateLayer(voxels: Map<string, VoxelCell>, layerIdx: number, isPreview = false) {
-				const tileSize = Renderer.Three.getTileSize();
-				const chunkBlockCounts = { x: 64, y: 64 };
+				const chunkBlockCounts = Renderer.Three.getChunkBlockCounts();
 				const yOffset = 0.001;
 				this.voxels[layerIdx] = voxels;
 				const renderOrder = (layerIdx + 1) * 100;
 				for (let chunkX = 0; chunkX < Math.ceil(taro.map.data.width / chunkBlockCounts.x); chunkX++) {
-					console.log(chunkX);
 					for (let chunkZ = 0; chunkZ < Math.ceil(taro.map.data.height / chunkBlockCounts.y); chunkZ++) {
-						console.log(chunkZ);
-						const subVoxels = new Map<string, VoxelCell>();
 						const chunkKey = Renderer.Three.getChunkKeyFromPos(chunkX, chunkZ);
+						if (!this.chunksNeedsUpdate.includes(chunkKey) && !this.chunksNeedsUpdate.includes('all')) {
+							continue;
+						}
+						const subVoxels = new Map<string, VoxelCell>();
 						for (let x = chunkX * chunkBlockCounts.x; x < (1 + chunkX) * chunkBlockCounts.x; x++) {
 							for (let z = chunkZ * chunkBlockCounts.y; z < (1 + chunkZ) * chunkBlockCounts.y; z++) {
 								const height = this.calcHeight(layerIdx);
@@ -142,7 +140,7 @@ namespace Renderer {
 							}
 						}
 						if (subVoxels.size === 0) {
-							break;
+							continue;
 						}
 						const prunedVoxels = pruneCells(subVoxels);
 						const idxs = buildMeshDataFromCells(prunedVoxels, this.topTileset);
@@ -219,11 +217,6 @@ namespace Renderer {
 						geometry.computeBoundsTree();
 						if (!this.meshes[layerIdx][chunkKey]) {
 							const mesh = new THREE.Mesh(geometry, [mat1, mat2, mat1Preview, mat2Preview]);
-							mesh.position.set(
-								Utils.pixelToWorld(chunkX * chunkBlockCounts.x),
-								mesh.position.y,
-								Utils.pixelToWorld(chunkZ * chunkBlockCounts.y)
-							);
 							this.meshes[layerIdx][chunkKey] = mesh;
 							this.add(mesh);
 						} else {
@@ -240,6 +233,11 @@ namespace Renderer {
 
 		export function getKeyFromPos(x: number, y: number, z: number) {
 			return `${x}.${y}.${z}`;
+		}
+
+		export function getChunkKeyFromBlockPos(x: number, z: number) {
+			const chunkBlockCounts = Renderer.Three.getChunkBlockCounts();
+			return `${Math.floor(x / chunkBlockCounts.x)}.${Math.floor(z / chunkBlockCounts.y)}`;
 		}
 
 		export function getChunkKeyFromPos(x: number, z: number) {

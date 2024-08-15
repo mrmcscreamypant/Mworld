@@ -34,6 +34,9 @@ namespace Renderer {
 				: { x: 64, y: 64 };
 		}
 
+		export function getChunkBlockCounts() {
+			return { x: 16, y: 16 };
+		}
 		class Renderer {
 			private static _instance: Renderer;
 			renderer: THREE.WebGLRenderer;

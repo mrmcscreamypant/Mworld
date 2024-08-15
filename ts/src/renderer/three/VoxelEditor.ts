@@ -252,7 +252,9 @@ class VoxelEditor {
 					tileId -= 1;
 					const height = this.voxels.calcHeight(layer);
 					const pos = { x: _x, y: height + yOffset * height, z: _z };
-
+					const voxelsInstance = Renderer.Three.getVoxels();
+					voxelsInstance.chunksNeedsUpdate = [];
+					voxelsInstance.chunksNeedsUpdate.push(Renderer.Three.getChunkKeyFromBlockPos(_x - 0.5, _z - 0.5));
 					voxels.set(Renderer.Three.getKeyFromPos(pos.x, pos.y, pos.z), {
 						position: [pos.x, pos.y, pos.z],
 						type: tileId,
