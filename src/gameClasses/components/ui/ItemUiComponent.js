@@ -194,6 +194,14 @@ var ItemUiComponent = TaroEntity.extend({
 			element.removeClass('active');
 		}
 
+		if (taro.client.myPlayer?.isTrading) {
+			if (taro.client.selectedUnit?.inventory?.checkAvailableSlots(taro.tradeUi.tradeItems)) {
+				taro.tradeUi.toggleActiveButton(true);	
+			} else {
+				taro.tradeUi.toggleActiveButton(false, 'not-enough-space');	
+			}
+		}
+
 		// if (equipmentAllowed && slotIndex != undefined && slotIndex <= equipmentAllowed) {
 		$(`#item-key-stroke-${slotIndex}`).html(
 			`<p class='m-0'><small style='font-weight:900;color: white;padding: 0px 5px;'>${slotIndex + 1}</small></p>`
