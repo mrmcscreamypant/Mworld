@@ -213,8 +213,9 @@ namespace Renderer {
 							entity.instancedIdx
 						);
 					}
-
-					entity.updateMatrix();
+					if (!entity.taroEntity.culled) {
+						entity.updateMatrix();
+					}
 				});
 
 				taroEntity.on(
@@ -232,7 +233,9 @@ namespace Renderer {
 								entity.instancedIdx
 							);
 						}
-						entity.updateMatrix();
+						if (!entity.taroEntity.culled) {
+							entity.updateMatrix();
+						}
 					},
 					this
 				);
