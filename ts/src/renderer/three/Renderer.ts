@@ -45,14 +45,37 @@ namespace Renderer {
 			frustum = new THREE.Frustum();
 			cameraViewProjectionMatrix = new THREE.Matrix4();
 
+			tryFindMesh(object: THREE.Object3D) {
+				const meshes: THREE.Mesh[] = [];
+				object.children.forEach((child: any) => {
+					if (child.isMesh) {
+						meshes.push(child);
+					}
+					if (child.children) {
+						meshes.push(...this.tryFindMesh(child));
+					}
+				});
+				return meshes;
+			}
 			updateFrustumCulling() {
 				this.scene.traverse((object: any) => {
 					const entity = object.taroEntity;
-					if (entity && object.body && (object.body.sprite ?? object.body.mesh)?.isMesh) {
-						if (!this.frustum.intersectsObject(object.body.sprite ?? object.body.mesh)) {
-							entity.culled = true;
-						} else {
-							entity.culled = false;
+					if (object instanceof Three.Model && entity) {
+						const meshes = this.tryFindMesh(object);
+						let culled = true;
+						meshes.forEach((mesh) => {
+							if (this.frustum.intersectsObject(mesh)) {
+								culled = false;
+							}
+						});
+						entity.culled = culled && !this.frustum.containsPoint(object.parent.position);
+					} else {
+						if (entity && object.body && object.body.sprite?.isMesh) {
+							if (!this.frustum.intersectsObject(object.body?.sprite) && !this.frustum.containsPoint(object.position)) {
+								entity.culled = true;
+							} else {
+								entity.culled = false;
+							}
 						}
 					}
 				});
