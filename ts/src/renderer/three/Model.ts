@@ -7,7 +7,7 @@ namespace Renderer {
 			originalSize = new THREE.Vector3();
 			originalScale = new THREE.Vector3();
 			firstTime = true;
-			taroEntity: TaroEntityPhysics;
+			taroEntity?: TaroEntityPhysics;
 			aabb = new THREE.Box3();
 			// OBB is something just like Box3 but with rotation
 			private obb = new OBB();
