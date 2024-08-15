@@ -631,6 +631,8 @@ var ClientNetworkEvents = {
 				delete playerB.tradingWith;
 				delete playerA.isTrading;
 				delete playerB.isTrading;
+				taro.tradeUi.tradeItems = [];
+				taro.tradeUi.acceptDisableReason = null;
 				$('#trade-div').hide();
 				break;
 			}

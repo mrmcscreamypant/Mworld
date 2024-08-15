@@ -316,11 +316,14 @@ var InventoryComponent = TaroEntity.extend({
 	},
 
 	checkAvailableSlots: function (itemIdArray) {
+		itemIdArray = itemIdArray.filter(function (el) {
+			return el != null;
+		});
 		let slotsAvailable = true;
 		let availableSlots = [];
 		itemIdArray.forEach((itemId) => {
 			const item = taro.$(itemId);
-			if (item && this.getFirstAvailableSlotForItem(item._stats, availableSlots)) {
+			if (this.getFirstAvailableSlotForItem(item._stats, availableSlots)) {
 				availableSlots.push(this.getFirstAvailableSlotForItem(item._stats, availableSlots));
 			} else {
 				slotsAvailable = false;
