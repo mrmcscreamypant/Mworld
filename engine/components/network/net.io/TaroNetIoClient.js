@@ -137,12 +137,14 @@ var TaroNetIoClient = {
 
 		this._io = new NetIo.Client(url);
 		self._state = 1; // Connecting
+		
+		clearTimeout(self.connectionTimer);
 
-		var timer = setTimeout(function () {
+		self.connectionTimer = setTimeout(function () {
 			console.log('connection timed out', url);
 			// self._io.disconnect('connection timed out');
 
-			clearTimeout(timer);
+			clearTimeout(self.connectionTimer);
 
 			self._state = 0;
 			self._io.disconnect('Client timed out');
@@ -173,7 +175,7 @@ var TaroNetIoClient = {
 
 				// Check if the data is an init packet
 				if (data.cmd === 'init') {
-					clearTimeout(timer);
+					clearTimeout(self.connectionTimer);
 
 					// Set flag to show we've now received an init command
 					self._initDone = true;
