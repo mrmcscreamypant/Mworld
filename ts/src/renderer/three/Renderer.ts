@@ -76,7 +76,7 @@ namespace Renderer {
 							const pos = ownerUnit.position.clone();
 							pos.setY(this.initEntityLayer.position.y + 1 + object.position.y);
 							if (ownerUnit) {
-								if (this.frustum.containsPoint(ownerUnit.position)) {
+								if (this.frustum.containsPoint(pos)) {
 									ownerCulled = false;
 								}
 							}
@@ -87,7 +87,7 @@ namespace Renderer {
 							pos.setY(this.initEntityLayer.position.y + 1 + object.position.y);
 							if (
 								!this.frustum.intersectsObject(object.body?.sprite) &&
-								!this.frustum.containsPoint(object.position) &&
+								!this.frustum.containsPoint(pos) &&
 								ownerCulled
 							) {
 								entity.culled = true;
