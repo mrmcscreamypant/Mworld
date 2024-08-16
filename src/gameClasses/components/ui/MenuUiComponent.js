@@ -861,6 +861,7 @@ var MenuUiComponent = TaroEntity.extend({
 		if (window.STATIC_EXPORT_ENABLED || window.IS_CRAZY_GAMES_ENV) {
 			$('#return-to-homepage-server').hide();
 			$('.return-to-homepage-cta').hide();
+			$('.refresh-page-cta #connection-lost-refresh').text('Reconnect');
 		} else {
 			$('#return-to-homepage-server').show();
 		}
