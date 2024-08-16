@@ -195,8 +195,19 @@ class DeveloperMode {
 
 	initEntities: ActionData[];
 
-	serverScriptData: Record<string, ScriptData>;
-	savedScriptData: Record<string, ScriptData>;
+	serverScriptData: {
+		unitTypes: Record<string, ScriptData>;
+		itemTypes: Record<string, ScriptData>;
+		projectileTypes: Record<string, ScriptData>;
+	};
+	savedScriptData: {
+		unitTypes: Record<string, ScriptData>;
+		itemTypes: Record<string, ScriptData>;
+		projectileTypes: Record<string, ScriptData>;
+	};
+
+	serverEntityScriptData: Record<string, ScriptData>;
+	savedEntityScriptData: Record<string, ScriptData>;
 
 	serverVariableData: Record<string, VariableData>;
 
@@ -223,6 +234,7 @@ class DeveloperMode {
 					taro.developerMode.savedScriptData[scriptId] = script;
 				} else {
 					delete taro.developerMode.serverScriptData[scriptId];
+					delete taro.developerMode.savedScriptData[scriptId];
 				}
 			});
 
@@ -820,20 +832,10 @@ class DeveloperMode {
 					if (!isNaN(data.angle) && !isNaN(action.angle)) {
 						action.angle = data.angle;
 					}
-					if (
-						data.rotation &&
-						!isNaN(data.rotation.x) &&
-						!isNaN(data.rotation.y) &&
-						!isNaN(data.rotation.z)
-					) {
+					if (data.rotation && !isNaN(data.rotation.x) && !isNaN(data.rotation.y) && !isNaN(data.rotation.z)) {
 						action.rotation = data.rotation;
 					}
-					if (
-						data.scale &&
-						!isNaN(data.scale.x) &&
-						!isNaN(data.scale.y) &&
-						!isNaN(data.scale.z)
-					) {
+					if (data.scale && !isNaN(data.scale.x) && !isNaN(data.scale.y) && !isNaN(data.scale.z)) {
 						action.scale = data.scale;
 					}
 					if (!isNaN(data.width) && !isNaN(action.width)) {
@@ -895,6 +897,17 @@ class DeveloperMode {
 		if (taro.game.data.unitTypes[data.typeId]) {
 			if (data.valueType === 'script') {
 				taro.game.data.unitTypes[data.typeId].scripts = rfdc()(data.newData.scripts);
+				Object.entries(data.scriptData).forEach(([scriptId, script]) => {
+					if (!data.deleted) {
+						if (data.action === 'apply') {
+							taro.developerMode.serverEntityScriptData.unitTypes[data.typId][scriptId] = script;
+						}
+						taro.developerMode.savedEntityScriptData.unitTypes[data.typId][scriptId] = script;
+					} else {
+						delete taro.developerMode.serverEntityScriptData.unitTypes[data.typId][scriptId];
+						delete taro.developerMode.savedEntityScriptData.unitTypes[data.typId][scriptId];
+					}
+				});
 			} else if (data.valueType === 'property') {
 				const oldScripts = rfdc()(taro.game.data.unitTypes[data.typeId].scripts);
 				taro.game.data.unitTypes[data.typeId] = rfdc()(data.newData);
@@ -1007,7 +1020,7 @@ class DeveloperMode {
 		});
 	}
 
-	createProjectile(data) { }
+	createProjectile(data) {}
 
 	updateProjectile(data) {
 		// 1. broadcast update to all players
