@@ -719,10 +719,13 @@ var Item = TaroEntityPhysics.extend({
 		this._stats.quantity = qty;
 		if (taro.isServer) {
 			var clientId = this.getOwnerUnit()?.getOwner()?._stats.clientId;
-			// if server authoritative mode is enabled, then stream item quantity to the item's owner player only
-			if (taro.runMode == 0) {
-				this.streamUpdateData([{ quantity: qty }], clientId);
-			}
+
+			// // if server authoritative mode is enabled, then stream item quantity to the item's owner player only
+			// if (taro.runMode == 0) {
+			// 	this.streamUpdateData([{ quantity: qty }], clientId);
+			// }
+
+			this.streamUpdateData([{ quantity: qty }]);
 
 			// item's set to be removed when empty
 			if (this._stats.quantity == 0 && this._stats.removeWhenEmpty === true) {
@@ -839,7 +842,6 @@ var Item = TaroEntityPhysics.extend({
 
 	startUsing: function () {
 		var self = this;
-
 		if (self._stats.isBeingUsed) return;
 
 		self._stats.isBeingUsed = true;
