@@ -59,7 +59,7 @@ namespace Renderer {
 			}
 			updateFrustumCulling() {
 				this.scene.traverse((object: any) => {
-					const entity = object.taroEntity;
+					const entity: TaroEntityPhysics = object.taroEntity;
 					if (object instanceof Three.Model && entity) {
 						const meshes = this.tryFindMesh(object);
 						let culled = true;
@@ -70,8 +70,22 @@ namespace Renderer {
 						});
 						entity.culled = culled && !this.frustum.containsPoint(object.parent.position);
 					} else {
+						let ownerCulled = true;
+						if (entity && entity._category === 'item' && entity._stats?.ownerUnitId) {
+							const ownerUnit = this.entityManager.units.find((u) => u.taroEntity._id === entity._stats?.ownerUnitId);
+							if (ownerUnit) {
+								if (this.frustum.containsPoint(ownerUnit.position)) {
+									ownerCulled = false;
+								}
+							}
+						}
+
 						if (entity && object.body && object.body.sprite?.isMesh) {
-							if (!this.frustum.intersectsObject(object.body?.sprite) && !this.frustum.containsPoint(object.position)) {
+							if (
+								!this.frustum.intersectsObject(object.body?.sprite) &&
+								!this.frustum.containsPoint(object.position) &&
+								ownerCulled
+							) {
 								entity.culled = true;
 							} else {
 								entity.culled = false;
