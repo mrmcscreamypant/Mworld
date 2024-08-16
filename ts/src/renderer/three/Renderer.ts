@@ -58,6 +58,7 @@ namespace Renderer {
 				return meshes;
 			}
 			updateFrustumCulling() {
+				const zeroVec3 = new THREE.Vector3(0, 0, 0);
 				this.scene.traverse((object: any) => {
 					const entity: TaroEntityPhysics = object.taroEntity;
 					if (object instanceof Three.Model && entity) {
@@ -73,9 +74,9 @@ namespace Renderer {
 						let ownerCulled = true;
 						if (entity && entity._category === 'item' && entity._stats?.ownerUnitId) {
 							const ownerUnit = this.entityManager.units.find((u) => u.taroEntity._id === entity._stats?.ownerUnitId);
-							const pos = ownerUnit.position.clone();
-							pos.setY(this.initEntityLayer.position.y + 1 + object.position.y);
 							if (ownerUnit) {
+								const pos = ownerUnit.position.clone();
+								pos.setY(this.initEntityLayer.position.y + 1 + ownerUnit.position.y);
 								if (this.frustum.containsPoint(pos)) {
 									ownerCulled = false;
 								}
@@ -88,7 +89,8 @@ namespace Renderer {
 							if (
 								!this.frustum.intersectsObject(object.body?.sprite) &&
 								!this.frustum.containsPoint(pos) &&
-								ownerCulled
+								ownerCulled &&
+								(object as THREE.Object3D).position.distanceTo(zeroVec3) !== 0
 							) {
 								entity.culled = true;
 							} else {
