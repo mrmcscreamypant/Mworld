@@ -66,8 +66,8 @@ var TaroEntityPhysics = TaroEntity.extend({
 
 		// override body bounds
 		if (bodyDef?.fixtures) {
-			var sizeX = bodyDef?.fixtures[0].size?.width;
-			var sizeY = bodyDef?.fixtures[0].size?.height;
+			var sizeX = this._category === 'region' ? bodyDef?.width : bodyDef?.fixtures[0].size?.width;
+			var sizeY = this._category === 'region' ? bodyDef?.height : bodyDef?.fixtures[0].size?.height;
 			var offsetX = bodyDef?.fixtures[0].offset?.x;
 			var offsetY = bodyDef?.fixtures[0].offset?.y;
 			if (shapeData === undefined) {
