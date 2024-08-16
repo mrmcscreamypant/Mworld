@@ -12,7 +12,6 @@ var Region = TaroEntityPhysics.extend({
 
 		if (data && regionName) {
 			self._stats = data;
-			console.log(self._stats);
 
 			self.category('region');
 
