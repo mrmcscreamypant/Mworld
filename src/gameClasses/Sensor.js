@@ -10,6 +10,8 @@ var Sensor = TaroEntityPhysics.extend({
 		if (radius === null) {
 			radius = 0;
 		}
+		this.width(radius, true);
+
 		if (taro.isServer) {
 			this.streamMode(0);
 		}
