@@ -68,6 +68,7 @@ var Sensor = TaroEntityPhysics.extend({
 					},
 				};
 
+				this.width(radius, true);
 				this.updateBody(defaultData);
 			} else {
 				console.log("ownerUnit doesn't exist!!");
