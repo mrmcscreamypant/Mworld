@@ -2336,6 +2336,21 @@ var ActionComponent = TaroEntity.extend({
 						}
 						break;
 
+					case 'enableRotateToFaceMouseCursor':
+						console.log('enabling!');
+						var item = self._script.param.getValue(action.item, vars);
+						if (item && item._category == 'item') {
+							item.streamUpdateData([{ rotateToFaceMouseCursor: true }]);
+						}
+						break;
+
+					case 'disableRotateToFaceMouseCursor':
+						var item = self._script.param.getValue(action.item, vars);
+						if (item && item._category == 'item') {
+							item.streamUpdateData([{ rotateToFaceMouseCursor: false }]);
+						}
+						break;
+
 					// very old
 					case 'castAbility':
 						if (entity && entity._category == 'unit' && entity.ability && action.abilityName) {

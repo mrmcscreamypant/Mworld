@@ -1261,6 +1261,10 @@ var Item = TaroEntityPhysics.extend({
 							this._stats.fireRate = newValue;
 						}
 						break;
+
+					case 'rotateToFaceMouseCursor':
+						this._stats.controls.mouseBehaviour.rotateToFaceMouseCursor = newValue;
+						break;
 				}
 			}
 		}
@@ -1288,7 +1292,7 @@ var Item = TaroEntityPhysics.extend({
 			var rotate = this._rotate.z;
 
 			// angleToTarget is only available in server
-			if (taro.isServer && ownerUnit.angleToTarget) {
+			if (taro.isServer && ownerUnit.angleToTarget && self._stats.controls.mouseBehaviour.rotateToFaceMouseCursor) {
 				rotate = ownerUnit.angleToTarget;
 			}
 

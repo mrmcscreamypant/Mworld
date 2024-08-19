@@ -2135,12 +2135,8 @@ var Unit = TaroEntityPhysics.extend({
 					this.distanceToTarget = Math.sqrt(a * a + b * b);
 
 					if (!this._stats.cameraPointerLock) {
-						if (this._stats.controls.mouseBehaviour?.rotateToFaceMouseCursor) {
-							this.angleToTarget =
-								Math.atan2(mouse.y - this._translate.y, mouse.x - this._translate.x) + Math.radians(90);
-						} else {
-							this.angleToTarget = undefined;
-						}
+						this.angleToTarget =
+							Math.atan2(mouse.y - this._translate.y, mouse.x - this._translate.x) + Math.radians(90);
 						while (this.angleToTarget <= -Math.PI) this.angleToTarget += Math.PI * 2;
 						while (this.angleToTarget > Math.PI) this.angleToTarget -= Math.PI * 2;
 

@@ -175,7 +175,7 @@ const Client = TaroEventingClass.extend({
 			if (!document.hidden) {
 				// this.applyInactiveTabEntityStream();
 				self.tabBecameActiveAt = Date.now();
-				console.log('tab became active at', self.tabBecameActiveAt);
+				// console.log('tab became active at', self.tabBecameActiveAt);
 			}
 
 			self.isActiveTab = !document.hidden;
