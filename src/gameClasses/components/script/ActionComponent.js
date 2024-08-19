@@ -2337,7 +2337,6 @@ var ActionComponent = TaroEntity.extend({
 						break;
 
 					case 'enableRotateToFaceMouseCursor':
-						console.log('enabling!');
 						var item = self._script.param.getValue(action.item, vars);
 						if (item && item._category == 'item') {
 							item.streamUpdateData([{ rotateToFaceMouseCursor: true }]);
