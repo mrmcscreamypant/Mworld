@@ -40,6 +40,7 @@ class SelectionBox {
 	}
 
 	select(startPoint, endPoint) {
+		return;
 		if (this.enabled === false) {
 			return;
 		}
