@@ -3569,7 +3569,7 @@ var TaroEntity = TaroObject.extend({
 			} else {
 				this.height(height);
 				this.width(width);
-				this._scaleTexture();
+				// this._scaleTexture();
 			}
 		}
 	},
@@ -4374,6 +4374,8 @@ var TaroEntity = TaroObject.extend({
 
 						default:
 							if (taro.isServer) {
+								// TODO: I think we need a validation to see if attrName exists in this._stats
+								// if (this._stats[attrName] != undefined)
 								this._stats[attrName] = newValue;
 							}
 

@@ -719,10 +719,13 @@ var Item = TaroEntityPhysics.extend({
 		this._stats.quantity = qty;
 		if (taro.isServer) {
 			var clientId = this.getOwnerUnit()?.getOwner()?._stats.clientId;
-			// if server authoritative mode is enabled, then stream item quantity to the item's owner player only
-			if (taro.runMode == 0) {
-				this.streamUpdateData([{ quantity: qty }], clientId);
-			}
+
+			// // if server authoritative mode is enabled, then stream item quantity to the item's owner player only
+			// if (taro.runMode == 0) {
+			// 	this.streamUpdateData([{ quantity: qty }], clientId);
+			// }
+
+			this.streamUpdateData([{ quantity: qty }]);
 
 			// item's set to be removed when empty
 			if (this._stats.quantity == 0 && this._stats.removeWhenEmpty === true) {
@@ -839,7 +842,6 @@ var Item = TaroEntityPhysics.extend({
 
 	startUsing: function () {
 		var self = this;
-
 		if (self._stats.isBeingUsed) return;
 
 		self._stats.isBeingUsed = true;
@@ -891,74 +893,58 @@ var Item = TaroEntityPhysics.extend({
 	},
 
 	/**
-	 * get item's position based on its itemAnchor, unitAnchor, and current rotation value.
-	 * @param rotate item's rotation. used for tweening item that's not anchored at 0,0. e.g. swinging a sword.
+	 * Get item's position based on its itemAnchor, unitAnchor, and current rotation value.
+	 * @param {number} rotate - Item's rotation. Used for tweening item that's not anchored at 0,0. e.g. swinging a sword.
+	 * @returns {Object} - The offset object containing x, y, rotate, unitAnchor, and itemAnchor.
 	 */
 	getAnchoredOffset: function (rotate = 0) {
-		var self = this;
-		var offset = { x: 0, y: 0, rotate: 0, unitAnchor: { x: 0, y: 0 }, itemAnchor: { x: 0, y: 0 } };
-		var ownerUnit = this.getOwnerUnit();
+		const ownerUnit = this.getOwnerUnit();
+		const offset = { x: 0, y: 0, rotate: rotate, unitAnchor: { x: 0, y: 0 }, itemAnchor: { x: 0, y: 0 } };
 
-		if (ownerUnit && this._stats.stateId != 'dropped') {
-			// place item correctly based on its owner's transformation & its body's offsets.
-			if (self._stats.currentBody) {
-				var unitRotate = ownerUnit._rotate.z;
+		if (!ownerUnit || this._stats.stateId === 'dropped' || !this._stats.currentBody) {
+			return offset;
+		}
 
-				if (self._stats.currentBody.fixedRotation) {
-					rotate = unitRotate;
-				}
+		const unitRotate = ownerUnit._rotate.z;
+		const currentBody = this._stats.currentBody;
+		const unitAnchor = currentBody.unitAnchor || {};
+		const itemAnchor = currentBody.itemAnchor || {};
 
-				// get translation offset based on unitAnchor
-				if (self._stats.currentBody.unitAnchor) {
-					// if entity is flipped, then flip the keyFrames as well
-					// var itemAngle = ownerUnit.angleToTarget
-					// if (taro.isClient && ownerUnit == taro.client.selectedUnit) {
-					// console.log(itemAngle, unitAnchoredPosition)
-					// }
+		// Adjust rotation if fixed
+		if (currentBody.fixedRotation) {
+			rotate = unitRotate;
+		}
 
-					var unitAnchorOffsetRotate = Math.radians(self._stats.currentBody.unitAnchor.rotation || 0);
-					var unitAnchorOffsetY = self._stats.currentBody.unitAnchor.y || 0;
-					var itemAnchorOffsetY = self._stats.currentBody.itemAnchor?.y || 0; // get translation offset based on itemAnchor
+		// Calculate unit anchor offset
+		const unitAnchorOffsetRotate = Math.radians(unitAnchor.rotation || 0);
+		const unitAnchorOffsetX = ownerUnit._stats.flip === 1 ? -unitAnchor.x || 0 : unitAnchor.x || 0;
+		const unitAnchorOffsetY = unitAnchor.y || 0;
 
-					// item is flipped, then mirror the rotation
-					if (ownerUnit._stats.flip == 1) {
-						var unitAnchorOffsetX = -self._stats.currentBody.unitAnchor.x || 0;
-						var itemAnchorOffsetX = -self._stats.currentBody.itemAnchor?.x || 0;
+		// Calculate item anchor offset
+		const itemAnchorOffsetX = ownerUnit._stats.flip === 1 ? -itemAnchor.x || 0 : itemAnchor.x || 0;
+		const itemAnchorOffsetY = itemAnchor.y || 0;
 
-						rotate -= unitAnchorOffsetRotate;
-					} else {
-						var unitAnchorOffsetX = self._stats.currentBody.unitAnchor.x || 0;
-						var itemAnchorOffsetX = self._stats.currentBody.itemAnchor?.x || 0;
+		// Adjust rotation based on flip
+		rotate += ownerUnit._stats.flip === 1 ? -unitAnchorOffsetRotate : unitAnchorOffsetRotate;
 
-						rotate += unitAnchorOffsetRotate;
-					}
+		// Calculate anchored positions
+		const unitAnchoredPosition = {
+			x: unitAnchorOffsetX * Math.cos(unitRotate) + unitAnchorOffsetY * Math.sin(unitRotate),
+			y: unitAnchorOffsetX * Math.sin(unitRotate) - unitAnchorOffsetY * Math.cos(unitRotate),
+		};
 
-					var unitAnchoredPosition = {
-						x: unitAnchorOffsetX * Math.cos(unitRotate) + unitAnchorOffsetY * Math.sin(unitRotate),
-						y: unitAnchorOffsetX * Math.sin(unitRotate) - unitAnchorOffsetY * Math.cos(unitRotate),
-					};
+		offset.unitAnchor = unitAnchoredPosition;
+		offset.itemAnchor = {
+			x: itemAnchorOffsetX * Math.cos(rotate) + itemAnchorOffsetY * Math.sin(rotate),
+			y: itemAnchorOffsetX * Math.sin(rotate) - itemAnchorOffsetY * Math.cos(rotate),
+		};
 
-					offset.unitAnchor.x = unitAnchoredPosition.x;
-					offset.unitAnchor.y = unitAnchoredPosition.y;
+		offset.x = unitAnchoredPosition.x + offset.itemAnchor.x;
+		offset.y = unitAnchoredPosition.y + offset.itemAnchor.y;
 
-					offset.itemAnchor.x = itemAnchorOffsetX * Math.cos(rotate) + itemAnchorOffsetY * Math.sin(rotate);
-					offset.itemAnchor.y = itemAnchorOffsetX * Math.sin(rotate) - itemAnchorOffsetY * Math.cos(rotate);
-
-					(offset.x =
-						unitAnchoredPosition.x + itemAnchorOffsetX * Math.cos(rotate) + itemAnchorOffsetY * Math.sin(rotate)),
-						(offset.y =
-							unitAnchoredPosition.y + itemAnchorOffsetX * Math.sin(rotate) - itemAnchorOffsetY * Math.cos(rotate));
-
-					if (self._stats.controls && self._stats.controls.mouseBehaviour) {
-						if (
-							self._stats.controls.mouseBehaviour.rotateToFaceMouseCursor ||
-							(self._stats.currentBody && self._stats.currentBody.jointType == 'weldJoint')
-						) {
-							offset.rotate = rotate;
-						}
-					}
-				}
-			}
+		// Set rotation if necessary
+		if (this._stats.controls?.mouseBehaviour?.rotateToFaceMouseCursor || currentBody.jointType === 'weldJoint') {
+			offset.rotate = rotate;
 		}
 
 		return offset;
@@ -1275,6 +1261,10 @@ var Item = TaroEntityPhysics.extend({
 							this._stats.fireRate = newValue;
 						}
 						break;
+
+					case 'rotateToFaceMouseCursor':
+						this._stats.controls.mouseBehaviour.rotateToFaceMouseCursor = newValue;
+						break;
 				}
 			}
 		}
@@ -1302,7 +1292,7 @@ var Item = TaroEntityPhysics.extend({
 			var rotate = this._rotate.z;
 
 			// angleToTarget is only available in server
-			if (taro.isServer && ownerUnit.angleToTarget) {
+			if (taro.isServer && ownerUnit.angleToTarget && self._stats.controls.mouseBehaviour.rotateToFaceMouseCursor) {
 				rotate = ownerUnit.angleToTarget;
 			}
 
@@ -1329,16 +1319,8 @@ var Item = TaroEntityPhysics.extend({
 			}
 
 			if (taro.isServer || (taro.isClient && taro.client.selectedUnit == ownerUnit)) {
-				if (
-					self._stats.controls &&
-					self._stats.controls.mouseBehaviour &&
-					self._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse
-				) {
-					if (ownerUnit.angleToTargetRelative > 0 && ownerUnit.angleToTargetRelative < Math.PI) {
-						self.flip(0);
-					} else {
-						self.flip(1);
-					}
+				if (self._stats.controls?.mouseBehaviour?.flipSpriteHorizontallyWRTMouse) {
+					self.flip(ownerUnit._stats.flip ? 1 : 0);
 				}
 			}
 		}

@@ -374,8 +374,6 @@ var ControlComponent = TaroEntity.extend({
 							parseFloat(unit._translate.x).toFixed(2),
 							parseFloat(unit._translate.y).toFixed(2),
 							parseFloat(unit._rotate.z).toFixed(4),
-							velocity.x.toFixed(2),
-							velocity.y.toFixed(2),
 						]);
 					}
 				}

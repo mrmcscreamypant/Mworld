@@ -969,7 +969,7 @@ var ActionComponent = TaroEntity.extend({
 						var unit = self._script.param.getValue(action.unit, vars);
 						var ownerPlayer = unit.getOwner();
 						var userId = ownerPlayer._stats.userId || ownerPlayer._stats.guestUserId;
-						var isGuestUser = !!(!player._stats.userId && player._stats.guestUserId);
+						var isGuestUser = !!(!ownerPlayer._stats.userId && ownerPlayer._stats.guestUserId);
 
 						if (unit && ownerPlayer && userId && ownerPlayer.persistentDataLoaded) {
 							if (taro.game.isWorldMap && !vars.isWorldScript) {
@@ -2121,8 +2121,10 @@ var ActionComponent = TaroEntity.extend({
 					case 'setUnitNameLabel':
 						var unit = self._script.param.getValue(action.unit, vars);
 						var name = self._script.param.getValue(action.name, vars);
+						var player = self._script.param.getValue(action.player, vars);
+
 						if (unit) {
-							unit.streamUpdateData([{ name: name }]);
+							unit.streamUpdateData([{ name: name }], player?._stats?.clientId);
 						}
 
 						break;
@@ -2331,6 +2333,20 @@ var ActionComponent = TaroEntity.extend({
 							}
 						} else {
 							// throw new Error('invalid item');
+						}
+						break;
+
+					case 'enableRotateToFaceMouseCursor':
+						var item = self._script.param.getValue(action.item, vars);
+						if (item && item._category == 'item') {
+							item.streamUpdateData([{ rotateToFaceMouseCursor: true }]);
+						}
+						break;
+
+					case 'disableRotateToFaceMouseCursor':
+						var item = self._script.param.getValue(action.item, vars);
+						if (item && item._category == 'item') {
+							item.streamUpdateData([{ rotateToFaceMouseCursor: false }]);
 						}
 						break;
 
@@ -2658,6 +2674,14 @@ var ActionComponent = TaroEntity.extend({
 						var angle = self._script.param.getValue(action.angle, vars);
 						if (player && player._stats.clientId) {
 							player.setCameraPitch(angle);
+						}
+						break;
+
+					case 'playerCameraSetYaw':
+						var player = self._script.param.getValue(action.player, vars);
+						var angle = self._script.param.getValue(action.angle, vars);
+						if (player && player._stats.clientId) {
+							player.setCameraYaw(angle);
 						}
 						break;
 

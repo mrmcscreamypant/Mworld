@@ -290,6 +290,16 @@ var Player = TaroEntity.extend({
 		}
 	},
 
+	setCameraYaw: function (angle) {
+		if (taro.isServer) {
+			if (this._stats.clientId) {
+				this.streamUpdateData([{ cameraYaw: angle }], this._stats.clientId);
+			}
+		} else if (taro.isClient) {
+			taro.client.emit('camera-yaw', angle);
+		}	
+	},
+
 	cameraStopTracking: function () {
 		this._stats.cameraTrackedUnitId = undefined;
 		if (taro.isServer) {
@@ -517,6 +527,10 @@ var Player = TaroEntity.extend({
 			if (taro.isServer) {
 				const i = taro.server.developerClientIds.indexOf(this._stats.clientId);
 				if (i != -1) taro.server.developerClientIds.splice(i, 1);
+
+				if (this.isTrading) {
+					taro.server._onTrade({ type: 'cancel', cancleBy: this.tradingWith, cancleTo: this.id() });
+				}
 			}
 
 			taro.script.trigger('playerLeavesGame', { playerId: this.id() });
@@ -688,6 +702,10 @@ var Player = TaroEntity.extend({
 								self.setCameraPitch(newValue);
 								break;
 
+							case 'cameraYaw':
+								self.setCameraYaw(newValue);
+								break;
+
 							case 'scriptData':
 								taro.developerMode.serverScriptData = newValue;
 								taro.developerMode.savedScriptData = newValue;
@@ -751,10 +769,10 @@ var Player = TaroEntity.extend({
 
 								console.log(
 									`JoinGame took ${window.joinGameSent.completed}ms to join player` +
-										`, client to gs: ${self._stats.receivedJoinGame - window.joinGameSent.start}ms` +
-										`, gs loading player data: ${self._stats.totalTime}ms` +
-										`, gs processed request for: ${self._stats.processedJoinGame}ms` +
-										`, gs to client: ${streamingDiff}, client sent on: ${window.joinGameSent.start}, server sent back on: ${data.streamedOn}`
+									`, client to gs: ${self._stats.receivedJoinGame - window.joinGameSent.start}ms` +
+									`, gs loading player data: ${self._stats.totalTime}ms` +
+									`, gs processed request for: ${self._stats.processedJoinGame}ms` +
+									`, gs to client: ${streamingDiff}, client sent on: ${window.joinGameSent.start}, server sent back on: ${data.streamedOn}`
 								);
 
 								if (window.joinGameSent.completed > 7000) {

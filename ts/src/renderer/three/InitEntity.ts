@@ -151,7 +151,7 @@ namespace Renderer {
 
 			updateAction(action: ActionData): void {
 				//update action in editor
-				const renderer = Renderer.Three.instance()
+				const renderer = Renderer.Three.instance();
 				renderer.entityEditor.debounceUpdateAction?.({ data: [action] });
 				if (action.wasCreated) {
 					return;
@@ -289,7 +289,7 @@ namespace Renderer {
 							const nowActionObj = JSON.parse(nowAction);
 							taro.network.send<any>('editInitEntity', nowActionObj);
 						},
-						mergedUuid: uuid
+						mergedUuid: uuid,
 					},
 					history
 				);

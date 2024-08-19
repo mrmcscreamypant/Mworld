@@ -49,6 +49,9 @@ var Region = TaroEntityPhysics.extend({
 			self._translate.x = regionDimension.x + regionDimension.width / 2;
 			self._translate.y = regionDimension.y + regionDimension.height / 2;
 
+			this.width(self._stats.default.width);
+			this.height(self._stats.default.height);
+
 			self.updateBody({
 				translate: { x: self._translate.x, y: self._translate.y },
 			});

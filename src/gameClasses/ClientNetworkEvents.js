@@ -631,6 +631,8 @@ var ClientNetworkEvents = {
 				delete playerB.tradingWith;
 				delete playerA.isTrading;
 				delete playerB.isTrading;
+				taro.tradeUi.tradeItems = [];
+				taro.tradeUi.acceptDisableReason = null;
 				$('#trade-div').hide();
 				break;
 			}
@@ -638,10 +640,14 @@ var ClientNetworkEvents = {
 			case 'cancel': {
 				var playerA = taro.$(msg.between.playerA);
 				var playerB = taro.$(msg.between.playerB);
-				delete playerA.tradingWith;
-				delete playerB.tradingWith;
-				delete playerA.isTrading;
-				delete playerB.isTrading;
+				if (playerA) {
+					delete playerA.tradingWith;
+					delete playerA.isTrading;
+				}
+				if (playerB) {
+					delete playerB.tradingWith;
+					delete playerB.isTrading;
+				}
 				$('#trade-div').hide();
 				break;
 			}

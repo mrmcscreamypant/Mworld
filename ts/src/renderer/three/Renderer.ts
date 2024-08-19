@@ -45,14 +45,57 @@ namespace Renderer {
 			frustum = new THREE.Frustum();
 			cameraViewProjectionMatrix = new THREE.Matrix4();
 
+			tryFindMesh(object: THREE.Object3D) {
+				const meshes: THREE.Mesh[] = [];
+				object.children.forEach((child: any) => {
+					if (child.isMesh) {
+						meshes.push(child);
+					}
+					if (child.children) {
+						meshes.push(...this.tryFindMesh(child));
+					}
+				});
+				return meshes;
+			}
 			updateFrustumCulling() {
+				const zeroVec3 = new THREE.Vector3(0, 0, 0);
 				this.scene.traverse((object: any) => {
-					const entity = object.taroEntity;
-					if (entity && object.body && (object.body.sprite ?? object.body.mesh)?.isMesh) {
-						if (!this.frustum.intersectsObject(object.body.sprite ?? object.body.mesh)) {
-							entity.culled = true;
-						} else {
-							entity.culled = false;
+					const entity: TaroEntityPhysics = object.taroEntity;
+					if (object instanceof Three.Model && entity) {
+						const meshes = this.tryFindMesh(object);
+						let culled = true;
+						meshes.forEach((mesh) => {
+							if (this.frustum.intersectsObject(mesh)) {
+								culled = false;
+							}
+						});
+						entity.culled = culled && !this.frustum.containsPoint(object.parent.position);
+					} else {
+						let ownerCulled = true;
+						if (entity && entity._category === 'item' && entity._stats?.ownerUnitId) {
+							const ownerUnit = this.entityManager.units.find((u) => u.taroEntity._id === entity._stats?.ownerUnitId);
+							if (ownerUnit) {
+								const pos = ownerUnit.position.clone();
+								pos.setY(this.initEntityLayer.position.y + 1 + ownerUnit.position.y);
+								if (this.frustum.containsPoint(pos)) {
+									ownerCulled = false;
+								}
+							}
+						}
+
+						if (entity && object.body && object.body.sprite?.isMesh) {
+							const pos = object.position.clone();
+							pos.setY(this.initEntityLayer.position.y + 1 + object.position.y);
+							if (
+								!this.frustum.intersectsObject(object.body?.sprite) &&
+								!this.frustum.containsPoint(pos) &&
+								ownerCulled &&
+								(object as THREE.Object3D).position.distanceTo(zeroVec3) !== 0
+							) {
+								entity.culled = true;
+							} else {
+								entity.culled = false;
+							}
 						}
 					}
 				});
@@ -1008,6 +1051,7 @@ namespace Renderer {
 
 				taro.client.on('stop-follow', () => this.camera.unfollow());
 				taro.client.on('camera-pitch', (deg: number) => this.camera.setElevationAngle(deg));
+				taro.client.on('camera-yaw', (deg: number) => this.camera.setAzimuthAngle(deg));
 
 				taro.client.on('camera-position', (x: number, y: number) => {
 					if (!taro.developerMode.active || taro.developerMode.activeTab === 'play') {

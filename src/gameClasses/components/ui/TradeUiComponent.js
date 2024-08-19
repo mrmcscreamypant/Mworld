@@ -2,6 +2,9 @@ var TradeUiComponent = TaroEntity.extend({
 	classId: 'TradeUiComponent',
 	componentId: 'tradeUi',
 
+	acceptDisableReason: null,
+	tradeItems: [],
+
 	init: function (entity, options) {
 		var self = this;
 
@@ -15,6 +18,10 @@ var TradeUiComponent = TaroEntity.extend({
 		});
 
 		$('#accept-trade-button').on('click', function () {
+			if (taro.tradeUi.acceptDisableReason === 'not-enough-space') {
+				window.setToastMessage('Not enough space', 'error');
+				return;
+			}
 			$('#accept-trade-button').addClass('disabled-trade-button');
 			$('#you-accept').addClass('active');
 
@@ -140,10 +147,17 @@ var TradeUiComponent = TaroEntity.extend({
 			$(`#item-${totalInventorySlot + i}`).removeClass('trade-item-success');
 		}
 
+		taro.tradeUi.tradeItems = tradeItems;
+
 		$('#you-accept').removeClass('active');
 		$('#trader-accept').removeClass('active');
-		$('#accept-trade-button').removeClass('disabled-trade-button');
 		$('#accept-trade-text').text('Accept');
+
+		if (!selectedUnit.inventory.checkAvailableSlots(tradeItems)) {
+			taro.tradeUi.toggleActiveButton(false, 'not-enough-space');
+		} else {
+			taro.tradeUi.toggleActiveButton(true);
+		}
 	},
 	closeTradeRequest: function () {
 		$('#trade-request-div').hide();
@@ -157,6 +171,9 @@ var TradeUiComponent = TaroEntity.extend({
 		delete playerB?.tradingWith;
 		delete playerA.isTrading;
 		delete playerB?.isTrading;
+
+		taro.tradeUi.tradeItems = [];
+		taro.tradeUi.acceptDisableReason = null;
 		$('#trade-div').hide();
 	},
 
@@ -166,6 +183,16 @@ var TradeUiComponent = TaroEntity.extend({
 			tradeWithUnitId: unitId,
 		});
 	},
+
+	toggleActiveButton: function (show, reason) {
+		if (show) {
+			taro.tradeUi.acceptDisableReason = null;
+			$('#accept-trade-button').removeClass('disabled-trade-button');
+		} else {
+			$('#accept-trade-button').addClass('disabled-trade-button');
+			taro.tradeUi.acceptDisableReason = reason;
+		}
+	}
 });
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

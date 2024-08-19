@@ -2121,11 +2121,13 @@ var Unit = TaroEntityPhysics.extend({
 		if (ownerPlayer) {
 			// mobile control: rotate to rotation provided by the client and convert it to radians
 			if (this._stats.controls && this._stats.controls.absoluteRotation) {
-				if (taro.isMobile) this.angleToTarget = ownerPlayer.absoluteAngle * 0.017453;
-				else this.angleToTarget = ownerPlayer.absoluteAngle;
-
-				// desktop control: if this unit's not under a command, rotate to mouse xy coordinate
+				if (taro.isMobile) {
+					this.angleToTarget = ownerPlayer.absoluteAngle * 0.017453;
+				} else {
+					this.angleToTarget = ownerPlayer.absoluteAngle;
+				}
 			} else {
+				// desktop control: if this unit's not under a command, rotate to mouse xy coordinate
 				var mouse = ownerPlayer.control?.input?.mouse;
 				if (mouse) {
 					var a = this._translate.x - mouse.x;
@@ -2203,7 +2205,11 @@ var Unit = TaroEntityPhysics.extend({
 			self.script.trigger(trigger.name, trigger.params);
 		});
 
-		if (taro.isServer || (taro.isClient && (taro.client.selectedUnit == this || this._stats.streamMode !== 1))) {
+		// don't apply movement logic for this unit on client if it's not streaming its position
+		if (
+			taro.isServer ||
+			(taro.isClient && (taro.client.selectedUnit == this || this._stats.streamMode !== 1)) // streams position, create & destroy
+		) {
 			// ability component behaviour method call
 			this.ability._behaviour();
 
@@ -2267,20 +2273,20 @@ var Unit = TaroEntityPhysics.extend({
 
 					// ignore client-side movement input if cspMode is 2 (client-authoritative),
 					// this unit's position is now dictated by the position streamed by its owner
-					if (
-						!taro.game.data.defaultData.clientPhysicsEngine ||
-						!(taro.isServer && self._stats.controls?.cspMode == 2)
-					) {
-						// moving diagonally should reduce speed
-						if (self.direction.x != 0 && self.direction.y != 0) {
-							speed = speed / 1.41421356237;
-						}
-
-						self.vector = {
-							x: self.direction.x * speed,
-							y: self.direction.y * speed,
-						};
+					// if (
+					// 	!taro.game.data.defaultData.clientPhysicsEngine ||
+					// 	!(taro.isServer && self._stats.controls?.cspMode == 2)
+					// ) {
+					// moving diagonally should reduce speed
+					if (self.direction.x != 0 && self.direction.y != 0) {
+						speed = speed / 1.41421356237;
 					}
+
+					self.vector = {
+						x: self.direction.x * speed,
+						y: self.direction.y * speed,
+					};
+					// }
 				}
 
 				// update AI
@@ -2307,12 +2313,11 @@ var Unit = TaroEntityPhysics.extend({
 			}
 
 			// flip unit
-			if (
-				this._stats.controls &&
-				this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse &&
-				self.angleToTargetRelative
-			) {
-				if (self.angleToTargetRelative > 0 && self.angleToTargetRelative < Math.PI) {
+			let mouse = ownerPlayer.control?.input?.mouse;
+			let angleBetweenUnitAndMouse =
+				Math.atan2(mouse.y - this._translate.y, mouse.x - this._translate.x) + Math.radians(90);
+			if (this._stats.controls && this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse) {
+				if (angleBetweenUnitAndMouse > 0 && angleBetweenUnitAndMouse < Math.PI) {
 					self.flip(0);
 				} else {
 					self.flip(1);

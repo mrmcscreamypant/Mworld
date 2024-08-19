@@ -265,10 +265,6 @@ namespace Renderer {
 				return Math.PI / 2 - this.controls.getPolarAngle();
 			}
 
-			getAzimuthAngle() {
-				return this.controls.getAzimuthalAngle();
-			}
-
 			setAzimuthAngle(deg: number) {
 				this.azimuthAngle = deg;
 
@@ -284,6 +280,10 @@ namespace Renderer {
 
 				this.cameraP.copy(this.perspectiveCamera);
 				this.cameraO.copy(this.orthographicCamera);
+			}
+
+			getAzimuthAngle() {
+				return this.controls.getAzimuthalAngle();
 			}
 
 			setDistance(distance: number) {

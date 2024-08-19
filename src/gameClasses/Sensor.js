@@ -6,10 +6,11 @@ var Sensor = TaroEntityPhysics.extend({
 		self.category('sensor');
 		self.ownerUnitId = ownerUnit.id();
 		TaroEntityPhysics.prototype.init.call(this, {});
-		this.updateRadius(radius);
 		if (radius === null) {
 			radius = 0;
 		}
+		this.updateRadius(radius);
+
 		if (taro.isServer) {
 			this.streamMode(0);
 		}
@@ -65,7 +66,8 @@ var Sensor = TaroEntityPhysics.extend({
 						y: ownerUnit._translate.y,
 					},
 				};
-
+				// need to make sure that taro as well as physics know about the new size
+				this.width(radius, true);
 				this.updateBody(defaultData);
 			} else {
 				console.log("ownerUnit doesn't exist!!");

@@ -824,12 +824,15 @@ var MenuUiComponent = TaroEntity.extend({
 			return;
 		}
 
-		message = message || 'Lost connection to the game server. Please refresh this page or visit our homepage.';
+		const failedConnectReason = 'Error trying to contact server. Please refresh this page or visit our homepage.';
+		const disconnectReason = 'Lost connection to the game server. Please refresh this page or visit our homepage.';
+
+		message = message || (taro.game?.hasStarted ? disconnectReason : failedConnectReason);
 
 		const autoRejoinReasons = [
 			'Server not accepting players, refresh to join another server.',
-			'Error trying to contact server. Please refresh this page or visit our homepage.',
-			'Lost connection to the game server. Please refresh this page or visit our homepage.', // if reason is empty
+			failedConnectReason,
+			disconnectReason,
 		];
 
 		if (!window.attemptedRejoin && !taro.game?.hasStarted && autoRejoinReasons.includes(message)) {
@@ -858,6 +861,7 @@ var MenuUiComponent = TaroEntity.extend({
 		if (window.STATIC_EXPORT_ENABLED || window.IS_CRAZY_GAMES_ENV) {
 			$('#return-to-homepage-server').hide();
 			$('.return-to-homepage-cta').hide();
+			$('.refresh-page-cta #connection-lost-refresh').text('Reconnect');
 		} else {
 			$('#return-to-homepage-server').show();
 		}

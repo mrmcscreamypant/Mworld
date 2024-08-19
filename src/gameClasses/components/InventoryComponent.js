@@ -210,7 +210,7 @@ var InventoryComponent = TaroEntity.extend({
 	 * @param {*} itemData
 	 * @return {int} returns first available slot number (starting from 1). undefined if there's no slot available
 	 */
-	getFirstAvailableSlotForItem: function (itemData) {
+	getFirstAvailableSlotForItem: function (itemData, reservedSlots) {
 		var self = this;
 		var itemTypeId = itemData.itemTypeId;
 
@@ -236,7 +236,7 @@ var InventoryComponent = TaroEntity.extend({
 					) {
 						mappedSlot = j;
 						isAvailable = this.isMappedSlotAvailable(mappedSlot, itemTypeId, ownerPlayer);
-						if (isAvailable) {
+						if (isAvailable && !reservedSlots?.includes(mappedSlot)) {
 							return mappedSlot;
 						}
 					}
@@ -247,7 +247,7 @@ var InventoryComponent = TaroEntity.extend({
 						continue;
 					}
 					isAvailable = this.isMappedSlotAvailable(mappedSlot, itemTypeId, ownerPlayer);
-					if (isAvailable) {
+					if (isAvailable && !reservedSlots?.includes(mappedSlot)) {
 						return mappedSlot;
 					}
 				}
@@ -302,7 +302,7 @@ var InventoryComponent = TaroEntity.extend({
 						itemData.controls.backpackAllowed == undefined))
 			) {
 				var itemId = self._entity._stats.itemIds[i];
-				if (!(itemId && taro.$(itemId))) {
+				if (!(itemId && taro.$(itemId)) && !reservedSlots?.includes(i + 1)) {
 					return i + 1; // empty slot found
 				}
 			}
@@ -313,6 +313,24 @@ var InventoryComponent = TaroEntity.extend({
 			self._entity.reasonForFailingToPickUpItem = `slot ${mappedSlot} is occupied`;
 		}
 		return undefined;
+	},
+
+	checkAvailableSlots: function (itemIdArray) {
+		itemIdArray = itemIdArray.filter(function (el) {
+			return el != null;
+		});
+		let slotsAvailable = true;
+		let availableSlots = [];
+		itemIdArray.forEach((itemId) => {
+			const item = taro.$(itemId);
+			if (this.getFirstAvailableSlotForItem(item._stats, availableSlots)) {
+				availableSlots.push(this.getFirstAvailableSlotForItem(item._stats, availableSlots));
+			} else {
+				slotsAvailable = false;
+				return false;
+			}
+		});
+		return slotsAvailable;
 	},
 
 	// insert item into first available slot
