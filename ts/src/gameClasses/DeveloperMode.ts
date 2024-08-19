@@ -896,7 +896,6 @@ class DeveloperMode {
 		// 2. force update its dimension/scale/layer/image
 		if (taro.game.data.unitTypes[data.typeId]) {
 			if (data.valueType === 'script') {
-				taro.game.data.unitTypes[data.typeId].scripts = rfdc()(data.newData.scripts);
 				Object.entries(data.scriptData).forEach(([scriptId, script]) => {
 					if (!data.deleted) {
 						if (data.action === 'apply') {
@@ -908,6 +907,9 @@ class DeveloperMode {
 						delete taro.developerMode.savedEntityScriptData.unitTypes[data.typId][scriptId];
 					}
 				});
+				taro.game.data.unitTypes[data.typeId].scripts = rfdc()(
+					taro.developerMode.serverEntityScriptData.unitTypes[data.typId]
+				);
 			} else if (data.valueType === 'property') {
 				const oldScripts = rfdc()(taro.game.data.unitTypes[data.typeId].scripts);
 				taro.game.data.unitTypes[data.typeId] = rfdc()(data.newData);
@@ -980,7 +982,20 @@ class DeveloperMode {
 		// 3. we may need to re-mount the item on unit
 		if (taro.game.data.itemTypes[data.typeId]) {
 			if (data.valueType === 'script') {
-				taro.game.data.itemTypes[data.typeId].scripts = rfdc()(data.newData.scripts);
+				Object.entries(data.scriptData).forEach(([scriptId, script]) => {
+					if (!data.deleted) {
+						if (data.action === 'apply') {
+							taro.developerMode.serverEntityScriptData.itemTypes[data.typId][scriptId] = script;
+						}
+						taro.developerMode.savedEntityScriptData.itemTypes[data.typId][scriptId] = script;
+					} else {
+						delete taro.developerMode.serverEntityScriptData.itemTypes[data.typId][scriptId];
+						delete taro.developerMode.savedEntityScriptData.itemTypes[data.typId][scriptId];
+					}
+				});
+				taro.game.data.itemTypes[data.typeId].scripts = rfdc()(
+					taro.developerMode.serverEntityScriptData.itemTypes[data.typId]
+				);
 			} else if (data.valueType === 'property') {
 				const oldScripts = rfdc()(taro.game.data.itemTypes[data.typeId].scripts);
 				taro.game.data.itemTypes[data.typeId] = rfdc()(data.newData);
@@ -1027,7 +1042,20 @@ class DeveloperMode {
 		// 2. force update its dimension/scale/layer/image
 		if (taro.game.data.projectileTypes[data.typeId]) {
 			if (data.valueType === 'script') {
-				taro.game.data.projectileTypes[data.typeId].scripts = rfdc()(data.newData.scripts);
+				Object.entries(data.scriptData).forEach(([scriptId, script]) => {
+					if (!data.deleted) {
+						if (data.action === 'apply') {
+							taro.developerMode.serverEntityScriptData.projectileTypes[data.typId][scriptId] = script;
+						}
+						taro.developerMode.savedEntityScriptData.projectileTypes[data.typId][scriptId] = script;
+					} else {
+						delete taro.developerMode.serverEntityScriptData.projectileTypes[data.typId][scriptId];
+						delete taro.developerMode.savedEntityScriptData.projectileTypes[data.typId][scriptId];
+					}
+				});
+				taro.game.data.projectileTypes[data.typeId].scripts = rfdc()(
+					taro.developerMode.serverEntityScriptData.projectileTypes[data.typId]
+				);
 			} else if (data.valueType === 'property') {
 				const oldScripts = rfdc()(taro.game.data.projectileTypes[data.typeId].scripts);
 				taro.game.data.projectileTypes[data.typeId] = rfdc()(data.newData);
