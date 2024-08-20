@@ -726,12 +726,12 @@ var Player = TaroEntity.extend({
 
 							case 'scriptData':
 								taro.developerMode.serverScriptData = newValue;
-								taro.developerMode.savedScriptData = newValue;
+								taro.developerMode.savedScriptData = rfdc()(newValue);
 								break;
 
 							case 'entityScriptData':
 								taro.developerMode.serverEntityScriptData = newValue;
-								taro.developerMode.savedEntityScriptData = newValue;
+								taro.developerMode.savedEntityScriptData = rfdc()(newValue);
 								break;
 
 							case 'variableData':
