@@ -829,13 +829,18 @@ var MenuUiComponent = TaroEntity.extend({
 
 		message = message || (taro.game?.hasStarted ? disconnectReason : failedConnectReason);
 
-		const autoRejoinReasons = [
+		const mustRejoinReasons = [
 			'Server not accepting players, refresh to join another server.',
+			'server not accepting connections',
+			'Sorry, the server you are trying to join is currently full. Please try again later or join a different server to play this game.',
+		];
+
+		const autoRejoinReasons = [
 			failedConnectReason,
 			disconnectReason,
 		];
 
-		if (!window.attemptedRejoin && !taro.game?.hasStarted && autoRejoinReasons.includes(message)) {
+		if (mustRejoinReasons.includes(message) || (!window.attemptedRejoin && !taro.game?.hasStarted && autoRejoinReasons.includes(message))) {
 			console.log('Attempting rejoin', window.attemptedRejoin, taro.network?._io?._socket?.readyState, taro.game?.hasStarted, message);
 			window.silentRejoin(message);
 			return;
