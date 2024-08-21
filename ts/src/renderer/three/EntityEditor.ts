@@ -32,7 +32,9 @@ namespace Renderer {
 				this.selectedGroup = new THREE.Group();
 				this.debounceUpdateAction = debounce(
 					(actionData) => {
-						inGameEditor.updateAction(actionData.data as any);
+						if (!window.isStandalone) {
+							inGameEditor.updateAction(actionData.data as any);
+						}
 					},
 					0,
 					this.mergedTemplate
@@ -324,6 +326,7 @@ namespace Renderer {
 			}
 
 			showOrHideOutline(e: any, show: boolean) {
+				return;
 				if ((e as any).tag === Three.EntityEditor.TAG) {
 					e.children.forEach((e_child) => {
 						this.showOrHideOutline(e_child, show);
@@ -339,10 +342,10 @@ namespace Renderer {
 				const renderer = Renderer.Three.instance();
 
 				if (entity === null) {
-					this.selectedEntities.forEach(e => {
-						Utils.removeFromParentAndRecalcTransform(e)
-					})
-					this.selectedGroup.position.set(0, 0, 0)
+					this.selectedEntities.forEach((e) => {
+						Utils.removeFromParentAndRecalcTransform(e);
+					});
+					this.selectedGroup.position.set(0, 0, 0);
 					this.selectedEntities = [];
 					this.gizmo.control.detach();
 					renderer.initEntityLayer.children.forEach((e) => {
@@ -401,10 +404,10 @@ namespace Renderer {
 				}
 				setTimeout(() => {
 					if (this.selectedEntities.length > 1) {
-						taro.client.emit('block-scale', true)
-						taro.client.emit('block-rotation', true)
+						taro.client.emit('block-scale', true);
+						taro.client.emit('block-rotation', true);
 					}
-				})
+				});
 			}
 
 			deleteEntity(): void {
