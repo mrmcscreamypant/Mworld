@@ -3,13 +3,15 @@ namespace Renderer {
 		export class Voxels extends Node {
 			brushArea: TileShape;
 			voxelData: { positions: any[]; uvs: any[]; normals: any[]; topIndices: any[]; sidesIndices: any[] }[] = [];
-			voxels: Map<string, VoxelCell>[] = [];
+			voxelsCellData: Map<string, VoxelCell>[] = [];
 			meshes: Record<string, Record<string, THREE.Mesh>> = {};
 			preview: THREE.Mesh | undefined = undefined;
 			layerPlanes: THREE.Plane[] = [];
 			layerLookupTable: Record<number, number> = {};
 			attrs: { positions: THREE.BufferAttribute; uvs: THREE.BufferAttribute; normals: THREE.BufferAttribute };
-			chunksNeedsUpdate: string[] = ['all'];
+			previewSidesIndices: number[] = [];
+			previewTopIndices: number[] = [];
+			lastPreviewChunksNeedsUpdate: string[] = [];
 			static Y_OFFSET = 0.001;
 			static CHUNK_BLOCK_COUNTS = { x: 16, y: 16 };
 			constructor(
@@ -94,7 +96,6 @@ namespace Renderer {
 							visible: true,
 							hiddenFaces: [...hiddenFaces],
 							isPreview: false,
-							changed: true,
 							uvs: [],
 							normals: [],
 							topIndices: [],
@@ -107,40 +108,65 @@ namespace Renderer {
 			}
 
 			clearLayer(rawLayerIdx: number) {
-				this.voxels[rawLayerIdx] = new Map();
+				this.voxelsCellData[rawLayerIdx] = new Map();
 				Object.values(this.meshes[rawLayerIdx]).forEach((mesh) => {
 					this.remove(mesh);
 				});
 			}
 
-			updateLayer(voxels: Map<string, VoxelCell>, layerIdx: number, isPreview = false) {
+			updateLayer(updatedVoxels: Map<string, VoxelCell>, layerIdx: number, isPreview = false) {
+				if (updatedVoxels.size === 0) {
+					return;
+				}
 				const chunkBlockCounts = Renderer.Three.Voxels.CHUNK_BLOCK_COUNTS;
-				if (!isPreview) {
-					this.voxels[layerIdx] = voxels;
+				let changedKeys = [];
+				const chunksNeedsUpdate = [];
+				let changed = false;
+				if (!this.voxelsCellData[layerIdx]) {
+					this.voxelsCellData[layerIdx] = new Map();
+				}
+				for (let [k, v] of updatedVoxels.entries()) {
+					if (!this.voxelsCellData[layerIdx].has(k) || this.voxelsCellData[layerIdx].get(k).type !== v.type) {
+						if (!isPreview) {
+							this.voxelsCellData[layerIdx].set(k, rfdc()(v));
+						}
+						changedKeys.push(k);
+						chunksNeedsUpdate.push(Renderer.Three.getChunkKeyFromBlockPos(v.position[0], v.position[2]));
+						changed = true;
+					}
+				}
+				if (!changed) {
+					return;
 				}
 				const renderOrder = (layerIdx + 1) * 100;
 				for (let chunkX = 0; chunkX < Math.ceil(taro.map.data.width / chunkBlockCounts.x); chunkX++) {
 					for (let chunkZ = 0; chunkZ < Math.ceil(taro.map.data.height / chunkBlockCounts.y); chunkZ++) {
 						const chunkKey = Renderer.Three.getChunkKeyFromPos(chunkX, chunkZ);
-						if (!this.chunksNeedsUpdate.includes(chunkKey) && !this.chunksNeedsUpdate.includes('all')) {
-							continue;
-						}
-						const subVoxels = new Map<string, VoxelCell>();
-						for (let x = chunkX * chunkBlockCounts.x; x < (1 + chunkX) * chunkBlockCounts.x; x++) {
-							for (let z = chunkZ * chunkBlockCounts.y; z < (1 + chunkZ) * chunkBlockCounts.y; z++) {
-								const height = this.calcHeight(layerIdx);
-								const pos = { x: x + 0.5, y: height + Renderer.Three.Voxels.Y_OFFSET * height, z: z + 0.5 };
-								const key = Renderer.Three.getKeyFromPos(pos.x, pos.y, pos.z);
-								if (!voxels.has(key)) {
-									break;
-								}
-								subVoxels.set(key, voxels.get(key));
+						if (!chunksNeedsUpdate.includes(chunkKey)) {
+							if (!this.lastPreviewChunksNeedsUpdate.includes(chunkKey)) {
+								continue;
+							} else {
+								this.lastPreviewChunksNeedsUpdate = this.lastPreviewChunksNeedsUpdate.filter(
+									(chunkId) => chunkId !== chunkKey
+								);
 							}
 						}
-						if (subVoxels.size === 0) {
-							continue;
+						const subVoxels = new Map<string, VoxelCell>();
+						const height = this.calcHeight(layerIdx);
+						for (let x = chunkX * chunkBlockCounts.x; x < (1 + chunkX) * chunkBlockCounts.x; x++) {
+							for (let z = chunkZ * chunkBlockCounts.y; z < (1 + chunkZ) * chunkBlockCounts.y; z++) {
+								const pos = { x: x + 0.5, y: height + Renderer.Three.Voxels.Y_OFFSET * height, z: z + 0.5 };
+								const key = Renderer.Three.getKeyFromPos(pos.x, pos.y, pos.z);
+								if (this.voxelsCellData[layerIdx].has(key)) {
+									if (updatedVoxels.get(key)?.isPreview === true) {
+										subVoxels.set(key, rfdc()(updatedVoxels.get(key)));
+									} else {
+										subVoxels.set(key, rfdc()(this.voxelsCellData[layerIdx].get(key)));
+									}
+								}
+							}
 						}
-						const prunedVoxels = pruneCells(subVoxels);
+						const prunedVoxels = pruneCells(subVoxels, this.voxelsCellData[layerIdx]);
 						buildMeshDataFromCells(prunedVoxels, this.topTileset);
 						const voxelData = {
 							positions: [],
@@ -149,44 +175,45 @@ namespace Renderer {
 							topIndices: [],
 							sidesIndices: [],
 						};
+
 						for (let voxel of subVoxels.values()) {
 							Object.keys(voxelData).forEach((k) => {
-								if (voxel[k]) {
-									voxelData[k].push(...voxel[k]);
-								}
+								voxelData[k].push(...voxel[k]);
 							});
 						}
 						if (!this.meshes[layerIdx]) {
 							this.meshes[layerIdx] = {};
 						}
-
 						let geometry: THREE.BufferGeometry<THREE.NormalBufferAttributes>;
-						if (!this.meshes[layerIdx][chunkKey]) {
-							geometry = new THREE.BufferGeometry();
-							this.attrs = {
-								uvs: new THREE.BufferAttribute(new Float32Array(voxelData.uvs), 2).setUsage(THREE.StreamDrawUsage),
-								positions: new THREE.BufferAttribute(new Float32Array(voxelData.positions), 3).setUsage(
-									THREE.StreamDrawUsage
-								),
-								normals: new THREE.BufferAttribute(new Float32Array(voxelData.normals), 3).setUsage(
-									THREE.StreamDrawUsage
-								),
-							};
-							geometry.setAttribute('position', this.attrs.positions);
-							geometry.setAttribute('uv', this.attrs.uvs);
-							geometry.setAttribute('normal', this.attrs.normals);
-							let curLength = 0;
-							geometry.addGroup(0, voxelData.sidesIndices.length, 0);
-							curLength += voxelData.sidesIndices.length;
-							geometry.addGroup(curLength, voxelData.topIndices.length, 1);
-						} else {
-							geometry = this.meshes[layerIdx][chunkKey].geometry;
-							Object.entries(geometry.attributes).forEach(([key, attr]: [string, THREE.BufferAttribute]) => {
-								attr.array.set(voxelData[`${key}s`]);
-								attr.needsUpdate = true;
-							});
-						}
-						geometry.setIndex([...voxelData.sidesIndices, ...voxelData.topIndices]);
+
+						geometry = new THREE.BufferGeometry();
+
+						const uvs = new THREE.BufferAttribute(new Float32Array(voxelData.uvs), 2).setUsage(THREE.StreamDrawUsage);
+						const positions = new THREE.BufferAttribute(new Float32Array(voxelData.positions), 3).setUsage(
+							THREE.StreamDrawUsage
+						);
+						const normals = new THREE.BufferAttribute(new Float32Array(voxelData.normals), 3).setUsage(
+							THREE.StreamDrawUsage
+						);
+
+						geometry.setIndex([
+							...voxelData.sidesIndices,
+							...voxelData.topIndices,
+							...this.previewTopIndices,
+							...this.previewSidesIndices,
+						]);
+						geometry.setAttribute('position', positions);
+						geometry.setAttribute('uv', uvs);
+						geometry.setAttribute('normal', normals);
+						let curLength = 0;
+						geometry.addGroup(0, voxelData.sidesIndices.length, 0);
+						curLength += voxelData.sidesIndices.length;
+						geometry.addGroup(curLength, voxelData.topIndices.length, 1);
+						curLength += voxelData.topIndices.length;
+						geometry.addGroup(curLength, this.previewSidesIndices.length, 2);
+						curLength += this.previewSidesIndices.length;
+						geometry.addGroup(curLength, this.previewTopIndices.length, 3);
+
 						const mat1 = new THREE.MeshStandardMaterial({
 							map: this.sidesTileset.texture,
 							side: THREE.DoubleSide,
@@ -202,25 +229,22 @@ namespace Renderer {
 							mat.opacity = 0.5;
 							mat.transparent = true;
 						});
-						// curLength += voxelData.topIndices.length;
-						// geometry.addGroup(curLength, voxelData.previewSidesIndices.length, 2);
-						// curLength += voxelData.previewSidesIndices.length;
-						// geometry.addGroup(curLength, voxelData.previewTopIndices.length, 3);
 
 						//@ts-ignore
 						geometry.computeBoundsTree();
-						if (!this.meshes[layerIdx][chunkKey]) {
-							const mesh = new THREE.Mesh(geometry, [mat1, mat2, mat1Preview, mat2Preview]);
-							this.meshes[layerIdx][chunkKey] = mesh;
-							this.add(mesh);
-						} else {
-						}
+						this.remove(this.meshes[layerIdx][chunkKey]);
+						const mesh = new THREE.Mesh(geometry, [mat1, mat2, mat1Preview, mat2Preview]);
+						this.meshes[layerIdx][chunkKey] = mesh;
+						this.add(mesh);
 
 						if (this.layerPlanes[layerIdx] === undefined) {
 							const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 1 - renderOrder / 100);
 							this.layerPlanes[layerIdx] = plane;
 						}
 					}
+				}
+				if (isPreview) {
+					this.lastPreviewChunksNeedsUpdate = chunksNeedsUpdate.slice();
 				}
 			}
 		}
@@ -265,29 +289,14 @@ namespace Renderer {
 			return neighborKeys;
 		}
 
-		function pruneCells(cells: Map<string, VoxelCell>, prevCells?: Map<string, VoxelCell>) {
-			const prunedVoxels = prevCells ?? new Map<string, VoxelCell>();
+		function pruneCells(cells: Map<string, VoxelCell>, allCells: Map<string, VoxelCell>) {
+			const prunedVoxels = new Map<string, VoxelCell>();
 			for (let k of cells.keys()) {
 				const curCell = cells.get(k);
-				if (curCell.changed === false) {
+
+				let visible = updateCellSides(curCell, allCells);
+				if (visible) {
 					prunedVoxels.set(k, curCell);
-					continue;
-				}
-				if (prevCells && curCell.type < 0) {
-					let pos = curCell.position;
-					prevCells.delete(k);
-					findNeighbors(pos[0], pos[1], pos[2]).forEach((neighborKey) => {
-						let neighbor = prevCells.get(neighborKey);
-						if (neighbor !== undefined) {
-							updateCellSides(neighbor, prevCells);
-						}
-					});
-				} else {
-					let visible =
-						updateCellSides(curCell, cells) && (prevCells === undefined || updateCellSides(curCell, prevCells));
-					if (visible) {
-						prunedVoxels.set(k, curCell);
-					}
 				}
 			}
 			return prunedVoxels;
@@ -296,13 +305,16 @@ namespace Renderer {
 		function buildMeshDataFromCells(cells: Map<string, VoxelCell>, tileset: TextureSheet) {
 			const xStep = tileset.tileWidth / tileset.width;
 			const yStep = tileset.tileHeight / tileset.height;
-			const changedIdx = [];
 			const resize = !taro.game.data.defaultData.dontResize;
 			const tileWidth = resize ? 1 : tileset.tileWidth / 64;
 			const tileHeight = resize ? 1 : tileset.tileHeight / 64;
 			const halfTileWidth = tileWidth / 2;
 			const halfTileHeight = tileHeight / 2;
-
+			const voxels = Renderer.Three.getVoxels();
+			if (voxels) {
+				voxels.previewSidesIndices = [];
+				voxels.previewTopIndices = [];
+			}
 			const pxGeometry = new THREE.PlaneGeometry(tileWidth, tileHeight);
 			pxGeometry.rotateY(Math.PI / 2);
 			pxGeometry.translate(halfTileWidth, 0, 0);
@@ -330,14 +342,8 @@ namespace Renderer {
 
 			const geometries = [pxGeometry, nxGeometry, pyGeometry, nyGeometry, pzGeometry, nzGeometry];
 			let nowCount = 0;
-			let idx = -1;
 			for (let c of cells.keys()) {
-				idx++;
 				const curCell = cells.get(c);
-				if (curCell.changed === false) {
-					nowCount += curCell.positions.length;
-					continue;
-				}
 				for (let i = 0; i < geometries.length; ++i) {
 					if (curCell.hiddenFaces[i]) {
 						continue;
@@ -395,21 +401,19 @@ namespace Renderer {
 					}
 
 					// top and bottom face
-					if (i === 2 || i === 3) {
-						if (curCell.isPreview) {
-							// targetData.previewTopIndices.push(...localIndices);
+					if (curCell.isPreview) {
+						if (i === 2 || i === 3) {
+							voxels.previewTopIndices.push(...localIndices);
 						} else {
-							curCell.topIndices.push(...localIndices);
+							voxels.previewSidesIndices.push(...localIndices);
 						}
 					} else {
-						if (curCell.isPreview) {
-							// targetData.previewSidesIndices.push(...localIndices);
+						if (i === 2 || i === 3) {
+							curCell.topIndices.push(...localIndices);
 						} else {
 							curCell.sidesIndices.push(...localIndices);
 						}
 					}
-					changedIdx.push(idx);
-					curCell.changed = false;
 				}
 			}
 		}
@@ -429,7 +433,6 @@ namespace Renderer {
 			visible: boolean;
 			hiddenFaces: boolean[];
 			isPreview: boolean;
-			changed: boolean;
 			uvs: number[];
 			normals: number[];
 			positions: number[];

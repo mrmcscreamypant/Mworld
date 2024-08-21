@@ -31,7 +31,7 @@ class VoxelEditor {
 
 		taro.client.on('updateMap', () => {
 			let numTileLayers = 0;
-			this.voxels.voxels = [];
+			this.voxels.voxelsCellData = [];
 			for (const [idx, layer] of taro.game.data.map.layers.entries()) {
 				if (layer.type === 'tilelayer' && layer.data) {
 					const voxels = Renderer.Three.Voxels.generateVoxelsFromLayerData(layer, numTileLayers, false);
@@ -226,7 +226,7 @@ class VoxelEditor {
 		flat = false,
 		isPreview = false
 	) {
-		const voxels = Renderer.Three.getVoxels().voxels[layer];
+		const voxels = new Map();
 		const allFacesVisible = [false, false, false, false, false, false];
 		const onlyBottomFaceVisible = [true, true, true, false, true, true];
 		const hiddenFaces = flat ? onlyBottomFaceVisible : allFacesVisible;
@@ -251,17 +251,13 @@ class VoxelEditor {
 					tileId -= 1;
 					const height = this.voxels.calcHeight(layer);
 					const pos = { x: _x, y: height + Renderer.Three.Voxels.Y_OFFSET * height, z: _z };
-					const voxelsInstance = Renderer.Three.getVoxels();
-					voxelsInstance.chunksNeedsUpdate = [];
-					voxelsInstance.chunksNeedsUpdate.push(Renderer.Three.getChunkKeyFromBlockPos(_x - 0.5, _z - 0.5));
 					voxels.set(Renderer.Three.getKeyFromPos(pos.x, pos.y, pos.z), {
 						position: [pos.x, pos.y, pos.z],
 						type: tileId,
 						visible: true,
 						hiddenFaces: [...hiddenFaces],
-						isPreview,
-						changed: true,
 						uvs: [],
+						isPreview,
 						normals: [],
 						topIndices: [],
 						sidesIndices: [],
@@ -296,8 +292,7 @@ class VoxelEditor {
 	}
 
 	getTile(tileX: number, tileY: number, tileZ: number, layer?: number): number {
-		const renderer = Renderer.Three.instance();
-		const voxelsMap = Renderer.Three.getVoxels().voxels[layer ?? this.currentLayerIndex];
+		const voxelsMap = Renderer.Three.getVoxels().voxelsCellData[layer ?? this.currentLayerIndex];
 		let tileId = voxelsMap.get(Renderer.Three.getKeyFromPos(tileX + 0.5, tileY, tileZ + 0.5))?.type ?? -2;
 		return tileId + 1;
 	}
@@ -502,11 +497,7 @@ class VoxelEditor {
 
 	hideLayer(layer: number, state: boolean): void {
 		const voxels = Renderer.Three.getVoxels();
-		Object.entries(voxels.meshes).forEach(([layer, chunkKey]) =>
-			Object.values(chunkKey).forEach((mesh) => {
-				mesh.visible = false;
-			})
-		);
+		Object.values(voxels.meshes[layer]).forEach((mesh) => (mesh.visible = !state));
 	}
 
 	showAllLayers(): void {
