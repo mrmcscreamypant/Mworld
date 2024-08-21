@@ -186,9 +186,7 @@ namespace Renderer {
 								entity.body.rotation.y = -data.rotation;
 							}
 						}
-						if (!entity.taroEntity.culled) {
-							entity.updateMatrix();
-						}
+						entity.updateMatrix();
 					},
 					this
 				);
@@ -213,9 +211,7 @@ namespace Renderer {
 							entity.instancedIdx
 						);
 					}
-					if (!entity.taroEntity.culled) {
-						entity.updateMatrix();
-					}
+					entity.updateMatrix();
 				});
 
 				taroEntity.on(
@@ -233,9 +229,7 @@ namespace Renderer {
 								entity.instancedIdx
 							);
 						}
-						if (!entity.taroEntity.culled) {
-							entity.updateMatrix();
-						}
+						entity.updateMatrix();
 					},
 					this
 				);
