@@ -142,7 +142,25 @@ var Player = TaroEntity.extend({
 
 					// Adding script data and default variables to the player join stream data for developer clients
 					if (taro.server.developerClientIds.includes(clientId)) {
+						const unitScripts = {};
+						Object.entries(taro.game.data.unitTypes).forEach((unitType) => {
+							unitScripts[unitType[0]] = unitType[1].scripts;
+						});
+						const itemScripts = {};
+						Object.entries(taro.game.data.itemTypes).forEach((itemType) => {
+							itemScripts[itemType[0]] = itemType[1].scripts;
+						});
+						const projectileScripts = {};
+						Object.entries(taro.game.data.projectileTypes).forEach((projectileType) => {
+							projectileScripts[projectileType[0]] = projectileType[1].scripts;
+						});
+						const entityScripts = {
+							unitTypes: unitScripts,
+							itemTypes: itemScripts,
+							projectileTypes: projectileScripts,
+						};
 						playerJoinStreamData.push({ scriptData: taro.game.data.scripts });
+						playerJoinStreamData.push({ entityScriptData: entityScripts });
 						playerJoinStreamData.push({ variableData: taro.defaultVariables });
 					}
 
@@ -297,7 +315,7 @@ var Player = TaroEntity.extend({
 			}
 		} else if (taro.isClient) {
 			taro.client.emit('camera-yaw', angle);
-		}	
+		}
 	},
 
 	cameraStopTracking: function () {
@@ -708,7 +726,12 @@ var Player = TaroEntity.extend({
 
 							case 'scriptData':
 								taro.developerMode.serverScriptData = newValue;
-								taro.developerMode.savedScriptData = newValue;
+								taro.developerMode.savedScriptData = rfdc()(newValue);
+								break;
+
+							case 'entityScriptData':
+								taro.developerMode.serverEntityScriptData = newValue;
+								taro.developerMode.savedEntityScriptData = rfdc()(newValue);
 								break;
 
 							case 'variableData':
@@ -769,10 +792,10 @@ var Player = TaroEntity.extend({
 
 								console.log(
 									`JoinGame took ${window.joinGameSent.completed}ms to join player` +
-									`, client to gs: ${self._stats.receivedJoinGame - window.joinGameSent.start}ms` +
-									`, gs loading player data: ${self._stats.totalTime}ms` +
-									`, gs processed request for: ${self._stats.processedJoinGame}ms` +
-									`, gs to client: ${streamingDiff}, client sent on: ${window.joinGameSent.start}, server sent back on: ${data.streamedOn}`
+										`, client to gs: ${self._stats.receivedJoinGame - window.joinGameSent.start}ms` +
+										`, gs loading player data: ${self._stats.totalTime}ms` +
+										`, gs processed request for: ${self._stats.processedJoinGame}ms` +
+										`, gs to client: ${streamingDiff}, client sent on: ${window.joinGameSent.start}, server sent back on: ${data.streamedOn}`
 								);
 
 								if (window.joinGameSent.completed > 7000) {
