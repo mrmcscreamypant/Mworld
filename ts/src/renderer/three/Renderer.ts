@@ -106,7 +106,7 @@ namespace Renderer {
 			}
 
 			voxels: Voxels;
-			projectilPool: ProjectilePool;
+			projectilPool: InstancedMeshPool;
 			private clock = new THREE.Clock();
 			private pointer = new THREE.Vector2();
 			private initLoadingManager = new THREE.LoadingManager();
@@ -996,7 +996,7 @@ namespace Renderer {
 				this.scene.add(this.particleSystem);
 				this.entitiesLayer.position.y = 0.51;
 				this.scene.add(this.entitiesLayer);
-				this.projectilPool = ProjectilePool.create();
+				this.projectilPool = InstancedMeshPool.create();
 				this.regionsLayer.position.y = 0.51;
 				this.scene.add(this.regionsLayer);
 

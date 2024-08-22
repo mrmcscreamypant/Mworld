@@ -1,6 +1,6 @@
 namespace Renderer {
 	export namespace Three {
-		export class ProjectilePool extends Node {
+		export class InstancedMeshPool extends Node {
 			pool: Record<
 				string,
 				{
@@ -10,18 +10,30 @@ namespace Renderer {
 						scale: [number, number, number];
 					}[];
 					locks: number[];
+					mostlyStatic: boolean;
 					mesh: InstancedMesh.InstancedMesh2;
 				}
 			> = {};
+			debounceComputeBVH: (
+				mesh: InstancedMesh.InstancedMesh2<
+					{},
+					THREE.BufferGeometry<THREE.NormalBufferAttributes>,
+					THREE.Material,
+					THREE.Object3DEventMap
+				>
+			) => void;
 			constructor() {
 				super();
+				this.debounceComputeBVH = debounce((mesh: InstancedMesh.InstancedMesh2) => {
+					mesh.computeBVH();
+				}, 20);
 			}
 
 			static MaxInstancedCount = 6000;
-			static create(): ProjectilePool {
-				const projectilePool = new ProjectilePool();
-				Three.getEntitiesLayer().add(projectilePool);
-				return projectilePool;
+			static create(): InstancedMeshPool {
+				const instancedMeshPool = new InstancedMeshPool();
+				Three.getEntitiesLayer().add(instancedMeshPool);
+				return instancedMeshPool;
 			}
 
 			editInstanceMesh(
@@ -54,10 +66,13 @@ namespace Renderer {
 					});
 					mesh.instances[idx].visible = true;
 					mesh.instances[idx].updateMatrix();
+					if (this.pool[textureId].mostlyStatic) {
+						this.debounceComputeBVH(mesh);
+					}
 				}
 			}
 
-			createOrMergeProjectile(textureId: string): number {
+			createOrMergeProjectile(textureId: string, mostlyStatic = false): number {
 				if (this.pool[textureId] === undefined) {
 					const renderer = Renderer.Three.instance();
 					const geometry = new THREE.PlaneGeometry(1.0, 1.0);
@@ -73,20 +88,25 @@ namespace Renderer {
 						currentData: [],
 						mesh: new InstancedMesh.InstancedMesh2(
 							renderer.renderer,
-							ProjectilePool.MaxInstancedCount,
+							InstancedMeshPool.MaxInstancedCount,
 							geometry,
 							material
 						),
+						mostlyStatic,
 					};
 					const mesh = this.pool[textureId].mesh;
 					mesh.createInstances((obj, index) => {
 						obj.visible = false;
 					});
-					mesh.raycastOnlyFrustum = true;
+					if (mostlyStatic) {
+						this.debounceComputeBVH(mesh);
+					} else {
+						mesh.raycastOnlyFrustum = true;
+					}
 					this.add(mesh);
 					return 0;
 				}
-				for (let i = 0; i < ProjectilePool.MaxInstancedCount; i++) {
+				for (let i = 0; i < InstancedMeshPool.MaxInstancedCount; i++) {
 					if (!this.pool[textureId].locks.includes(i)) {
 						this.pool[textureId].locks.push(i);
 						return i;
