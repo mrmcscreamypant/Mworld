@@ -32,6 +32,7 @@ namespace Renderer {
 					if (taroEntity._stats.is3DObject) {
 						const name = taroEntity._stats.cellSheet.url;
 						this.body = new Model(name, taroEntity);
+						this.body.matrixWorldAutoUpdate = false;
 					} else {
 						const key = taroEntity._stats.cellSheet.url;
 						const cols = taroEntity._stats.cellSheet.columnCount || 1;
@@ -363,6 +364,9 @@ namespace Renderer {
 			updateAttribute(data) {
 				// NOTE(nick): Update might add an attribute so we need to check
 				// if it's above or below.
+				if (this.taroEntity.culled) {
+					return;
+				}
 				if (Mapper.ProgressBar(data.attr).anchorPosition != 'below') {
 					this.topAttributes.update(data);
 				} else {
