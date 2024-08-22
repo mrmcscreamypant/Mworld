@@ -26,7 +26,6 @@ namespace Renderer {
 					this.body = new AnimatedSprite(spriteSheet);
 				}
 				this.add(this.body);
-
 				this.ownerUnitId = taroEntity._stats.ownerUnitId;
 			}
 
@@ -82,7 +81,6 @@ namespace Renderer {
 						} else {
 							entity.body.mesh.rotation.y = -data.rotation;
 						}
-						entity.updateMatrix();
 					},
 					this
 				);
@@ -91,7 +89,6 @@ namespace Renderer {
 					entity.body.root.rotation.x = Utils.deg2rad(x);
 					entity.body.root.rotation.y = Utils.deg2rad(z);
 					entity.body.root.rotation.z = Utils.deg2rad(y);
-					entity.updateMatrix();
 				});
 
 				taroEntity.on(
@@ -101,12 +98,14 @@ namespace Renderer {
 						const height = Utils.pixelToWorld(data.height || 0);
 						const depth = Utils.pixelToWorld(entity.taroEntity._stats?.currentBody?.depth || 0);
 						entity.setScale(width, height, depth);
-						entity.updateMatrix();
 					},
 					this
 				);
 
 				taroEntity.on('play-animation', (id) => {
+					if (entity.taroEntity.culled) {
+						return;
+					}
 					if (entity.body instanceof AnimatedSprite) {
 						const key = `${taroEntity._stats.cellSheet.url}/${id}/${taroEntity._stats.id}`;
 						entity.body.play(key);
@@ -122,7 +121,6 @@ namespace Renderer {
 
 				taroEntity.on('update-texture', (data) => {
 					const key = taroEntity._stats.cellSheet.url;
-
 					if (entity.body instanceof Model) {
 						const model = gAssetManager.getModelWithoutPlaceholder(key);
 

@@ -186,7 +186,6 @@ namespace Renderer {
 								entity.body.rotation.y = -data.rotation;
 							}
 						}
-						entity.updateMatrix();
 					},
 					this
 				);
@@ -211,7 +210,7 @@ namespace Renderer {
 							entity.instancedIdx
 						);
 					}
-					entity.updateMatrix();
+
 				});
 
 				taroEntity.on(
@@ -229,7 +228,6 @@ namespace Renderer {
 								entity.instancedIdx
 							);
 						}
-						entity.updateMatrix();
 					},
 					this
 				);
@@ -240,6 +238,9 @@ namespace Renderer {
 				});
 
 				taroEntity.on('play-animation', (id) => {
+					if (entity.taroEntity.culled) {
+						return;
+					}
 					if (entity.body instanceof AnimatedSprite) {
 						const key = `${taroEntity._stats.cellSheet.url}/${id}/${taroEntity._stats.id}`;
 						entity.body.play(key);

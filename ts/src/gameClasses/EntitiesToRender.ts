@@ -14,9 +14,7 @@ class EntitiesToRender {
 
 			// var entity = taro.$(entityId);
 			var entity = this.trackEntityById[entityId];
-			// if (is3D && entity.culled === true) {
-			// 	continue;
-			// }
+
 			// taro.profiler.logTimeElapsed('findEntity', timeStart);
 			if (entity) {
 				entity.script?.trigger('renderTick');

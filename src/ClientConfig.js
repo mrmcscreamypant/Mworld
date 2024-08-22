@@ -9,6 +9,7 @@ var taroClientConfig = {
 		'/lib/rexuiplugin.min.js',
 		'/lib/rexvirtualjoystickplugin.min.js',
 		'/lib/three.min.js',
+		'/lib/instanced_mesh.umd.js',
 		'/lib/DRACOLoader.js',
 		'/lib/GLTFLoader.js',
 		'/lib/OrbitControls.js',
@@ -156,7 +157,7 @@ var taroClientConfig = {
 		'renderer/three/entities/Entity.js',
 		'renderer/three/entities/Unit.js',
 		'renderer/three/entities/Item.js',
-		'renderer/three/entities/ProjectilePool.js',
+		'renderer/three/entities/InstancedMeshPool.js',
 		'renderer/three/entities/Region.js',
 
 		'/client.js',

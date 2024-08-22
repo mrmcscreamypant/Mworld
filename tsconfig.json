@@ -6,6 +6,7 @@
 		"outDir": ".",
 		"rootDir": "ts",
 		"moduleResolution": "node",
+		"skipLibCheck": true,
 		"typeRoots": [
 			"node_modules/@types",
 			"node_modules/phaser/types",
@@ -23,6 +24,6 @@
         "node_modules/phaser3-rex-plugins-types"
     ],
 	"exclude": [
-		"node_modules"
+		"node_modules",
 	]
 }
