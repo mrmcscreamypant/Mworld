@@ -210,6 +210,7 @@ namespace Renderer {
 							entity.instancedIdx
 						);
 					}
+
 				});
 
 				taroEntity.on(
