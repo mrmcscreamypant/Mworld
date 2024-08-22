@@ -79,7 +79,7 @@ namespace Renderer {
 					if ((entity as Unit).body === null) {
 						const renderer = Renderer.Three.instance();
 						renderer.projectilPool.editInstanceMesh(
-							{ position: [-Infinity, -Infinity, -Infinity] },
+							{},
 							(entity as Unit).textureId,
 							(entity as Unit).instancedIdx,
 							true
