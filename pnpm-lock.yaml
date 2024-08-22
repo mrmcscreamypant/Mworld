@@ -82,9 +82,9 @@ devDependencies:
   '@babel/eslint-parser':
     specifier: ^7.18.9
     version: 7.21.8(@babel/core@7.21.8)(eslint@8.41.0)
-  '@three.ez/main':
-    specifier: ^0.5.5
-    version: 0.5.5(three@0.160.1)
+  '@three.ez/instanced-mesh':
+    specifier: ^0.2.0
+    version: 0.2.0(three@0.160.1)
   '@types/google.analytics':
     specifier: ^0.0.42
     version: 0.0.42
@@ -558,11 +558,12 @@ packages:
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
     dev: true
 
-  /@three.ez/main@0.5.5(three@0.160.1):
-    resolution: {integrity: sha512-5GOy0eSbEl5QoQAPU7fZF4mOAvpbfjVp7DnBodrApRF3qjdqzqOt6B9xLZE6z6LeWLEnH5Mc6xfvbNvtSsy7gw==}
+  /@three.ez/instanced-mesh@0.2.0(three@0.160.1):
+    resolution: {integrity: sha512-x77S1OUtaHOlEVGflqz1W4GndHo/yZPFz2xL0hTw7o870eqM66nvdsuCa6CfPqrzF548AEtdm+qShhSAsm8O5A==}
     peerDependencies:
-      three: '>=0.151.0'
+      three: '>=0.159.0'
     dependencies:
+      bvh.js: 0.0.6
       three: 0.160.1
     dev: true
 
@@ -1069,6 +1070,10 @@ packages:
     resolution: {integrity: sha512-qwVpFEHNfhYJIzNRBvd2C1kyo6jz3ZSMPyyuR47OPdiKWlbYnZNyDWuyR175qDnAJLiCo5fBBqPb3RiXgWlkOQ==}
     dependencies:
       semver: 7.5.4
+    dev: true
+
+  /bvh.js@0.0.6:
+    resolution: {integrity: sha512-2yChJnmhkhrkSI74e7ajSnbriwPAibJdrjYw2N/00Fwv2W4hh9N0n3k6LWt2NijpnDUXAUE+bofq2lE/RsqIvQ==}
     dev: true
 
   /bytes@3.1.2:
