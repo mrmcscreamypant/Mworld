@@ -13,7 +13,6 @@ namespace Renderer {
 
 			constructor(protected tex: THREE.Texture) {
 				super();
-
 				const geometry = new THREE.PlaneGeometry(1, 1);
 				geometry.rotateX(-Math.PI / 2);
 				const material = new THREE.MeshStandardMaterial({

@@ -3,7 +3,7 @@
 		? o(exports, require('three'))
 		: typeof define == 'function' && define.amd
 			? define(['exports', 'three'], o)
-			: ((c = typeof globalThis < 'u' ? globalThis : c || self), o((c.Main = {}), c.three));
+			: ((c = typeof globalThis < 'u' ? globalThis : c || self), o((c.THREEEZ = {}), c.three));
 })(this, function (c, o) {
 	'use strict';
 	if (o === undefined) {

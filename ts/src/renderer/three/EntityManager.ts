@@ -43,7 +43,7 @@ namespace Renderer {
 				}
 
 				if (entity.matrixAutoUpdate && type !== 'region') {
-					entity.matrixAutoUpdate = false;
+					(entity as THREE.Object3D).matrixWorldAutoUpdate = false;
 				}
 				this.entities.push(entity);
 				entity.updateMatrix?.();

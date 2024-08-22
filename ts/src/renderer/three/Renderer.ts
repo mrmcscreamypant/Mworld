@@ -44,7 +44,7 @@ namespace Renderer {
 			selectionHelper: SelectionHelper;
 			frustum = new THREE.Frustum();
 			cameraViewProjectionMatrix = new THREE.Matrix4();
-
+			entitiesNeedsUpdate: (Unit | Item)[] = [];
 			tryFindMesh(object: THREE.Object3D) {
 				const meshes: THREE.Mesh[] = [];
 				object.children.forEach((child: any) => {
@@ -57,47 +57,51 @@ namespace Renderer {
 				});
 				return meshes;
 			}
+
 			updateFrustumCulling() {
 				const zeroVec3 = new THREE.Vector3(0, 0, 0);
-				this.scene.traverse((object: any) => {
-					const entity: TaroEntityPhysics = object.taroEntity;
-					if (object instanceof Three.Model && entity) {
-						const meshes = this.tryFindMesh(object);
-						let culled = true;
-						meshes.forEach((mesh) => {
-							if (this.frustum.intersectsObject(mesh)) {
-								culled = false;
+				this.entitiesNeedsUpdate = [];
+				[this.entityManager.units, this.entityManager.items, this.entityManager.projectiles].forEach((entities) => {
+					entities.forEach((object: Unit | Item) => {
+						const entity: TaroEntityPhysics = object.taroEntity;
+						if (!object.body) {
+							return;
+						}
+						if (!(object.body as Sprite).sprite) {
+							const meshes = this.tryFindMesh(object);
+							let culled = true;
+							meshes.forEach((mesh) => {
+								if (this.frustum.intersectsObject(mesh)) {
+									culled = false;
+								}
+							});
+							entity.culled = culled && !this.frustum.containsPoint(object.parent.position);
+							if (!entity.culled && !entity._stats.instancedMesh) {
+								this.entitiesNeedsUpdate.push(object);
+							} else {
+								object.matrixWorldAutoUpdate = false;
 							}
-						});
-						entity.culled = culled && !this.frustum.containsPoint(object.parent.position);
-					} else {
-						let ownerCulled = true;
-						if (entity && entity._category === 'item' && entity._stats?.ownerUnitId) {
-							const ownerUnit = this.entityManager.units.find((u) => u.taroEntity._id === entity._stats?.ownerUnitId);
-							if (ownerUnit) {
-								const pos = ownerUnit.position.clone();
-								pos.setY(this.initEntityLayer.position.y + 1 + ownerUnit.position.y);
-								if (this.frustum.containsPoint(pos)) {
-									ownerCulled = false;
+						} else {
+							if (entity && object.body && (object.body as Sprite).sprite?.isMesh) {
+								const pos = object.position.clone();
+								pos.setY(this.initEntityLayer.position.y + 1 + object.position.y);
+								if (
+									!this.frustum.intersectsObject((object.body as Sprite)?.sprite) &&
+									!this.frustum.containsPoint(pos) &&
+									(object as THREE.Object3D).position.distanceTo(zeroVec3) !== 0
+								) {
+									entity.culled = true;
+									object.matrixWorldAutoUpdate = false;
+								} else {
+									if (!entity._stats.instancedMesh) {
+										this.entitiesNeedsUpdate.push(object);
+									}
+									entity.culled = false;
 								}
 							}
 						}
-
-						if (entity && object.body && object.body.sprite?.isMesh) {
-							const pos = object.position.clone();
-							pos.setY(this.initEntityLayer.position.y + 1 + object.position.y);
-							if (
-								!this.frustum.intersectsObject(object.body?.sprite) &&
-								!this.frustum.containsPoint(pos) &&
-								ownerCulled &&
-								(object as THREE.Object3D).position.distanceTo(zeroVec3) !== 0
-							) {
-								entity.culled = true;
-							} else {
-								entity.culled = false;
-							}
-						}
-					}
+						(object as Unit).showHud?.(!entity.culled);
+					});
 				});
 			}
 
@@ -154,7 +158,6 @@ namespace Renderer {
 
 				this.scene = new THREE.Scene();
 				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
-
 				if (taro?.game?.data?.settings?.fog?.enabled) {
 					const fog = taro.game.data.settings.fog;
 					if (taro.game.data.settings.fog.type === 'exp2') {
@@ -991,7 +994,6 @@ namespace Renderer {
 
 				this.particleSystem = new ParticleSystem();
 				this.scene.add(this.particleSystem);
-
 				this.entitiesLayer.position.y = 0.51;
 				this.scene.add(this.entitiesLayer);
 				this.projectilPool = ProjectilePool.create();
@@ -1119,18 +1121,16 @@ namespace Renderer {
 				}
 			}
 
+			private updateAllEntitiesMatirx() {
+				this.entitiesNeedsUpdate.forEach((e) => {
+					e.matrixWorldAutoUpdate = true;
+				});
+			}
+
 			private render() {
 				window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
-				// Call this function before rendering
-				this.camera.instance.updateMatrixWorld(); // Ensure the camera matrix is updated
-				this.cameraViewProjectionMatrix.multiplyMatrices(
-					this.camera.instance.projectionMatrix,
-					this.camera.instance.matrixWorldInverse
-				);
-				this.frustum.setFromProjectionMatrix(this.cameraViewProjectionMatrix);
-				this.updateFrustumCulling();
 				taro.client.emit('tick');
-				if (this.entityEditor) this.entityEditor.update();
+				// Call this function before rendering
 				if (this.camera.target) {
 					const worldPos = this.camera.getWorldPoint(this.pointer);
 					const x = Utils.worldToPixel(worldPos.x);
@@ -1140,6 +1140,15 @@ namespace Renderer {
 					taro.input.emit('pointermove', [{ x, y, yaw, pitch }]);
 				}
 
+				this.camera.instance.updateMatrixWorld(); // Ensure the camera matrix is updated
+				this.cameraViewProjectionMatrix.multiplyMatrices(
+					this.camera.instance.projectionMatrix,
+					this.camera.instance.matrixWorldInverse
+				);
+				this.frustum.setFromProjectionMatrix(this.cameraViewProjectionMatrix);
+				this.updateFrustumCulling();
+				this.updateAllEntitiesMatirx();
+				if (this.entityEditor) this.entityEditor.update();
 				// TODO: Is this the proper way to get deltaTime or should I get it from the
 				// engine somewhere? Also it feels a little weird that the renderer triggers
 				// the engine update. It should be the other way around.
@@ -1153,7 +1162,7 @@ namespace Renderer {
 				this.camera.update(dt);
 				this.voxelEditor.update();
 				this.initEntityLayer.children.forEach((child) => {
-					if (child instanceof InitEntity) {
+					if (child instanceof InitEntity && child) {
 						child.update();
 					}
 				});
@@ -1168,7 +1177,7 @@ namespace Renderer {
 				this.timeSinceLastRaycast += dt;
 				if (this.timeSinceLastRaycast > this.raycastIntervalSeconds) {
 					this.timeSinceLastRaycast = 0;
-					this.checkForHiddenEntities();
+					// this.checkForHiddenEntities();
 				}
 			}
 

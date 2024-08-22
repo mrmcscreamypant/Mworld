@@ -21,7 +21,6 @@ namespace Renderer {
 				super();
 				this.taroEntity = taroEntity;
 				this.add(this.root);
-
 				const model = gAssetManager.getModel(name);
 				this.mesh = SkeletonUtils.clone(model.scene);
 
