@@ -59,31 +59,38 @@ namespace Renderer {
 					if (loader) {
 						loader.manager = loadingManager ?? THREE.DefaultLoadingManager;
 
-						loader.load(source.src, (asset: Asset) => {
-							if (source.type === 'texture') {
-								(asset as THREE.Texture).colorSpace = THREE.SRGBColorSpace;
-								(asset as THREE.Texture).magFilter = this.filter;
-								this.textures.set(source.name, asset as THREE.Texture);
-							}
+						loader.load(
+							source.src,
+							(asset: Asset) => {
+								if (source.type === 'texture') {
+									(asset as THREE.Texture).colorSpace = THREE.SRGBColorSpace;
+									(asset as THREE.Texture).magFilter = this.filter;
+									this.textures.set(source.name, asset as THREE.Texture);
+								}
 
-							if (source.type === 'gltf') {
-								(asset as GLTF).scene.traverse((child) => {
-									if (child instanceof THREE.Mesh) {
-										const material = new THREE.MeshStandardMaterial();
-										THREE.MeshStandardMaterial.prototype.copy.call(material, child.material);
+								if (source.type === 'gltf') {
+									(asset as GLTF).scene.traverse((child) => {
+										if (child instanceof THREE.Mesh) {
+											const material = new THREE.MeshStandardMaterial();
 
-										if (material.map) {
-											material.map.magFilter = this.filter;
+											if (material.map) {
+												material.map.magFilter = this.filter;
+											}
+
+											child.material = material;
 										}
-										child.material = material;
-									}
-								});
+									});
+								}
+
+								this.assets.set(source.name, asset);
+
+								if (cb) cb(source.name);
+							},
+							undefined,
+							(error) => {
+								console.log('Error loading asset:', source.name);
 							}
-
-							this.assets.set(source.name, asset);
-
-							if (cb) cb(source.name);
-						});
+						);
 					}
 				}
 			}
