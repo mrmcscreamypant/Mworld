@@ -2314,13 +2314,15 @@ var Unit = TaroEntityPhysics.extend({
 
 			// flip unit
 			let mouse = ownerPlayer.control?.input?.mouse;
-			let angleBetweenUnitAndMouse =
-				Math.atan2(mouse.y - this._translate.y, mouse.x - this._translate.x) + Math.radians(90);
-			if (this._stats.controls && this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse) {
-				if (angleBetweenUnitAndMouse > 0 && angleBetweenUnitAndMouse < Math.PI) {
-					self.flip(0);
-				} else {
-					self.flip(1);
+			if (mouse) {
+				let angleBetweenUnitAndMouse =
+					Math.atan2(mouse.y - this._translate.y, mouse.x - this._translate.x) + Math.radians(90);
+				if (this._stats.controls && this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse) {
+					if (angleBetweenUnitAndMouse > 0 && angleBetweenUnitAndMouse < Math.PI) {
+						self.flip(0);
+					} else {
+						self.flip(1);
+					}
 				}
 			}
 		}
