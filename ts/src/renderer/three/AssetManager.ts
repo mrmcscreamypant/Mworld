@@ -71,13 +71,11 @@ namespace Renderer {
 								if (source.type === 'gltf') {
 									(asset as GLTF).scene.traverse((child) => {
 										if (child instanceof THREE.Mesh) {
-											const material = new THREE.MeshStandardMaterial();
+											const material = child.material;
 
 											if (material.map) {
 												material.map.magFilter = this.filter;
 											}
-
-											child.material = material;
 										}
 									});
 								}
