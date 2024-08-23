@@ -1131,7 +1131,7 @@ namespace Renderer {
 				window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
 				taro.client.emit('tick');
 				// Call this function before rendering
-				if (this.camera.target) {
+				if (this.camera) {
 					const worldPos = this.camera.getWorldPoint(this.pointer);
 					const x = Utils.worldToPixel(worldPos.x);
 					const y = Utils.worldToPixel(worldPos.z);
