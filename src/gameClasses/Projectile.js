@@ -14,6 +14,9 @@ var Projectile = TaroEntityPhysics.extend({
 
 		self.entityId = this._id;
 		self._stats = _.merge(projectileData, data);
+		if (self._stats.streamMode === undefined) {
+			self._stats.streamMode = 1;
+		}
 		self._stats.particleEmitters = {};
 
 		// dont save variables in _stats as _stats is stringified and synced

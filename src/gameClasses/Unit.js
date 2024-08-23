@@ -27,7 +27,9 @@ var Unit = TaroEntityPhysics.extend({
 		unitData = taro.game.cloneAsset('unitTypes', data.type);
 
 		self._stats = _.merge(unitData, data);
-
+		if (self._stats.streamMode === undefined) {
+			self._stats.streamMode = 1;
+		}
 		self.entityId = entityIdFromServer;
 		self._stats.particleEmitters = {};
 

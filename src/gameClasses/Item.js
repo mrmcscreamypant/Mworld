@@ -17,6 +17,9 @@ var Item = TaroEntityPhysics.extend({
 		}
 
 		self._stats = _.merge(itemData, data);
+		if (self._stats.streamMode === undefined) {
+			self._stats.streamMode = 1;
+		}
 		self._stats.particleEmitters = {};
 
 		if (self._stats.projectileType) {
