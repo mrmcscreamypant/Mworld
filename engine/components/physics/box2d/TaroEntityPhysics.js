@@ -85,10 +85,9 @@ var TaroEntityPhysics = TaroEntity.extend({
 			if (offsetY) {
 				shapeData.y = offsetY;
 			}
-			// scaleDimensions means there is a custom width/height set in initialize actions
-			if (this._stats.scaleBody || this._stats.scaleDimensions) {
+			if (this._stats.scaleBody) {
 				// b2d expects halves
-				let scaleBody2 = Number(this._stats.scaleBody ?? 1) / 2;
+				let scaleBody2 = Number(this._stats.scaleBody) / 2;
 				shapeData.halfWidth = (sizeX ?? bodyDef.width) * scaleBody2;
 				shapeData.halfHeight = (sizeY ?? bodyDef.height) * scaleBody2;
 			}
