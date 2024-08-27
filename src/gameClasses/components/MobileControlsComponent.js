@@ -131,6 +131,8 @@ var MobileControlsComponent = TaroEntity.extend({
 
 		if (joysticks.length == 0 && taro.isClient) {
 			taro.client.joystickExists = false;
+		} else {
+			taro.client.joystickExists = true;
 		}
 	},
 
