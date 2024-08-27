@@ -109,6 +109,7 @@ namespace Renderer {
 			projectilPool: InstancedMeshPool;
 			private clock = new THREE.Clock();
 			private pointer = new THREE.Vector2();
+			private secondaryPointer = new THREE.Vector2();
 			private initLoadingManager = new THREE.LoadingManager();
 
 			public entityManager = new EntityManager();
@@ -209,7 +210,7 @@ namespace Renderer {
 				let width: number;
 				let height: number;
 
-				renderer.domElement.addEventListener('mousemove', (event: MouseEvent) => {
+				renderer.domElement.addEventListener('pointermove', (event: MouseEvent) => {
 					if (event.button === 1) {
 						return;
 					}
@@ -265,7 +266,13 @@ namespace Renderer {
 
 				let lastTime = 0;
 
-				renderer.domElement.addEventListener('mousedown', (event: MouseEvent) => {
+				renderer.domElement.addEventListener('pointerdown', (event: MouseEvent) => {
+					if (taro.isMobile) {
+						this.pointer.set(
+							(event.clientX / window.outerWidth) * 2 - 1,
+							-(event.clientY / window.outerHeight) * 2 + 1
+						);
+					}
 					if (event.button === 1) {
 						return;
 					}
@@ -336,7 +343,6 @@ namespace Renderer {
 
 												taro.client.emit('block-rotation', !!initEntity.isBillboard);
 											} else if (clickDelay < 350) {
-												console.log('showing script for entity', initEntity.action.actionId);
 												if (inGameEditor && inGameEditor.showScriptForEntity) {
 													inGameEditor.showScriptForEntity(initEntity.action.actionId);
 												}
@@ -639,6 +645,32 @@ namespace Renderer {
 							this.voxelEditor.handleMapToolCopy();
 						}
 						rightClickPos = undefined;
+					}
+				});
+
+				renderer.domElement.addEventListener('touchstart', (event: TouchEvent) => {
+					if (event.touches.length > 1) {
+						const secondaryTouch = event.touches[1];
+						this.secondaryPointer.set(
+							(secondaryTouch.clientX / window.innerWidth) * 2 - 1,
+							-(secondaryTouch.clientY / window.innerHeight) * 2 + 1
+						);
+					}
+				});
+
+				renderer.domElement.addEventListener('touchend', (event: TouchEvent) => {
+					if (event.touches.length === 0) {
+						this.secondaryPointer = null;
+					}
+				});
+
+				renderer.domElement.addEventListener('touchmove', (event: TouchEvent) => {
+					if (event.touches.length > 1) {
+						const secondaryTouch = event.touches[1];
+						this.secondaryPointer.set(
+							(secondaryTouch.clientX / window.innerWidth) * 2 - 1,
+							-(secondaryTouch.clientY / window.innerHeight) * 2 + 1
+						);
 					}
 				});
 
@@ -1138,6 +1170,18 @@ namespace Renderer {
 					const yaw = this.camera.getAzimuthAngle();
 					const pitch = this.camera.getElevationAngle();
 					taro.input.emit('pointermove', [{ x, y, yaw, pitch }]);
+				}
+
+				if (taro.isMobile && this.secondaryPointer) {
+					const worldPosSecondary = this.camera.getWorldPoint(this.pointer);
+					const x = Utils.worldToPixel(worldPosSecondary.x);
+					const y = Utils.worldToPixel(worldPosSecondary.z);
+					taro.input.emit('secondarytouchpointermove', [
+						{
+							x: x,
+							y: y,
+						},
+					]);
 				}
 
 				this.camera.instance.updateMatrixWorld(); // Ensure the camera matrix is updated
