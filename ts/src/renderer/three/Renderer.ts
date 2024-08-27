@@ -265,7 +265,14 @@ namespace Renderer {
 
 				let lastTime = 0;
 
-				renderer.domElement.addEventListener('mousedown', (event: MouseEvent) => {
+				renderer.domElement.addEventListener('pointerdown', (event: MouseEvent) => {
+					if (taro.isMobile) {
+						//console.log('click on mobile', event);
+						this.pointer.set(
+							(event.clientX / window.outerWidth) * 2 - 1,
+							-(event.clientY / window.outerHeight) * 2 + 1
+						);
+					}
 					if (event.button === 1) {
 						return;
 					}
@@ -554,6 +561,16 @@ namespace Renderer {
 						}
 					}
 				});
+
+				/*renderer.domElement.addEventListener('touchdown', (event: MouseEvent) => {
+					if (taro.isMobile) {
+						console.log('click on mobile', event);
+						this.pointer.set(
+							(event.clientX / window.innerWidth) * 2 - 1,
+							-(event.clientY / window.innerHeight) * 2 + 1
+						);
+					}
+				});*/
 
 				renderer.domElement.addEventListener('mouseup', (event: MouseEvent) => {
 					if (event.button === 1) {
@@ -1137,8 +1154,29 @@ namespace Renderer {
 					const y = Utils.worldToPixel(worldPos.z);
 					const yaw = this.camera.getAzimuthAngle();
 					const pitch = this.camera.getElevationAngle();
+					console.log('three js pointermove', x, y, yaw, pitch);
 					taro.input.emit('pointermove', [{ x, y, yaw, pitch }]);
 				}
+
+				/*const worldPoint = gameScene.cameras.main.getWorldPoint(gameScene.input.pointer1.x, gameScene.input.pointer1.y);
+				taro.input.emit('pointermove', [
+					{
+						x: worldPoint.x,
+						y: worldPoint.y,
+					},
+				]);
+				if (gameScene.input.pointer2.primaryDown) {
+					const worldPointSecondary = gameScene.cameras.main.getWorldPoint(
+						gameScene.input.pointer2.x,
+						gameScene.input.pointer2.y
+					);
+					taro.input.emit('secondarytouchpointermove', [
+						{
+							x: worldPointSecondary.x,
+							y: worldPointSecondary.y,
+						},
+					]);
+				}*/
 
 				this.camera.instance.updateMatrixWorld(); // Ensure the camera matrix is updated
 				this.cameraViewProjectionMatrix.multiplyMatrices(
