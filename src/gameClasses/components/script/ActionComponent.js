@@ -9,6 +9,29 @@ var ActionComponent = TaroEntity.extend({
 		this.lastProgressTrackedValue = null;
 	},
 
+	filterSerializable: function (obj) {
+		// Check for circular references or non-objects
+		if (Array.isArray(obj)) {
+			const result = [];
+			obj.forEach((element) => {
+				try {
+					result.push(JSON.stringify(element));
+				} catch (e) {}
+			});
+			return result;
+		} else if (typeof obj === 'object') {
+			const result = {};
+			Object.entries(obj).forEach(([k, v]) => {
+				try {
+					result[k] = JSON.stringify(v);
+				} catch (e) {}
+			});
+			return result;
+		} else {
+			return obj;
+		}
+	},
+
 	/**
 	 * Calculates the total number of actions within a nested action object, including disabled actions.
 
@@ -452,10 +475,9 @@ var ActionComponent = TaroEntity.extend({
 							const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
 							const localPlayer = self._script.param.getValue(action.player, vars);
 							localPlayer.streamUpdateData(
-								[{ script: { name: action.scriptName, params: localScriptParams } }],
+								[{ script: { name: action.scriptName, params: self.filterSerializable(localScriptParams) } }],
 								localPlayer._stats.clientId
 							);
-
 							self._script.currentScriptId = previousScriptId;
 							self._script.currentActionLineNumber = previousAcionBlockIdx;
 						}
@@ -471,7 +493,15 @@ var ActionComponent = TaroEntity.extend({
 								const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
 								const localPlayer = self._script.param.getValue(action.player, vars);
 								localPlayer.streamUpdateData(
-									[{ script: { name: action.scriptName, entityId: entity.id(), params: localScriptParams } }],
+									[
+										{
+											script: {
+												name: action.scriptName,
+												entityId: entity.id(),
+												params: self.filterSerializable(localScriptParams),
+											},
+										},
+									],
 									localPlayer._stats.clientId
 								);
 
