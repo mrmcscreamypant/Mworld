@@ -1634,9 +1634,6 @@ var ParameterComponent = TaroEntity.extend({
 								x: position.x,
 								y: position.y,
 							};
-								x: bounds.x + bounds.width / 2,
-								y: bounds.y + bounds.height / 2,
-							console.log('getCameraPosition', returnValue.x, returnValue.y);
 						}
 
 						break;
@@ -1731,7 +1728,6 @@ var ParameterComponent = TaroEntity.extend({
 									x: parseInt(player.control.input.mouse.x),
 									y: parseInt(player.control.input.mouse.y),
 								};
-								console.log('getMouseCursorPosition', returnValue.x, returnValue.y);
 							}
 						}
 
