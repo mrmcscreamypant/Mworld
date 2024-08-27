@@ -3189,6 +3189,17 @@ var ParameterComponent = TaroEntity.extend({
 				}
 			},
 
+			itemTypeInventoryUrl: function (text, vars) {
+				var itemTypeId = self.getValue(text.itemType, vars);
+				var itemType = taro.game.data.itemTypes[itemTypeId];
+
+				if (itemType) {
+					return itemType.inventoryImage;
+				} else {
+					return '';
+				}
+			},
+
 			numberOfInvitesByPlayer: function (text, vars) {
 				var player = self.getValue(text.player, vars);
 				if (player) {
