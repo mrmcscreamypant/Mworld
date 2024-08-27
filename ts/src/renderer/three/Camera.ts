@@ -359,6 +359,14 @@ namespace Renderer {
 					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z, true);
 				}
 
+				if (
+					!this.isEditorMode &&
+					this.controls.target.x !== this.tempVec3.x &&
+					this.controls.target.z !== this.tempVec3.z
+				) {
+					this.setPosition(this.tempVec3.x, this.tempVec3.y, this.tempVec3.z, true);
+				}
+
 				if (!this.isLocked) {
 					this.controls.update();
 				}
@@ -568,7 +576,14 @@ namespace Renderer {
 			}
 
 			setPosition2D(x: number, z: number, lerp = false) {
+				if (lerp) {
+					this.tempVec3.set(x, this.controls.target.y, z);
+				}
 				this.setPosition(x, this.controls.target.y, z, lerp);
+			}
+
+			getPosition2D() {
+				return new THREE.Vector2(this.controls.target.x, this.controls.target.z);
 			}
 
 			onChange(cb: () => void) {

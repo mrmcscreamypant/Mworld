@@ -830,12 +830,20 @@ namespace Renderer {
 			getViewportBounds() {
 				const halfWidth = (window.innerWidth * 0.5) / this.camera.zoom;
 				const halfHeight = (window.innerHeight * 0.5) / this.camera.zoom;
-				const p = this.camera.instance.position;
+				const p = this.camera.getPosition2D();
 				return {
 					x: Utils.worldToPixel(p.x) - halfWidth,
-					y: Utils.worldToPixel(p.z) - halfHeight,
+					y: Utils.worldToPixel(p.y) - halfHeight,
 					width: halfWidth * 2,
 					height: halfHeight * 2,
+				};
+			}
+
+			getCameraPosition() {
+				const pos = this.camera.getPosition2D();
+				return {
+					x: Utils.worldToPixel(pos.x),
+					y: Utils.worldToPixel(pos.y),
 				};
 			}
 
