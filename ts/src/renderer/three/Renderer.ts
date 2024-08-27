@@ -206,10 +206,65 @@ namespace Renderer {
 					this.entityManager.scaleGui(1 / this.camera.zoom);
 				});
 
+				this.forceLoadUnusedCSSFonts();
+
+				this.initLoadingManager.onLoad = () => {
+					this.init();
+					taro.input.setupListeners(this.renderer.domElement);
+					taro.client.rendererLoaded.resolve();
+
+					window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
+				};
+
+				const isPixelArt = taro.game.data.defaultData.renderingFilter === 'pixelArt';
+				gAssetManager.setFilter(isPixelArt ? THREE.NearestFilter : THREE.LinearFilter);
+
+				this.loadAssets();
+
+				taro.client.on('enterPlayTab', () => {
+					this.mode = Mode.Play;
+					this.onEnterPlayMode();
+				});
+
+				taro.client.on('leavePlayTab', () => {
+					this.onExitPlayMode();
+				});
+
+				taro.client.on('enterMapTab', () => {
+					this.mode = Mode.Map;
+					this.onEnterMapMode();
+				});
+
+				taro.client.on('leaveMapTab', () => {
+					this.onExitMapMode();
+				});
+
+				taro.client.on('enterEntitiesTab', () => {
+					this.mode = Mode.Entities;
+					this.onEnterEntitiesMode();
+				});
+
+				taro.client.on('leaveEntitiesTab', () => {
+					this.onExitEntitiesMode();
+				});
+
+				taro.client.on('update-region-name', (data: { name: string; newName: string }) => {
+					const region = this.entityManager.entities.find((e) => e instanceof Region && e.name === data.name) as Region;
+					if (region) {
+						region.name = data.newName;
+						region.updateLabel(data.newName);
+					}
+				});
+			}
+
+			private addEventListener() {
 				let line: THREE.LineSegments;
 				let width: number;
 				let height: number;
+				let rightClickPos: { x: number; y: number } = undefined;
 
+				let lastTime = 0;
+				const renderer = this.renderer;
 				renderer.domElement.addEventListener('pointermove', (event: MouseEvent) => {
 					if (event.button === 1) {
 						return;
@@ -261,10 +316,6 @@ namespace Renderer {
 						line?.scale.set(width, 1, height);
 					}
 				});
-
-				let rightClickPos: { x: number; y: number } = undefined;
-
-				let lastTime = 0;
 
 				renderer.domElement.addEventListener('pointerdown', (event: MouseEvent) => {
 					if (taro.isMobile) {
@@ -671,56 +722,6 @@ namespace Renderer {
 							(secondaryTouch.clientX / window.innerWidth) * 2 - 1,
 							-(secondaryTouch.clientY / window.innerHeight) * 2 + 1
 						);
-					}
-				});
-
-				this.forceLoadUnusedCSSFonts();
-
-				this.initLoadingManager.onLoad = () => {
-					this.init();
-					taro.input.setupListeners(this.renderer.domElement);
-					taro.client.rendererLoaded.resolve();
-
-					window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
-				};
-
-				const isPixelArt = taro.game.data.defaultData.renderingFilter === 'pixelArt';
-				gAssetManager.setFilter(isPixelArt ? THREE.NearestFilter : THREE.LinearFilter);
-
-				this.loadAssets();
-
-				taro.client.on('enterPlayTab', () => {
-					this.mode = Mode.Play;
-					this.onEnterPlayMode();
-				});
-
-				taro.client.on('leavePlayTab', () => {
-					this.onExitPlayMode();
-				});
-
-				taro.client.on('enterMapTab', () => {
-					this.mode = Mode.Map;
-					this.onEnterMapMode();
-				});
-
-				taro.client.on('leaveMapTab', () => {
-					this.onExitMapMode();
-				});
-
-				taro.client.on('enterEntitiesTab', () => {
-					this.mode = Mode.Entities;
-					this.onEnterEntitiesMode();
-				});
-
-				taro.client.on('leaveEntitiesTab', () => {
-					this.onExitEntitiesMode();
-				});
-
-				taro.client.on('update-region-name', (data: { name: string; newName: string }) => {
-					const region = this.entityManager.entities.find((e) => e instanceof Region && e.name === data.name) as Region;
-					if (region) {
-						region.name = data.newName;
-						region.updateLabel(data.newName);
 					}
 				});
 			}
@@ -1151,6 +1152,7 @@ namespace Renderer {
 					this.camera.setBounds(0, 0, width, height);
 					this.camera.useBounds = true;
 				}
+				this.addEventListener();
 			}
 
 			private updateAllEntitiesMatirx() {
