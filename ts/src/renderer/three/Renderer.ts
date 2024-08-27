@@ -209,7 +209,7 @@ namespace Renderer {
 				let width: number;
 				let height: number;
 
-				renderer.domElement.addEventListener('mousemove', (event: MouseEvent) => {
+				renderer.domElement.addEventListener('pointermove', (event: MouseEvent) => {
 					if (event.button === 1) {
 						return;
 					}
@@ -267,7 +267,6 @@ namespace Renderer {
 
 				renderer.domElement.addEventListener('pointerdown', (event: MouseEvent) => {
 					if (taro.isMobile) {
-						//console.log('click on mobile', event);
 						this.pointer.set(
 							(event.clientX / window.outerWidth) * 2 - 1,
 							-(event.clientY / window.outerHeight) * 2 + 1
@@ -343,7 +342,6 @@ namespace Renderer {
 
 												taro.client.emit('block-rotation', !!initEntity.isBillboard);
 											} else if (clickDelay < 350) {
-												console.log('showing script for entity', initEntity.action.actionId);
 												if (inGameEditor && inGameEditor.showScriptForEntity) {
 													inGameEditor.showScriptForEntity(initEntity.action.actionId);
 												}
@@ -561,16 +559,6 @@ namespace Renderer {
 						}
 					}
 				});
-
-				/*renderer.domElement.addEventListener('touchdown', (event: MouseEvent) => {
-					if (taro.isMobile) {
-						console.log('click on mobile', event);
-						this.pointer.set(
-							(event.clientX / window.innerWidth) * 2 - 1,
-							-(event.clientY / window.innerHeight) * 2 + 1
-						);
-					}
-				});*/
 
 				renderer.domElement.addEventListener('mouseup', (event: MouseEvent) => {
 					if (event.button === 1) {
@@ -1154,7 +1142,6 @@ namespace Renderer {
 					const y = Utils.worldToPixel(worldPos.z);
 					const yaw = this.camera.getAzimuthAngle();
 					const pitch = this.camera.getElevationAngle();
-					console.log('three js pointermove', x, y, yaw, pitch);
 					taro.input.emit('pointermove', [{ x, y, yaw, pitch }]);
 				}
 
