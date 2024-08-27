@@ -109,6 +109,7 @@ namespace Renderer {
 			projectilPool: InstancedMeshPool;
 			private clock = new THREE.Clock();
 			private pointer = new THREE.Vector2();
+			private secondaryPointer = new THREE.Vector2();
 			private initLoadingManager = new THREE.LoadingManager();
 
 			public entityManager = new EntityManager();
@@ -647,6 +648,32 @@ namespace Renderer {
 					}
 				});
 
+				renderer.domElement.addEventListener('touchstart', (event: TouchEvent) => {
+					if (event.touches.length > 1) {
+						const secondaryTouch = event.touches[1];
+						this.secondaryPointer.set(
+							(secondaryTouch.clientX / window.innerWidth) * 2 - 1,
+							-(secondaryTouch.clientY / window.innerHeight) * 2 + 1
+						);
+					}
+				});
+
+				renderer.domElement.addEventListener('touchend', (event: TouchEvent) => {
+					if (event.touches.length === 0) {
+						this.secondaryPointer = null;
+					}
+				});
+
+				renderer.domElement.addEventListener('touchmove', (event: TouchEvent) => {
+					if (event.touches.length > 1) {
+						const secondaryTouch = event.touches[1];
+						this.secondaryPointer.set(
+							(secondaryTouch.clientX / window.innerWidth) * 2 - 1,
+							-(secondaryTouch.clientY / window.innerHeight) * 2 + 1
+						);
+					}
+				});
+
 				this.forceLoadUnusedCSSFonts();
 
 				this.initLoadingManager.onLoad = () => {
@@ -1151,19 +1178,18 @@ namespace Renderer {
 						x: worldPoint.x,
 						y: worldPoint.y,
 					},
-				]);
-				if (gameScene.input.pointer2.primaryDown) {
-					const worldPointSecondary = gameScene.cameras.main.getWorldPoint(
-						gameScene.input.pointer2.x,
-						gameScene.input.pointer2.y
-					);
+				]);*/
+				if (taro.isMobile && this.secondaryPointer) {
+					const worldPosSecondary = this.camera.getWorldPoint(this.pointer);
+					const x = Utils.worldToPixel(worldPosSecondary.x);
+					const y = Utils.worldToPixel(worldPosSecondary.z);
 					taro.input.emit('secondarytouchpointermove', [
 						{
-							x: worldPointSecondary.x,
-							y: worldPointSecondary.y,
+							x: x,
+							y: y,
 						},
 					]);
-				}*/
+				}
 
 				this.camera.instance.updateMatrixWorld(); // Ensure the camera matrix is updated
 				this.cameraViewProjectionMatrix.multiplyMatrices(

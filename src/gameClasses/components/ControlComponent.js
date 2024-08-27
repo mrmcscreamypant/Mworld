@@ -384,6 +384,7 @@ var ControlComponent = TaroEntity.extend({
 							if (self.input[device][key] == false) {
 								if (taro.isMobile && self.sendMobileInput && device == 'mouse') {
 									// tap on mobile will be detected as right click for now, so old games with joysticks will not have problems
+									self.keyDown('mouse', 'button3');
 									self.sendMobileInput = false;
 								} else if (!taro.isMobile) {
 									self.keyDown(device, key);
