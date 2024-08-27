@@ -126,7 +126,11 @@ var MobileControlsComponent = TaroEntity.extend({
 		// we currently only support max 2 joysticks
 		if (joysticks.length == 1) {
 			let joystickZone = document.getElementById(joysticks[0] + '_joystick');
-			// joystickZone.style.width = '100vw';
+			joystickZone.style.width = '100vw';
+		}
+
+		if (joysticks.length == 0 && taro.isClient) {
+			taro.client.joystickExists = false;
 		}
 	},
 
