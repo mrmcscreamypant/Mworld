@@ -11,6 +11,7 @@ declare class Client extends TaroEventingClass {
 	developerClientIds: any;
 	zoom: number;
 	isPressingPhaserButton: boolean;
+	joystickExists: boolean;
 
 	constructor(options?: object);
 }
