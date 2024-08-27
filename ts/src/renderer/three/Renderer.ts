@@ -1172,13 +1172,6 @@ namespace Renderer {
 					taro.input.emit('pointermove', [{ x, y, yaw, pitch }]);
 				}
 
-				/*const worldPoint = gameScene.cameras.main.getWorldPoint(gameScene.input.pointer1.x, gameScene.input.pointer1.y);
-				taro.input.emit('pointermove', [
-					{
-						x: worldPoint.x,
-						y: worldPoint.y,
-					},
-				]);*/
 				if (taro.isMobile && this.secondaryPointer) {
 					const worldPosSecondary = this.camera.getWorldPoint(this.pointer);
 					const x = Utils.worldToPixel(worldPosSecondary.x);
