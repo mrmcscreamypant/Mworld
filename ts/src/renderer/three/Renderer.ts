@@ -37,7 +37,9 @@ namespace Renderer {
 		class Renderer {
 			private static _instance: Renderer;
 			renderer: THREE.WebGLRenderer;
+			effectComposer: any;
 			camera: Camera;
+			outlinePass: any;
 			scene: THREE.Scene;
 			mode = Mode.Play;
 			selectionBox: SelectionBox;
@@ -156,7 +158,8 @@ namespace Renderer {
 				renderer.setSize(window.innerWidth, window.innerHeight);
 				document.querySelector('#game-div')?.appendChild(renderer.domElement);
 				this.renderer = renderer;
-
+				const composer = new EffectComposer(renderer);
+				this.effectComposer = composer;
 				this.scene = new THREE.Scene();
 				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
 				if (taro?.game?.data?.settings?.fog?.enabled) {
@@ -198,9 +201,10 @@ namespace Renderer {
 				window.addEventListener('resize', () => {
 					this.camera.resize(window.innerWidth, window.innerHeight);
 					renderer.setSize(window.innerWidth, window.innerHeight);
+					this.effectComposer.setSize(window.innerWidth, window.innerHeight);
 					renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 					renderer.render(this.scene, this.camera.instance);
-
+					this.effectComposer.render();
 					taro.client.emit('scale', { ratio: this.camera.zoom });
 					taro.client.emit('update-abilities-position');
 					this.entityManager.scaleGui(1 / this.camera.zoom);
@@ -255,6 +259,15 @@ namespace Renderer {
 						region.updateLabel(data.newName);
 					}
 				});
+				composer.addPass(new RenderPass(this.scene, this.camera.instance));
+				composer.addPass(new ShaderPass(GammaCorrectionShader));
+				const outlinePass = new OutlinePass(
+					new THREE.Vector2(window.innerWidth, window.innerHeight),
+					this.scene,
+					this.camera.instance
+				);
+				this.outlinePass = outlinePass;
+				composer.addPass(outlinePass);
 			}
 
 			private addEventListener() {
@@ -284,15 +297,18 @@ namespace Renderer {
 										0.5
 									);
 									const allSelected = this.selectionBox.select();
+
 									if (allSelected) {
 										if (allSelected.filter((e) => e.entity instanceof InitEntity).length > 0) {
 											this.entityEditor.selectEntity(null);
 										}
-										allSelected.forEach((e) => {
-											if (e.entity instanceof InitEntity) {
-												this.entityEditor.showOrHideOutline(e.entity, true);
-											}
-										});
+										console.log(allSelected);
+										this.outlinePass.selectedObjects = allSelected.filter((e) => e.entity instanceof InitEntity);
+										// allSelected.forEach((e) => {
+										// 	if (e.entity instanceof InitEntity) {
+										// 		this.entityEditor.showOrHideOutline(e.entity, true);
+										// 	}
+										// });
 									}
 								}
 								break;
@@ -333,7 +349,7 @@ namespace Renderer {
 							this.selectionHelper.enabled = false;
 							this.selectionBox.enabled = false;
 						} else {
-							// this.selectionHelper.enabled = true;
+							this.selectionHelper.enabled = true;
 							this.selectionBox.enabled = true;
 						}
 						if (developerMode.regionTool) {
@@ -361,8 +377,7 @@ namespace Renderer {
 										if (this.entityEditor.gizmo.control.dragging) {
 											return;
 										}
-										// this.selectionHelper.enabled = true;
-
+										this.selectionHelper.enabled = true;
 										this.selectionBox.enabled = true;
 										this.selectionBox.startPoint.set(
 											(event.clientX / window.innerWidth) * 2 - 1,
@@ -637,7 +652,7 @@ namespace Renderer {
 								if (e.entity instanceof InitEntity) {
 									this.entityEditor.showOrHideOutline(e.entity, true);
 									if (!this.entityEditor.selectedEntities.includes(e.entity)) {
-										this.entityEditor.selectEntity(e.entity, 'addOrRemove');
+										this.entityEditor.selectEntity(e.entity, 'add');
 									}
 								}
 							});
@@ -1219,7 +1234,7 @@ namespace Renderer {
 
 				TWEEN.update();
 				this.renderer.render(this.scene, this.camera.instance);
-
+				this.effectComposer.render();
 				this.timeSinceLastRaycast += dt;
 				if (this.timeSinceLastRaycast > this.raycastIntervalSeconds) {
 					this.timeSinceLastRaycast = 0;

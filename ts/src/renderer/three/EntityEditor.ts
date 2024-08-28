@@ -338,7 +338,7 @@ namespace Renderer {
 				}
 			}
 
-			selectEntity(entity: InitEntity | Region, mode: 'addOrRemove' | 'select' | 'remove' = 'select'): void {
+			selectEntity(entity: InitEntity | Region, mode: 'addOrRemove' | 'select' | 'remove' | 'add' = 'select'): void {
 				const renderer = Renderer.Three.instance();
 
 				if (entity === null) {
@@ -375,13 +375,17 @@ namespace Renderer {
 						}
 						break;
 					}
+					case 'add':
 					case 'remove':
 					case 'addOrRemove': {
 						let remove = mode === 'remove' ? true : false;
-
+						let forceToAdd = mode === 'add' ? true : false;
 						if (!remove && this.selectedEntities.find((e) => e.uuid === entity.uuid) === undefined) {
 							this.selectedEntities.push(entity);
 						} else {
+							if (forceToAdd) {
+								break;
+							}
 							remove = true;
 							entity.position.add(this.selectedGroup.position);
 							this.selectedEntities = this.selectedEntities.filter((e) => e.uuid !== entity.uuid);
