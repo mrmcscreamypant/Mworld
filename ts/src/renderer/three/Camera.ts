@@ -361,6 +361,7 @@ namespace Renderer {
 
 				if (
 					!this.isEditorMode &&
+					!this.target &&
 					this.controls.target.x !== this.tempVec3.x &&
 					this.controls.target.z !== this.tempVec3.z
 				) {
