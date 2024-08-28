@@ -2296,10 +2296,12 @@ var Unit = TaroEntityPhysics.extend({
 					self.distanceToTarget = self.ai.getDistanceToTarget();
 					self.ai.update();
 					// enable AI unit flipping based on target
-					if (!isNaN(this.angleToTarget) && this.angleToTarget > 0 && this.angleToTarget < Math.PI) {
-						this.flip(0);
-					} else {
-						this.flip(1);
+					if (this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse) {
+						if (!isNaN(this.angleToTarget) && this.angleToTarget > 0 && this.angleToTarget < Math.PI) {
+							this.flip(0);
+						} else {
+							this.flip(1);
+						}
 					}
 				}
 
