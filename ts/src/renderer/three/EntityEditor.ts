@@ -347,10 +347,8 @@ namespace Renderer {
 					});
 					this.selectedGroup.position.set(0, 0, 0);
 					this.selectedEntities = [];
+					renderer.outlinePass.selectedObjects = this.selectedEntities;
 					this.gizmo.control.detach();
-					renderer.initEntityLayer.children.forEach((e) => {
-						this.showOrHideOutline(e, false);
-					});
 					taro.client.emit('show-transform-modes', false);
 					return;
 				}
@@ -360,11 +358,9 @@ namespace Renderer {
 						if ((entity.parent as any)?.tag !== Three.EntityEditor.TAG) {
 							this.selectedEntities.forEach((e) => {
 								Utils.removeFromParentAndRecalcTransform(e);
-								this.showOrHideOutline(e, false);
 							});
 							this.selectedEntities = [entity];
 							this.gizmo.attach(entity);
-							this.showOrHideOutline(entity, true);
 						} else {
 							// this.selectedEntities = entity.parent.children as any;
 							// this.selectedGroup = entity.parent as any;
@@ -393,9 +389,6 @@ namespace Renderer {
 							renderer.initEntityLayer.add(entity);
 						}
 						const minMaxPos = this.calcMinMaxPosition();
-						if (remove) {
-							this.showOrHideOutline(entity, false);
-						}
 						if (this.selectedEntities.length === 0) {
 							this.gizmo.control.detach();
 							taro.client.emit('show-transform-modes', false);
@@ -412,6 +405,7 @@ namespace Renderer {
 						taro.client.emit('block-rotation', true);
 					}
 				});
+				renderer.outlinePass.selectedObjects = this.selectedEntities;
 			}
 
 			deleteEntity(): void {

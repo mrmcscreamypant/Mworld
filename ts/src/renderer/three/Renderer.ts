@@ -284,13 +284,13 @@ namespace Renderer {
 					}
 					if (this.mode === Mode.Map) {
 						if (this.entityEditor.gizmo.control.dragging) {
-							this.selectionHelper.enabled = false;
 							this.selectionBox.enabled = false;
 							return;
 						}
 						switch (taro.developerMode.activeButton) {
 							case 'cursor': {
-								if (this.selectionHelper.isDown && this.selectionHelper.enabled) {
+								if (this.selectionHelper.isDown) {
+									this.selectionHelper.onPointerMove(event);
 									this.selectionBox.endPoint.set(
 										(event.clientX / window.innerWidth) * 2 - 1,
 										-(event.clientY / window.innerHeight) * 2 + 1,
@@ -299,16 +299,36 @@ namespace Renderer {
 									const allSelected = this.selectionBox.select();
 
 									if (allSelected) {
-										if (allSelected.filter((e) => e.entity instanceof InitEntity).length > 0) {
+										const filteredSelected: (THREE.Object3D & { entity?: InitEntity })[] = [];
+										allSelected.forEach((e: THREE.Object3D & { entity?: InitEntity }) => {
+											if (e.entity) {
+												filteredSelected.push(e);
+											} else if (e.parent) {
+												const findObj = Utils.tryFindInitEntity(e.parent);
+												if (findObj) {
+													console.log(findObj);
+													filteredSelected.push(findObj);
+												}
+											}
+										});
+
+										if (filteredSelected.length > 0) {
+											filteredSelected.forEach((e) => {
+												if (e.entity instanceof InitEntity) {
+													if (!this.entityEditor.selectedEntities.includes(e.entity)) {
+														this.entityEditor.selectEntity(e.entity, 'add');
+													}
+												} else if (e instanceof InitEntity) {
+													{
+														if (!this.entityEditor.selectedEntities.includes(e)) {
+															this.entityEditor.selectEntity(e, 'add');
+														}
+													}
+												}
+											});
+										} else {
 											this.entityEditor.selectEntity(null);
 										}
-										this.outlinePass.selectedObjects = allSelected;
-										console.log(allSelected, this.outlinePass.selectedObjects);
-										// allSelected.forEach((e) => {
-										// 	if (e.entity instanceof InitEntity) {
-										// 		this.entityEditor.showOrHideOutline(e.entity, true);
-										// 	}
-										// });
 									}
 								}
 								break;
@@ -346,11 +366,10 @@ namespace Renderer {
 					if (this.mode === Mode.Map) {
 						const developerMode = taro.developerMode;
 						if (developerMode.activeButton !== 'cursor') {
-							this.selectionHelper.enabled = false;
 							this.selectionBox.enabled = false;
 						} else {
-							this.selectionHelper.enabled = true;
 							this.selectionBox.enabled = true;
+							this.selectionHelper.onPointerDown(event);
 						}
 						if (developerMode.regionTool) {
 							const worldPoint = this.camera.getWorldPoint(this.pointer);
@@ -377,7 +396,7 @@ namespace Renderer {
 										if (this.entityEditor.gizmo.control.dragging) {
 											return;
 										}
-										this.selectionHelper.enabled = true;
+
 										this.selectionBox.enabled = true;
 										this.selectionBox.startPoint.set(
 											(event.clientX / window.innerWidth) * 2 - 1,
@@ -645,20 +664,7 @@ namespace Renderer {
 							-(event.clientY / window.innerHeight) * 2 + 1,
 							0.5
 						);
-
-						const allSelected = this.selectionBox.select();
-						if (allSelected) {
-							allSelected.forEach((e) => {
-								if (e.entity instanceof InitEntity) {
-									this.entityEditor.showOrHideOutline(e.entity, true);
-									if (!this.entityEditor.selectedEntities.includes(e.entity)) {
-										this.entityEditor.selectEntity(e.entity, 'add');
-									}
-								}
-							});
-						}
-						this.selectionHelper.enabled = false;
-
+						this.selectionHelper.onPointerUp(event);
 						this.selectionBox.enabled = false;
 					}
 					if (developerMode.regionTool) {
@@ -904,7 +910,6 @@ namespace Renderer {
 				}
 
 				taro.network.send<any>('updateClientInitEntities', true);
-				// this.selectionHelper.enabled = true;
 				this.selectionBox.enabled = true;
 				this.entityManager.initEntities.forEach((initEntity) => {
 					initEntity.body.visible = true;
@@ -913,8 +918,6 @@ namespace Renderer {
 
 			private onExitMapMode() {
 				this.showEntities();
-				this.selectionHelper.enabled = false;
-
 				this.selectionBox.enabled = false;
 				this.entityManager.regions.forEach((r) => r.setMode(RegionMode.Normal));
 				this.voxelEditor.voxels.updateLayer(new Map(), this.voxelEditor.currentLayerIndex);
