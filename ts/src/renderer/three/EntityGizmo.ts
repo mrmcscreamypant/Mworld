@@ -80,9 +80,16 @@ namespace Renderer {
 								};
 							} else if (control.object.body instanceof Model) {
 								editedAction['scale'] = {
-									x: Utils.worldToPixel(control.object.body.getSize().x / control.object.defaultWidth),
-									y: Utils.worldToPixel(control.object.body.getSize().z / control.object.defaultHeight),
-									z: Utils.worldToPixel(control.object.body.getSize().y / control.object.defaultDepth),
+									x: Utils.worldToPixel(
+										(control.object.body.getSize().x / control.object.defaultWidth) *
+											(e.parent.tag === Three.EntityEditor.TAG ? e.scale.x : 1)
+									),
+									y:
+										Utils.worldToPixel(control.object.body.getSize().z / control.object.defaultHeight) *
+										(e.parent.tag === Three.EntityEditor.TAG ? e.scale.z : 1),
+									z:
+										Utils.worldToPixel(control.object.body.getSize().y / control.object.defaultDepth) *
+										(e.parent.tag === Three.EntityEditor.TAG ? e.scale.y : 1),
 									function: 'vector3',
 								};
 							}

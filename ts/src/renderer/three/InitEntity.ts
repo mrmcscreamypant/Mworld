@@ -149,7 +149,7 @@ namespace Renderer {
 				}
 			}
 
-			updateAction(action: ActionData): void {
+			updateAction(action: ActionData, ignoreOffset = false): void {
 				//update action in editor
 				const renderer = Renderer.Three.instance();
 				renderer.entityEditor.debounceUpdateAction?.({ data: [action] });
@@ -166,10 +166,10 @@ namespace Renderer {
 					!isNaN(action.position.y)
 				) {
 					this.action.position = action.position;
-					this.position.x = Utils.pixelToWorld(action.position.x) + (action.offset?.x ?? 0);
-					this.position.z = Utils.pixelToWorld(action.position.y) + (action.offset?.z ?? 0);
+					this.position.x = Utils.pixelToWorld(action.position.x) + ((!ignoreOffset && action.offset?.x) ?? 0);
+					this.position.z = Utils.pixelToWorld(action.position.y) + ((!ignoreOffset && action.offset?.z) ?? 0);
 					if (!isNaN(action.position.z)) {
-						this.position.y = Utils.pixelToWorld(action.position.z) + (action.offset?.y ?? 0);
+						this.position.y = Utils.pixelToWorld(action.position.z) + ((!ignoreOffset && action.offset?.y) ?? 0);
 					}
 				}
 				if (taro.is3D()) {
