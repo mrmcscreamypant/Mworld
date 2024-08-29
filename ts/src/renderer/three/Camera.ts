@@ -577,9 +577,7 @@ namespace Renderer {
 			}
 
 			setPosition2D(x: number, z: number, lerp = false) {
-				if (lerp) {
-					this.tempVec3.set(x, this.controls.target.y, z);
-				}
+				this.tempVec3.set(x, this.controls.target.y, z);
 				this.setPosition(x, this.controls.target.y, z, lerp);
 			}
 
