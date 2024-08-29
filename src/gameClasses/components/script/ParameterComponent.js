@@ -1629,10 +1629,10 @@ var ParameterComponent = TaroEntity.extend({
 
 					case 'getCameraPosition':
 						if (taro.isClient) {
-							const bounds = taro.renderer.getViewportBounds();
+							const position = taro.renderer.getCameraPosition();
 							returnValue = {
-								x: bounds.x + bounds.width / 2,
-								y: bounds.y + bounds.height / 2,
+								x: position.x,
+								y: position.y,
 							};
 						}
 
@@ -3186,6 +3186,17 @@ var ParameterComponent = TaroEntity.extend({
 					if (player) {
 						return player.lastClientReceivedData || {};
 					}
+				}
+			},
+
+			itemTypeInventoryUrl: function (text, vars) {
+				var itemTypeId = self.getValue(text.itemType, vars);
+				var itemType = taro.game.data.itemTypes[itemTypeId];
+
+				if (itemType) {
+					return itemType.inventoryImage;
+				} else {
+					return '';
 				}
 			},
 
