@@ -23,7 +23,7 @@ namespace Renderer {
 				this.add(this.root);
 				const model = gAssetManager.getModel(name);
 				this.mesh = SkeletonUtils.clone(model.scene);
-
+				(this.mesh as any).entity = this.taroEntity;
 				this.originalSize.copy(this.getSize());
 				this.originalScale.copy(this.mesh.scale);
 				this.aabb.setFromObject(this.mesh);
@@ -37,7 +37,7 @@ namespace Renderer {
 			setModel(model: GLTF) {
 				this.root.remove(this.mesh);
 				this.mesh = SkeletonUtils.clone(model.scene);
-
+				(this.mesh as any).entity = this.taroEntity;
 				this.firstTime = true;
 				this.originalSize.copy(this.getSize());
 				this.originalScale.copy(this.mesh.scale);

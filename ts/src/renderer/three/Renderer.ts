@@ -302,8 +302,8 @@ namespace Renderer {
 										if (allSelected.filter((e) => e.entity instanceof InitEntity).length > 0) {
 											this.entityEditor.selectEntity(null);
 										}
-										console.log(allSelected);
-										this.outlinePass.selectedObjects = allSelected.filter((e) => e.entity instanceof InitEntity);
+										this.outlinePass.selectedObjects = allSelected;
+										console.log(allSelected, this.outlinePass.selectedObjects);
 										// allSelected.forEach((e) => {
 										// 	if (e.entity instanceof InitEntity) {
 										// 		this.entityEditor.showOrHideOutline(e.entity, true);
