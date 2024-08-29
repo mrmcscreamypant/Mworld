@@ -96,7 +96,7 @@ namespace Renderer {
 						initEntities.forEach((initEntity) => {
 							if (initEntity.action.actionId === action.actionId) {
 								found = true;
-								initEntity.updateAction(action);
+								initEntity.updateAction(action, true);
 							}
 						});
 						if (!found) {
@@ -279,7 +279,6 @@ namespace Renderer {
 				);
 				const offsetPos = prevCenterPos.sub(positions.center);
 				this.selectedEntities.forEach((e) => {
-					this.showOrHideOutline(e, true);
 					if ((e.parent as any).tag === Three.EntityEditor.TAG) {
 						e.position.add(offsetPos);
 					} else {
@@ -323,19 +322,6 @@ namespace Renderer {
 
 			getLastSelectedEntity() {
 				return this.selectedEntities[this.selectedEntities.length - 1];
-			}
-
-			showOrHideOutline(e: any, show: boolean) {
-				return;
-				if ((e as any).tag === Three.EntityEditor.TAG) {
-					e.children.forEach((e_child) => {
-						this.showOrHideOutline(e_child, show);
-					});
-				} else {
-					if (e.body?.sprite !== undefined) {
-						e.body.sprite.children[0].visible = show;
-					}
-				}
 			}
 
 			selectEntity(entity: InitEntity | Region, mode: 'addOrRemove' | 'select' | 'remove' | 'add' = 'select'): void {

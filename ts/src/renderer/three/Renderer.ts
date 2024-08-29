@@ -306,7 +306,6 @@ namespace Renderer {
 											} else if (e.parent) {
 												const findObj = Utils.tryFindInitEntity(e.parent);
 												if (findObj) {
-													console.log(findObj);
 													filteredSelected.push(findObj);
 												}
 											}
