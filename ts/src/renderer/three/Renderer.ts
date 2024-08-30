@@ -77,7 +77,7 @@ namespace Renderer {
 									culled = false;
 								}
 							});
-							entity.culled = culled && !this.frustum.containsPoint(object.parent.position);
+							entity.culled = culled && !this.frustum.containsPoint(object.position);
 							if (!entity.culled && !entity._stats.instancedMesh) {
 								this.entitiesNeedsUpdate.push(object);
 							} else {
