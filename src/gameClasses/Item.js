@@ -147,11 +147,7 @@ var Item = TaroEntityPhysics.extend({
 				}
 			}
 		}
-		// check if it's in backpack first
-		let owner = self.getOwnerUnit();
-		if (owner && self._stats.slotIndex >= owner._stats.inventorySize) {
-			return;
-		}
+
 		// if body exists and item is not hidden, show
 		if (body && body.type != 'none') {
 			TaroEntityPhysics.prototype.updateBody.call(self, initTransform);
@@ -159,6 +155,11 @@ var Item = TaroEntityPhysics.extend({
 			if (taro.isClient) {
 				self.updateTexture();
 			} else {
+				// check if it's in backpack first
+				let owner = self.getOwnerUnit();
+				if (owner && self._stats.slotIndex >= owner._stats.inventorySize) {
+					return;
+				}
 				self.show();
 			}
 		} else {
