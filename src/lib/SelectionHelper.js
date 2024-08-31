@@ -34,9 +34,9 @@ class SelectionHelper {
 
 		}.bind(this);
 
-		this.onPointerUp = function () {
+		this.onPointerUp = function (event, forceToEnd) {
 
-			if (event.button !== 0) return;
+			if (event?.button !== 0 && !forceToEnd) return;
 
 			this.isDown = false;
 			this.onSelectOver();
