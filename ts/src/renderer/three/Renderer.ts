@@ -918,6 +918,7 @@ namespace Renderer {
 			private onExitMapMode() {
 				this.showEntities();
 				this.selectionBox.enabled = false;
+				this.selectionHelper.onPointerUp(null, true);
 				this.entityManager.regions.forEach((r) => r.setMode(RegionMode.Normal));
 				this.voxelEditor.voxels.updateLayer(new Map(), this.voxelEditor.currentLayerIndex);
 				this.voxelEditor.showAllLayers();

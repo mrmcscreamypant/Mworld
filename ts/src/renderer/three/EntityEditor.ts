@@ -48,6 +48,7 @@ namespace Renderer {
 				taro.client.on('add-entities', () => {
 					this.selectEntity(null);
 					this.activatePlacement(true);
+					renderer.selectionHelper.onPointerUp(null, true);
 				});
 				taro.client.on('cursor', () => {
 					this.activatePlacement(false);
@@ -55,18 +56,22 @@ namespace Renderer {
 				taro.client.on('draw-region', () => {
 					this.selectEntity(null);
 					this.activatePlacement(false);
+					renderer.selectionHelper.onPointerUp(null, true);
 				});
 				taro.client.on('brush', () => {
 					this.selectEntity(null);
 					this.activatePlacement(false);
+					renderer.selectionHelper.onPointerUp(null, true);
 				});
 				taro.client.on('empty-tile', () => {
 					this.selectEntity(null);
 					this.activatePlacement(false);
+					renderer.selectionHelper.onPointerUp(null, true);
 				});
 				taro.client.on('fill', () => {
 					this.selectEntity(null);
 					this.activatePlacement(false);
+					renderer.selectionHelper.onPointerUp(null, true);
 				});
 				taro.client.on('clear', () => {
 					this.selectEntity(null);
