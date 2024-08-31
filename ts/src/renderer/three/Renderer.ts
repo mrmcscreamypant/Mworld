@@ -1,5 +1,7 @@
 /// <reference types="@types/google.analytics" />
 
+const dummy = new THREE.Object3D();
+
 namespace Renderer {
 	export enum Mode {
 		Play,
@@ -36,6 +38,7 @@ namespace Renderer {
 
 		class Renderer {
 			private static _instance: Renderer;
+
 			renderer: THREE.WebGLRenderer;
 			camera: Camera;
 			scene: THREE.Scene;
@@ -45,6 +48,7 @@ namespace Renderer {
 			frustum = new THREE.Frustum();
 			cameraViewProjectionMatrix = new THREE.Matrix4();
 			entitiesNeedsUpdate: (Unit | Item)[] = [];
+
 			tryFindMesh(object: THREE.Object3D) {
 				const meshes: THREE.Mesh[] = [];
 				object.children.forEach((child: any) => {
@@ -134,6 +138,7 @@ namespace Renderer {
 			// Environment
 			private ambientLight: THREE.AmbientLight;
 			private directionalLight: THREE.DirectionalLight;
+			private shadowMesh: THREE.InstancedMesh;
 
 			// Debug
 			private raycastHelpers = new Map<string, THREE.ArrowHelper>();
@@ -255,6 +260,39 @@ namespace Renderer {
 						region.updateLabel(data.newName);
 					}
 				});
+
+				// Simple shadows
+				const canvas = document.createElement('canvas');
+				canvas.width = 128;
+				canvas.height = 128;
+				const ctx = canvas.getContext('2d');
+				const blur = 6;
+				const scale = 1.25;
+				const opacity = 0.25;
+				if (ctx) {
+					ctx.filter = `blur(${blur}px)`;
+					ctx.fillStyle = `rgba(0,0,0,${opacity})`;
+					ctx.beginPath();
+					ctx.arc(64, 64, 64 - blur * 2, 0, Math.PI * 2);
+					ctx.fill();
+				}
+				const shadowTexture = new THREE.CanvasTexture(canvas);
+
+				const maxShadows = 2000;
+				const shadowGeometry = new THREE.PlaneGeometry(scale, scale);
+				shadowGeometry.rotateX(-Math.PI * 0.5);
+				const shadowMaterial = new THREE.MeshBasicMaterial({
+					map: shadowTexture,
+					transparent: true,
+					depthWrite: false,
+					blending: THREE.CustomBlending,
+					blendEquation: THREE.AddEquation,
+					blendSrc: THREE.OneFactor,
+					blendDst: THREE.OneMinusSrcAlphaFactor,
+				});
+				this.shadowMesh = new THREE.InstancedMesh(shadowGeometry, shadowMaterial, maxShadows);
+				this.shadowMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+				this.scene.add(this.shadowMesh);
 			}
 
 			private addEventListener() {
@@ -1220,6 +1258,22 @@ namespace Renderer {
 						child.update();
 					}
 				});
+
+				let i = 0;
+				for (const entity of this.entityManager.entities) {
+					if (!(entity instanceof Unit || entity instanceof Item) || !entity.taroEntity._stats.shadow) {
+						continue;
+					}
+
+					dummy.position.copy(entity.position);
+					dummy.position.y = 0.501; // should be on floor layer
+					dummy.rotation.y = entity.body.rotation.y;
+					dummy.scale.set(entity.size.x, 1, entity.size.y);
+					dummy.updateMatrix();
+					this.shadowMesh.setMatrixAt(i++, dummy.matrix);
+				}
+				this.shadowMesh.instanceMatrix.needsUpdate = true;
+				this.shadowMesh.computeBoundingSphere();
 
 				if (this.camera.target) {
 					this.sky.position.copy(this.camera.target.position);

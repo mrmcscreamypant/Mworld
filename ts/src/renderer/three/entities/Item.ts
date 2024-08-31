@@ -4,6 +4,7 @@ namespace Renderer {
 			ownerUnitId: string | undefined;
 			ownerUnit: Unit | undefined;
 			body: AnimatedSprite | Model;
+			size: { x: number; y: number; z: number } = { x: 0, y: 0, z: 0 };
 
 			constructor(
 				public taroId: string,
@@ -179,6 +180,10 @@ namespace Renderer {
 			}
 
 			setScale(sx: number, sy: number, sz: number) {
+				this.size.x = sx;
+				this.size.y = sy;
+				this.size.z = sz;
+
 				if (this.body instanceof AnimatedSprite) {
 					this.body.setScale(sx, sy);
 				} else {
