@@ -159,6 +159,8 @@ var Unit = TaroEntityPhysics.extend({
 			taro.script.trigger('entityCreatedGlobal', { entityId: this.id() });
 			this.script.trigger('entityCreated');
 		}
+		this.width(self._stats.currentBody.width);
+		this.height(self._stats.currentBody.height);
 	},
 
 	shouldRenderAttribute: function (attribute) {

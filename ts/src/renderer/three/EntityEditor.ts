@@ -48,6 +48,7 @@ namespace Renderer {
 				taro.client.on('add-entities', () => {
 					this.selectEntity(null);
 					this.activatePlacement(true);
+					renderer.selectionHelper.onPointerUp(null, true);
 				});
 				taro.client.on('cursor', () => {
 					this.activatePlacement(false);
@@ -55,18 +56,22 @@ namespace Renderer {
 				taro.client.on('draw-region', () => {
 					this.selectEntity(null);
 					this.activatePlacement(false);
+					renderer.selectionHelper.onPointerUp(null, true);
 				});
 				taro.client.on('brush', () => {
 					this.selectEntity(null);
 					this.activatePlacement(false);
+					renderer.selectionHelper.onPointerUp(null, true);
 				});
 				taro.client.on('empty-tile', () => {
 					this.selectEntity(null);
 					this.activatePlacement(false);
+					renderer.selectionHelper.onPointerUp(null, true);
 				});
 				taro.client.on('fill', () => {
 					this.selectEntity(null);
 					this.activatePlacement(false);
+					renderer.selectionHelper.onPointerUp(null, true);
 				});
 				taro.client.on('clear', () => {
 					this.selectEntity(null);
@@ -96,7 +101,7 @@ namespace Renderer {
 						initEntities.forEach((initEntity) => {
 							if (initEntity.action.actionId === action.actionId) {
 								found = true;
-								initEntity.updateAction(action);
+								initEntity.updateAction(action, true);
 							}
 						});
 						if (!found) {
@@ -279,7 +284,6 @@ namespace Renderer {
 				);
 				const offsetPos = prevCenterPos.sub(positions.center);
 				this.selectedEntities.forEach((e) => {
-					this.showOrHideOutline(e, true);
 					if ((e.parent as any).tag === Three.EntityEditor.TAG) {
 						e.position.add(offsetPos);
 					} else {
@@ -325,20 +329,7 @@ namespace Renderer {
 				return this.selectedEntities[this.selectedEntities.length - 1];
 			}
 
-			showOrHideOutline(e: any, show: boolean) {
-				return;
-				if ((e as any).tag === Three.EntityEditor.TAG) {
-					e.children.forEach((e_child) => {
-						this.showOrHideOutline(e_child, show);
-					});
-				} else {
-					if (e.body?.sprite !== undefined) {
-						e.body.sprite.children[0].visible = show;
-					}
-				}
-			}
-
-			selectEntity(entity: InitEntity | Region, mode: 'addOrRemove' | 'select' | 'remove' = 'select'): void {
+			selectEntity(entity: InitEntity | Region, mode: 'addOrRemove' | 'select' | 'remove' | 'add' = 'select'): void {
 				const renderer = Renderer.Three.instance();
 
 				if (entity === null) {
@@ -347,10 +338,8 @@ namespace Renderer {
 					});
 					this.selectedGroup.position.set(0, 0, 0);
 					this.selectedEntities = [];
+					renderer.outlinePass.selectedObjects = this.selectedEntities;
 					this.gizmo.control.detach();
-					renderer.initEntityLayer.children.forEach((e) => {
-						this.showOrHideOutline(e, false);
-					});
 					taro.client.emit('show-transform-modes', false);
 					return;
 				}
@@ -360,11 +349,9 @@ namespace Renderer {
 						if ((entity.parent as any)?.tag !== Three.EntityEditor.TAG) {
 							this.selectedEntities.forEach((e) => {
 								Utils.removeFromParentAndRecalcTransform(e);
-								this.showOrHideOutline(e, false);
 							});
 							this.selectedEntities = [entity];
 							this.gizmo.attach(entity);
-							this.showOrHideOutline(entity, true);
 						} else {
 							// this.selectedEntities = entity.parent.children as any;
 							// this.selectedGroup = entity.parent as any;
@@ -375,13 +362,17 @@ namespace Renderer {
 						}
 						break;
 					}
+					case 'add':
 					case 'remove':
 					case 'addOrRemove': {
 						let remove = mode === 'remove' ? true : false;
-
+						let forceToAdd = mode === 'add' ? true : false;
 						if (!remove && this.selectedEntities.find((e) => e.uuid === entity.uuid) === undefined) {
 							this.selectedEntities.push(entity);
 						} else {
+							if (forceToAdd) {
+								break;
+							}
 							remove = true;
 							entity.position.add(this.selectedGroup.position);
 							this.selectedEntities = this.selectedEntities.filter((e) => e.uuid !== entity.uuid);
@@ -389,9 +380,6 @@ namespace Renderer {
 							renderer.initEntityLayer.add(entity);
 						}
 						const minMaxPos = this.calcMinMaxPosition();
-						if (remove) {
-							this.showOrHideOutline(entity, false);
-						}
 						if (this.selectedEntities.length === 0) {
 							this.gizmo.control.detach();
 							taro.client.emit('show-transform-modes', false);
@@ -408,6 +396,7 @@ namespace Renderer {
 						taro.client.emit('block-rotation', true);
 					}
 				});
+				renderer.outlinePass.selectedObjects = this.selectedEntities;
 			}
 
 			deleteEntity(): void {

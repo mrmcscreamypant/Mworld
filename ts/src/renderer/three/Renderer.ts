@@ -40,7 +40,9 @@ namespace Renderer {
 			private static _instance: Renderer;
 
 			renderer: THREE.WebGLRenderer;
+			effectComposer: any;
 			camera: Camera;
+			outlinePass: any;
 			scene: THREE.Scene;
 			mode = Mode.Play;
 			selectionBox: SelectionBox;
@@ -79,7 +81,7 @@ namespace Renderer {
 									culled = false;
 								}
 							});
-							entity.culled = culled && !this.frustum.containsPoint(object.parent.position);
+							entity.culled = culled && !this.frustum.containsPoint(object.position);
 							if (!entity.culled && !entity._stats.instancedMesh) {
 								this.entitiesNeedsUpdate.push(object);
 							} else {
@@ -161,7 +163,8 @@ namespace Renderer {
 				renderer.setSize(window.innerWidth, window.innerHeight);
 				document.querySelector('#game-div')?.appendChild(renderer.domElement);
 				this.renderer = renderer;
-
+				const composer = new EffectComposer(renderer);
+				this.effectComposer = composer;
 				this.scene = new THREE.Scene();
 				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
 				if (taro?.game?.data?.settings?.fog?.enabled) {
@@ -203,9 +206,10 @@ namespace Renderer {
 				window.addEventListener('resize', () => {
 					this.camera.resize(window.innerWidth, window.innerHeight);
 					renderer.setSize(window.innerWidth, window.innerHeight);
+					this.effectComposer.setSize(window.innerWidth, window.innerHeight);
 					renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 					renderer.render(this.scene, this.camera.instance);
-
+					this.effectComposer.render();
 					taro.client.emit('scale', { ratio: this.camera.zoom });
 					taro.client.emit('update-abilities-position');
 					this.entityManager.scaleGui(1 / this.camera.zoom);
@@ -293,6 +297,16 @@ namespace Renderer {
 				this.shadowMesh = new THREE.InstancedMesh(shadowGeometry, shadowMaterial, maxShadows);
 				this.shadowMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 				this.scene.add(this.shadowMesh);
+
+				composer.addPass(new RenderPass(this.scene, this.camera.instance));
+				composer.addPass(new ShaderPass(GammaCorrectionShader));
+				const outlinePass = new OutlinePass(
+					new THREE.Vector2(window.innerWidth, window.innerHeight),
+					this.scene,
+					this.camera.instance
+				);
+				this.outlinePass = outlinePass;
+				composer.addPass(outlinePass);
 			}
 
 			private addEventListener() {
@@ -309,28 +323,50 @@ namespace Renderer {
 					}
 					if (this.mode === Mode.Map) {
 						if (this.entityEditor.gizmo.control.dragging) {
-							this.selectionHelper.enabled = false;
 							this.selectionBox.enabled = false;
 							return;
 						}
 						switch (taro.developerMode.activeButton) {
 							case 'cursor': {
-								if (this.selectionHelper.isDown && this.selectionHelper.enabled) {
+								if (this.selectionHelper.isDown) {
+									this.selectionHelper.onPointerMove(event);
 									this.selectionBox.endPoint.set(
 										(event.clientX / window.innerWidth) * 2 - 1,
 										-(event.clientY / window.innerHeight) * 2 + 1,
 										0.5
 									);
 									const allSelected = this.selectionBox.select();
+
 									if (allSelected) {
-										if (allSelected.filter((e) => e.entity instanceof InitEntity).length > 0) {
-											this.entityEditor.selectEntity(null);
-										}
-										allSelected.forEach((e) => {
-											if (e.entity instanceof InitEntity) {
-												this.entityEditor.showOrHideOutline(e.entity, true);
+										const filteredSelected: (THREE.Object3D & { entity?: InitEntity })[] = [];
+										allSelected.forEach((e: THREE.Object3D & { entity?: InitEntity }) => {
+											if (e.entity) {
+												filteredSelected.push(e);
+											} else if (e.parent) {
+												const findObj = Utils.tryFindInitEntity(e.parent);
+												if (findObj) {
+													filteredSelected.push(findObj);
+												}
 											}
 										});
+
+										if (filteredSelected.length > 0) {
+											filteredSelected.forEach((e) => {
+												if (e.entity instanceof InitEntity) {
+													if (!this.entityEditor.selectedEntities.includes(e.entity)) {
+														this.entityEditor.selectEntity(e.entity, 'add');
+													}
+												} else if (e instanceof InitEntity) {
+													{
+														if (!this.entityEditor.selectedEntities.includes(e)) {
+															this.entityEditor.selectEntity(e, 'add');
+														}
+													}
+												}
+											});
+										} else {
+											this.entityEditor.selectEntity(null);
+										}
 									}
 								}
 								break;
@@ -368,11 +404,10 @@ namespace Renderer {
 					if (this.mode === Mode.Map) {
 						const developerMode = taro.developerMode;
 						if (developerMode.activeButton !== 'cursor') {
-							this.selectionHelper.enabled = false;
 							this.selectionBox.enabled = false;
 						} else {
-							// this.selectionHelper.enabled = true;
 							this.selectionBox.enabled = true;
+							this.selectionHelper.onPointerDown(event);
 						}
 						if (developerMode.regionTool) {
 							const worldPoint = this.camera.getWorldPoint(this.pointer);
@@ -399,7 +434,6 @@ namespace Renderer {
 										if (this.entityEditor.gizmo.control.dragging) {
 											return;
 										}
-										// this.selectionHelper.enabled = true;
 
 										this.selectionBox.enabled = true;
 										this.selectionBox.startPoint.set(
@@ -668,20 +702,7 @@ namespace Renderer {
 							-(event.clientY / window.innerHeight) * 2 + 1,
 							0.5
 						);
-
-						const allSelected = this.selectionBox.select();
-						if (allSelected) {
-							allSelected.forEach((e) => {
-								if (e.entity instanceof InitEntity) {
-									this.entityEditor.showOrHideOutline(e.entity, true);
-									if (!this.entityEditor.selectedEntities.includes(e.entity)) {
-										this.entityEditor.selectEntity(e.entity, 'addOrRemove');
-									}
-								}
-							});
-						}
-						this.selectionHelper.enabled = false;
-
+						this.selectionHelper.onPointerUp(event);
 						this.selectionBox.enabled = false;
 					}
 					if (developerMode.regionTool) {
@@ -927,7 +948,6 @@ namespace Renderer {
 				}
 
 				taro.network.send<any>('updateClientInitEntities', true);
-				// this.selectionHelper.enabled = true;
 				this.selectionBox.enabled = true;
 				this.entityManager.initEntities.forEach((initEntity) => {
 					initEntity.body.visible = true;
@@ -936,9 +956,8 @@ namespace Renderer {
 
 			private onExitMapMode() {
 				this.showEntities();
-				this.selectionHelper.enabled = false;
-
 				this.selectionBox.enabled = false;
+				this.selectionHelper.onPointerUp(null, true);
 				this.entityManager.regions.forEach((r) => r.setMode(RegionMode.Normal));
 				this.voxelEditor.voxels.updateLayer(new Map(), this.voxelEditor.currentLayerIndex);
 				this.voxelEditor.showAllLayers();
@@ -1281,7 +1300,7 @@ namespace Renderer {
 
 				TWEEN.update();
 				this.renderer.render(this.scene, this.camera.instance);
-
+				this.effectComposer.render();
 				this.timeSinceLastRaycast += dt;
 				if (this.timeSinceLastRaycast > this.raycastIntervalSeconds) {
 					this.timeSinceLastRaycast = 0;

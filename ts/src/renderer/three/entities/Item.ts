@@ -15,7 +15,7 @@ namespace Renderer {
 
 				if (taroEntity._stats.is3DObject) {
 					const name = taroEntity._stats.cellSheet.url;
-					this.body = new Model(name);
+					this.body = new Model(name, taroEntity);
 				} else {
 					const key = taroEntity._stats.cellSheet.url;
 					const cols = taroEntity._stats.cellSheet.columnCount || 1;
