@@ -123,8 +123,8 @@ namespace Renderer {
 			private regionsLayer = new THREE.Group();
 			public initEntityLayer = new THREE.Group();
 
-			private sky: Skybox;
 			private particleSystem: ParticleSystem;
+			private environment: Environment;
 
 			private raycastIntervalSeconds = 0.1;
 			private timeSinceLastRaycast = 0;
@@ -136,11 +136,6 @@ namespace Renderer {
 			private showRepublishWarning: boolean;
 
 			private regionDrawStart: { x: number; y: number } = { x: 0, y: 0 };
-
-			// Environment
-			private ambientLight: THREE.AmbientLight;
-			private directionalLight: THREE.DirectionalLight;
-			private shadowMesh: THREE.InstancedMesh;
 
 			// Debug
 			private raycastHelpers = new Map<string, THREE.ArrowHelper>();
@@ -167,33 +162,6 @@ namespace Renderer {
 				this.effectComposer = composer;
 				this.scene = new THREE.Scene();
 				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
-				if (taro?.game?.data?.settings?.fog?.enabled) {
-					const fog = taro.game.data.settings.fog;
-					if (taro.game.data.settings.fog.type === 'exp2') {
-						this.scene.fog = new THREE.FogExp2(fog.color, fog.density);
-					} else {
-						this.scene.fog = new THREE.Fog(fog.color, fog.near, fog.far);
-					}
-				}
-
-				const ambientLightSettings = taro?.game?.data?.settings?.light?.ambient;
-				this.ambientLight = new THREE.AmbientLight(
-					ambientLightSettings?.color ?? 0xffffff,
-					ambientLightSettings?.intensity ?? 3
-				);
-				this.scene.add(this.ambientLight);
-
-				const directionalLightSettings = taro?.game?.data?.settings?.light?.directional;
-				this.directionalLight = new THREE.DirectionalLight(
-					directionalLightSettings?.color ?? 0xffffff,
-					directionalLightSettings?.intensity ?? 0
-				);
-				this.directionalLight.position.set(
-					directionalLightSettings?.position.x ?? 0,
-					directionalLightSettings?.position.z ?? 1,
-					directionalLightSettings?.position.y ?? 0
-				);
-				this.scene.add(this.directionalLight);
 
 				this.camera = new Camera(window.innerWidth, window.innerHeight, this.renderer.domElement);
 				this.camera.setElevationAngle(taro.game.data.settings.camera.defaultPitch);
@@ -264,39 +232,6 @@ namespace Renderer {
 						region.updateLabel(data.newName);
 					}
 				});
-
-				// Simple shadows
-				const canvas = document.createElement('canvas');
-				canvas.width = 128;
-				canvas.height = 128;
-				const ctx = canvas.getContext('2d');
-				const blur = 6;
-				const scale = 1.25;
-				const opacity = 0.25;
-				if (ctx) {
-					ctx.filter = `blur(${blur}px)`;
-					ctx.fillStyle = `rgba(0,0,0,${opacity})`;
-					ctx.beginPath();
-					ctx.arc(64, 64, 64 - blur * 2, 0, Math.PI * 2);
-					ctx.fill();
-				}
-				const shadowTexture = new THREE.CanvasTexture(canvas);
-
-				const maxShadows = 2000;
-				const shadowGeometry = new THREE.PlaneGeometry(scale, scale);
-				shadowGeometry.rotateX(-Math.PI * 0.5);
-				const shadowMaterial = new THREE.MeshBasicMaterial({
-					map: shadowTexture,
-					transparent: true,
-					depthWrite: false,
-					blending: THREE.CustomBlending,
-					blendEquation: THREE.AddEquation,
-					blendSrc: THREE.OneFactor,
-					blendDst: THREE.OneMinusSrcAlphaFactor,
-				});
-				this.shadowMesh = new THREE.InstancedMesh(shadowGeometry, shadowMaterial, maxShadows);
-				this.shadowMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-				this.scene.add(this.shadowMesh);
 
 				composer.addPass(new RenderPass(this.scene, this.camera.instance));
 				composer.addPass(new ShaderPass(GammaCorrectionShader));
@@ -916,14 +851,12 @@ namespace Renderer {
 
 			private onEnterPlayMode() {
 				this.camera.setEditorMode(false);
-
-				this.showEnvironment();
+				this.environment.show();
 			}
 
 			private onExitPlayMode() {
 				this.camera.setEditorMode(true);
-
-				this.hideEnvironment();
+				this.environment.hide();
 			}
 
 			private onEnterMapMode() {
@@ -981,41 +914,6 @@ namespace Renderer {
 
 			private hideEntities() {
 				this.setEntitiesVisible(false);
-			}
-
-			private showEnvironment() {
-				// Lighting
-				const ambientLightSettings = taro?.game?.data?.settings?.light?.ambient;
-				this.ambientLight.intensity = ambientLightSettings?.intensity ?? 3;
-				const directionalLightSettings = taro?.game?.data?.settings?.light?.directional;
-				this.directionalLight.intensity = directionalLightSettings?.intensity ?? 0;
-
-				// Fog
-				if (taro?.game?.data?.settings?.fog?.enabled) {
-					const fog = taro.game.data.settings.fog;
-					if (this.scene.fog instanceof THREE.Fog) {
-						this.scene.fog.near = fog.near;
-						this.scene.fog.far = fog.far;
-					} else if (this.scene.fog instanceof THREE.FogExp2) {
-						this.scene.fog.density = fog.density;
-					}
-				}
-			}
-
-			private hideEnvironment() {
-				// Lighting
-				this.ambientLight.intensity = 3;
-				this.directionalLight.intensity = 0;
-
-				// Fog
-				if (taro?.game?.data?.settings?.fog?.enabled) {
-					if (this.scene.fog instanceof THREE.Fog) {
-						this.scene.fog.near = 100000;
-						this.scene.fog.far = 100000;
-					} else if (this.scene.fog instanceof THREE.FogExp2) {
-						this.scene.fog.density = 0;
-					}
-				}
 			}
 
 			private setEntitiesVisible(visible: boolean) {
@@ -1080,8 +978,7 @@ namespace Renderer {
 			}
 
 			private init() {
-				this.sky = new Skybox();
-				this.scene.add(this.sky);
+				this.environment = new Environment(this);
 
 				this.voxels = Voxels.create(taro.game.data.map.layers);
 				this.voxelEditor = new VoxelEditor(this.voxels);
@@ -1278,25 +1175,7 @@ namespace Renderer {
 					}
 				});
 
-				let i = 0;
-				for (const entity of this.entityManager.entities) {
-					if (!(entity instanceof Unit || entity instanceof Item) || !entity.taroEntity._stats.shadow) {
-						continue;
-					}
-
-					dummy.position.copy(entity.position);
-					dummy.position.y = 0.501; // should be on floor layer
-					dummy.rotation.y = entity.body.rotation.y;
-					dummy.scale.set(entity.size.x, 1, entity.size.y);
-					dummy.updateMatrix();
-					this.shadowMesh.setMatrixAt(i++, dummy.matrix);
-				}
-				this.shadowMesh.instanceMatrix.needsUpdate = true;
-				this.shadowMesh.computeBoundingSphere();
-
-				if (this.camera.target) {
-					this.sky.position.copy(this.camera.target.position);
-				}
+				this.environment.update();
 
 				TWEEN.update();
 				this.renderer.render(this.scene, this.camera.instance);
