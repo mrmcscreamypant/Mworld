@@ -23,7 +23,7 @@ class VoxelEditor {
 		this.voxelMarker = new Renderer.Three.VoxelMarker(this.commandController);
 		taro.client.on('switch-layer', (value) => {
 			if (value !== this.currentLayerIndex) {
-				this.voxels.updateLayer(new Map(), this.currentLayerIndex);
+				this.voxels.updateLayer(new Map(), this.currentLayerIndex, false, true);
 				this.switchLayer(value);
 				renderer.voxelEditor.voxelMarker.updatePreview();
 			}
@@ -55,12 +55,12 @@ class VoxelEditor {
 		});
 
 		taro.client.on('brush', () => {
-			this.voxels.updateLayer(new Map(), this.currentLayerIndex);
+			this.voxels.updateLayer(new Map(), this.currentLayerIndex, false, true);
 			this.voxelMarker.updatePreview(true, true);
 		});
 
 		taro.client.on('empty-tile', () => {
-			this.voxels.updateLayer(new Map(), this.currentLayerIndex);
+			this.voxels.updateLayer(new Map(), this.currentLayerIndex, false, true);
 			this.voxelMarker.updatePreview(true, true);
 		});
 
@@ -136,7 +136,7 @@ class VoxelEditor {
 	}
 
 	removePreview() {
-		this.voxels.updateLayer(new Map(), this.currentLayerIndex);
+		this.voxels.updateLayer(new Map(), this.currentLayerIndex, false, true);
 		this.voxelMarker.removeMeshes();
 	}
 
@@ -384,7 +384,7 @@ class VoxelEditor {
 		if (taroMap.layers[this.currentLayerIndex].data[_y * taroMap.width + _x] !== 0) {
 			renderer.tmp_tileId = taroMap.layers[this.currentLayerIndex].data[_y * taroMap.width + _x];
 		}
-		this.voxels.updateLayer(new Map(), this.currentLayerIndex);
+		this.voxels.updateLayer(new Map(), this.currentLayerIndex, false, true);
 	}
 
 	floodFill(

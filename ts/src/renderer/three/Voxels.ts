@@ -114,8 +114,8 @@ namespace Renderer {
 				});
 			}
 
-			updateLayer(updatedVoxels: Map<string, VoxelCell>, layerIdx: number, isPreview = false) {
-				if (updatedVoxels.size === 0) {
+			updateLayer(updatedVoxels: Map<string, VoxelCell>, layerIdx: number, isPreview = false, forceUpdateAll = false) {
+				if (updatedVoxels.size === 0 && !forceUpdateAll) {
 					return;
 				}
 				const chunkBlockCounts = Renderer.Three.Voxels.CHUNK_BLOCK_COUNTS;
@@ -135,14 +135,14 @@ namespace Renderer {
 						changed = true;
 					}
 				}
-				if (!changed) {
+				if (!changed && !forceUpdateAll) {
 					return;
 				}
 				const renderOrder = (layerIdx + 1) * 100;
 				for (let chunkX = 0; chunkX < Math.ceil(taro.map.data.width / chunkBlockCounts.x); chunkX++) {
 					for (let chunkZ = 0; chunkZ < Math.ceil(taro.map.data.height / chunkBlockCounts.y); chunkZ++) {
 						const chunkKey = Renderer.Three.getChunkKeyFromPos(chunkX, chunkZ);
-						if (!chunksNeedsUpdate.includes(chunkKey)) {
+						if (!chunksNeedsUpdate.includes(chunkKey) || forceUpdateAll) {
 							if (!this.lastPreviewChunksNeedsUpdate.includes(chunkKey)) {
 								continue;
 							} else {
