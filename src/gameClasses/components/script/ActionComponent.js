@@ -2151,10 +2151,9 @@ var ActionComponent = TaroEntity.extend({
 					case 'setUnitNameLabel':
 						var unit = self._script.param.getValue(action.unit, vars);
 						var name = self._script.param.getValue(action.name, vars);
-						var player = self._script.param.getValue(action.player, vars);
 
 						if (unit) {
-							unit.streamUpdateData([{ name: name }], player?._stats?.clientId);
+							unit.streamUpdateData([{ name: name }]);
 						}
 
 						break;
