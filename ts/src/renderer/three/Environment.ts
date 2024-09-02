@@ -12,7 +12,7 @@ namespace Renderer {
 			private ambientLight: THREE.AmbientLight;
 			private directionalLight: THREE.DirectionalLight;
 			private shadowMesh: THREE.InstancedMesh;
-			private shadowQuality = ShadowQuality.High;
+			private shadowQuality = ShadowQuality.Simple;
 
 			constructor(private renderer) {
 				const scene = renderer.scene;
@@ -51,6 +51,23 @@ namespace Renderer {
 				scene.add(this.directionalLight);
 
 				// Shadows
+				if (taro?.game?.data?.settings?.shadowQuality) {
+					switch (taro.game.data.settings.shadowQuality) {
+						case 'simple':
+							this.shadowQuality = ShadowQuality.Simple;
+							break;
+						case 'low':
+							this.shadowQuality = ShadowQuality.Low;
+							break;
+						case 'medium':
+							this.shadowQuality = ShadowQuality.Medium;
+							break;
+						case 'high':
+							this.shadowQuality = ShadowQuality.High;
+							break;
+					}
+				}
+
 				if (this.shadowQuality === ShadowQuality.Simple) {
 					const canvas = document.createElement('canvas');
 					canvas.width = 128;
