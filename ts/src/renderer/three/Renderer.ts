@@ -978,12 +978,12 @@ namespace Renderer {
 			}
 
 			private init() {
-				this.environment = new Environment(this);
-
 				this.voxels = Voxels.create(taro.game.data.map.layers);
 				this.voxelEditor = new VoxelEditor(this.voxels);
 				this.scene.add(this.voxels);
 				this.scene.add(this.voxelEditor.voxelMarker);
+
+				this.environment = new Environment(this);
 
 				this.entityEditor = new EntityEditor();
 
