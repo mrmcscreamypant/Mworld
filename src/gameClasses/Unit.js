@@ -27,7 +27,9 @@ var Unit = TaroEntityPhysics.extend({
 		unitData = taro.game.cloneAsset('unitTypes', data.type);
 
 		self._stats = _.merge(unitData, data);
-
+		if (self._stats.streamMode === undefined) {
+			self._stats.streamMode = 1;
+		}
 		self.entityId = entityIdFromServer;
 		self._stats.particleEmitters = {};
 
@@ -157,6 +159,8 @@ var Unit = TaroEntityPhysics.extend({
 			taro.script.trigger('entityCreatedGlobal', { entityId: this.id() });
 			this.script.trigger('entityCreated');
 		}
+		this.width(self._stats.currentBody.width);
+		this.height(self._stats.currentBody.height);
 	},
 
 	shouldRenderAttribute: function (attribute) {
@@ -2294,10 +2298,12 @@ var Unit = TaroEntityPhysics.extend({
 					self.distanceToTarget = self.ai.getDistanceToTarget();
 					self.ai.update();
 					// enable AI unit flipping based on target
-					if (!isNaN(this.angleToTarget) && this.angleToTarget > 0 && this.angleToTarget < Math.PI) {
-						this.flip(0);
-					} else {
-						this.flip(1);
+					if (this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse) {
+						if (!isNaN(this.angleToTarget) && this.angleToTarget > 0 && this.angleToTarget < Math.PI) {
+							this.flip(0);
+						} else {
+							this.flip(1);
+						}
 					}
 				}
 
@@ -2314,13 +2320,15 @@ var Unit = TaroEntityPhysics.extend({
 
 			// flip unit
 			let mouse = ownerPlayer.control?.input?.mouse;
-			let angleBetweenUnitAndMouse =
-				Math.atan2(mouse.y - this._translate.y, mouse.x - this._translate.x) + Math.radians(90);
-			if (this._stats.controls && this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse) {
-				if (angleBetweenUnitAndMouse > 0 && angleBetweenUnitAndMouse < Math.PI) {
-					self.flip(0);
-				} else {
-					self.flip(1);
+			if (mouse) {
+				let angleBetweenUnitAndMouse =
+					Math.atan2(mouse.y - this._translate.y, mouse.x - this._translate.x) + Math.radians(90);
+				if (this._stats.controls && this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse) {
+					if (angleBetweenUnitAndMouse > 0 && angleBetweenUnitAndMouse < Math.PI) {
+						self.flip(0);
+					} else {
+						self.flip(1);
+					}
 				}
 			}
 		}

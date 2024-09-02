@@ -6,11 +6,12 @@ namespace Renderer {
 				pitchRange: { min: -90, max: 90 },
 				offset: { x: 0, y: 0, z: 0 },
 			};
-
 			body: AnimatedSprite | Model | null = null;
 			instancedIdx: number | null = null;
 			instancedData: { depthZOffset: number } | null = null;
 			textureId: string;
+			size: { x: number; y: number; z: number } = { x: 0, y: 0, z: 0 };
+
 			private hud = new THREE.Group();
 			private topHud = new THREE.Group();
 			private bottomHud = new THREE.Group();
@@ -186,9 +187,6 @@ namespace Renderer {
 								entity.body.rotation.y = -data.rotation;
 							}
 						}
-						if (!entity.taroEntity.culled) {
-							entity.updateMatrix();
-						}
 					},
 					this
 				);
@@ -213,9 +211,6 @@ namespace Renderer {
 							entity.instancedIdx
 						);
 					}
-					if (!entity.taroEntity.culled) {
-						entity.updateMatrix();
-					}
 				});
 
 				taroEntity.on(
@@ -233,9 +228,6 @@ namespace Renderer {
 								entity.instancedIdx
 							);
 						}
-						if (!entity.taroEntity.culled) {
-							entity.updateMatrix();
-						}
 					},
 					this
 				);
@@ -246,6 +238,9 @@ namespace Renderer {
 				});
 
 				taroEntity.on('play-animation', (id) => {
+					if (entity.taroEntity.culled) {
+						return;
+					}
 					if (entity.body instanceof AnimatedSprite) {
 						const key = `${taroEntity._stats.cellSheet.url}/${id}/${taroEntity._stats.id}`;
 						entity.body.play(key);
@@ -377,6 +372,10 @@ namespace Renderer {
 			}
 
 			setScale(sx: number, sy: number, sz: number) {
+				this.size.x = sx;
+				this.size.y = sy;
+				this.size.z = sz;
+
 				if (this.body === null) {
 					const renderer = Renderer.Three.instance();
 					renderer.projectilPool.editInstanceMesh({ scale: [sx, sy, sz] }, this.textureId, this.instancedIdx);

@@ -229,6 +229,9 @@ var SoundComponent = TaroEntity.extend({
 					settingsVolume = isNaN(settingsVolume) ? 1 : settingsVolume / 100;
 					volume = settingsVolume * volume;
 				}
+				if (volume === 0) {
+					return;
+				}
 				if (sound && sound.file) {
 					if (self.preLoadedSounds[key] && self.preLoadedSounds[key].src == sound.file) {
 						// if audio is currently playing then stop it first and replay audio

@@ -1,5 +1,7 @@
 /// <reference types="@types/google.analytics" />
 
+const dummy = new THREE.Object3D();
+
 namespace Renderer {
 	export enum Mode {
 		Play,
@@ -36,14 +38,18 @@ namespace Renderer {
 
 		class Renderer {
 			private static _instance: Renderer;
+
 			renderer: THREE.WebGLRenderer;
+			effectComposer: any;
 			camera: Camera;
+			outlinePass: any;
 			scene: THREE.Scene;
 			mode = Mode.Play;
 			selectionBox: SelectionBox;
 			selectionHelper: SelectionHelper;
 			frustum = new THREE.Frustum();
 			cameraViewProjectionMatrix = new THREE.Matrix4();
+			entitiesNeedsUpdate: (Unit | Item)[] = [];
 
 			tryFindMesh(object: THREE.Object3D) {
 				const meshes: THREE.Mesh[] = [];
@@ -57,54 +63,59 @@ namespace Renderer {
 				});
 				return meshes;
 			}
+
 			updateFrustumCulling() {
 				const zeroVec3 = new THREE.Vector3(0, 0, 0);
-				this.scene.traverse((object: any) => {
-					const entity: TaroEntityPhysics = object.taroEntity;
-					if (object instanceof Three.Model && entity) {
-						const meshes = this.tryFindMesh(object);
-						let culled = true;
-						meshes.forEach((mesh) => {
-							if (this.frustum.intersectsObject(mesh)) {
-								culled = false;
+				this.entitiesNeedsUpdate = [];
+				[this.entityManager.units, this.entityManager.items, this.entityManager.projectiles].forEach((entities) => {
+					entities.forEach((object: Unit | Item) => {
+						const entity: TaroEntityPhysics = object.taroEntity;
+						if (!object.body) {
+							return;
+						}
+						if (!(object.body as Sprite).sprite) {
+							const meshes = this.tryFindMesh(object);
+							let culled = true;
+							meshes.forEach((mesh) => {
+								if (this.frustum.intersectsObject(mesh)) {
+									culled = false;
+								}
+							});
+							entity.culled = culled && !this.frustum.containsPoint(object.position);
+							if (!entity.culled && !entity._stats.instancedMesh) {
+								this.entitiesNeedsUpdate.push(object);
+							} else {
+								object.matrixWorldAutoUpdate = false;
 							}
-						});
-						entity.culled = culled && !this.frustum.containsPoint(object.parent.position);
-					} else {
-						let ownerCulled = true;
-						if (entity && entity._category === 'item' && entity._stats?.ownerUnitId) {
-							const ownerUnit = this.entityManager.units.find((u) => u.taroEntity._id === entity._stats?.ownerUnitId);
-							if (ownerUnit) {
-								const pos = ownerUnit.position.clone();
-								pos.setY(this.initEntityLayer.position.y + 1 + ownerUnit.position.y);
-								if (this.frustum.containsPoint(pos)) {
-									ownerCulled = false;
+						} else {
+							if (entity && object.body && (object.body as Sprite).sprite?.isMesh) {
+								const pos = object.position.clone();
+								pos.setY(this.initEntityLayer.position.y + 1 + object.position.y);
+								if (
+									!this.frustum.intersectsObject((object.body as Sprite)?.sprite) &&
+									!this.frustum.containsPoint(pos) &&
+									(object as THREE.Object3D).position.distanceTo(zeroVec3) !== 0
+								) {
+									entity.culled = true;
+									object.matrixWorldAutoUpdate = false;
+								} else {
+									if (!entity._stats.instancedMesh) {
+										this.entitiesNeedsUpdate.push(object);
+									}
+									entity.culled = false;
 								}
 							}
 						}
-
-						if (entity && object.body && object.body.sprite?.isMesh) {
-							const pos = object.position.clone();
-							pos.setY(this.initEntityLayer.position.y + 1 + object.position.y);
-							if (
-								!this.frustum.intersectsObject(object.body?.sprite) &&
-								!this.frustum.containsPoint(pos) &&
-								ownerCulled &&
-								(object as THREE.Object3D).position.distanceTo(zeroVec3) !== 0
-							) {
-								entity.culled = true;
-							} else {
-								entity.culled = false;
-							}
-						}
-					}
+						(object as Unit).showHud?.(!entity.culled);
+					});
 				});
 			}
 
 			voxels: Voxels;
-			projectilPool: ProjectilePool;
+			projectilPool: InstancedMeshPool;
 			private clock = new THREE.Clock();
 			private pointer = new THREE.Vector2();
+			private secondaryPointer = new THREE.Vector2();
 			private initLoadingManager = new THREE.LoadingManager();
 
 			public entityManager = new EntityManager();
@@ -129,6 +140,7 @@ namespace Renderer {
 			// Environment
 			private ambientLight: THREE.AmbientLight;
 			private directionalLight: THREE.DirectionalLight;
+			private shadowMesh: THREE.InstancedMesh;
 
 			// Debug
 			private raycastHelpers = new Map<string, THREE.ArrowHelper>();
@@ -151,10 +163,10 @@ namespace Renderer {
 				renderer.setSize(window.innerWidth, window.innerHeight);
 				document.querySelector('#game-div')?.appendChild(renderer.domElement);
 				this.renderer = renderer;
-
+				const composer = new EffectComposer(renderer);
+				this.effectComposer = composer;
 				this.scene = new THREE.Scene();
 				this.scene.background = new THREE.Color(taro.game.data.defaultData.mapBackgroundColor);
-
 				if (taro?.game?.data?.settings?.fog?.enabled) {
 					const fog = taro.game.data.settings.fog;
 					if (taro.game.data.settings.fog.type === 'exp2') {
@@ -194,46 +206,167 @@ namespace Renderer {
 				window.addEventListener('resize', () => {
 					this.camera.resize(window.innerWidth, window.innerHeight);
 					renderer.setSize(window.innerWidth, window.innerHeight);
+					this.effectComposer.setSize(window.innerWidth, window.innerHeight);
 					renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 					renderer.render(this.scene, this.camera.instance);
-
+					this.effectComposer.render();
 					taro.client.emit('scale', { ratio: this.camera.zoom });
 					taro.client.emit('update-abilities-position');
 					this.entityManager.scaleGui(1 / this.camera.zoom);
 				});
 
+				this.forceLoadUnusedCSSFonts();
+
+				this.initLoadingManager.onLoad = () => {
+					this.init();
+					taro.input.setupListeners(this.renderer.domElement);
+					taro.client.rendererLoaded.resolve();
+
+					window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
+				};
+
+				const isPixelArt = taro.game.data.defaultData.renderingFilter === 'pixelArt';
+				gAssetManager.setFilter(isPixelArt ? THREE.NearestFilter : THREE.LinearFilter);
+
+				this.loadAssets();
+
+				taro.client.on('enterPlayTab', () => {
+					this.mode = Mode.Play;
+					this.onEnterPlayMode();
+				});
+
+				taro.client.on('leavePlayTab', () => {
+					this.onExitPlayMode();
+				});
+
+				taro.client.on('enterMapTab', () => {
+					this.mode = Mode.Map;
+					this.onEnterMapMode();
+				});
+
+				taro.client.on('leaveMapTab', () => {
+					this.onExitMapMode();
+				});
+
+				taro.client.on('enterEntitiesTab', () => {
+					this.mode = Mode.Entities;
+					this.onEnterEntitiesMode();
+				});
+
+				taro.client.on('leaveEntitiesTab', () => {
+					this.onExitEntitiesMode();
+				});
+
+				taro.client.on('update-region-name', (data: { name: string; newName: string }) => {
+					const region = this.entityManager.entities.find((e) => e instanceof Region && e.name === data.name) as Region;
+					if (region) {
+						region.name = data.newName;
+						region.updateLabel(data.newName);
+					}
+				});
+
+				// Simple shadows
+				const canvas = document.createElement('canvas');
+				canvas.width = 128;
+				canvas.height = 128;
+				const ctx = canvas.getContext('2d');
+				const blur = 6;
+				const scale = 1.25;
+				const opacity = 0.25;
+				if (ctx) {
+					ctx.filter = `blur(${blur}px)`;
+					ctx.fillStyle = `rgba(0,0,0,${opacity})`;
+					ctx.beginPath();
+					ctx.arc(64, 64, 64 - blur * 2, 0, Math.PI * 2);
+					ctx.fill();
+				}
+				const shadowTexture = new THREE.CanvasTexture(canvas);
+
+				const maxShadows = 2000;
+				const shadowGeometry = new THREE.PlaneGeometry(scale, scale);
+				shadowGeometry.rotateX(-Math.PI * 0.5);
+				const shadowMaterial = new THREE.MeshBasicMaterial({
+					map: shadowTexture,
+					transparent: true,
+					depthWrite: false,
+					blending: THREE.CustomBlending,
+					blendEquation: THREE.AddEquation,
+					blendSrc: THREE.OneFactor,
+					blendDst: THREE.OneMinusSrcAlphaFactor,
+				});
+				this.shadowMesh = new THREE.InstancedMesh(shadowGeometry, shadowMaterial, maxShadows);
+				this.shadowMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+				this.scene.add(this.shadowMesh);
+
+				composer.addPass(new RenderPass(this.scene, this.camera.instance));
+				composer.addPass(new ShaderPass(GammaCorrectionShader));
+				const outlinePass = new OutlinePass(
+					new THREE.Vector2(window.innerWidth, window.innerHeight),
+					this.scene,
+					this.camera.instance
+				);
+				this.outlinePass = outlinePass;
+				composer.addPass(outlinePass);
+			}
+
+			private addEventListener() {
 				let line: THREE.LineSegments;
 				let width: number;
 				let height: number;
+				let rightClickPos: { x: number; y: number } = undefined;
 
-				renderer.domElement.addEventListener('mousemove', (event: MouseEvent) => {
+				let lastTime = 0;
+				const renderer = this.renderer;
+				renderer.domElement.addEventListener('pointermove', (event: MouseEvent) => {
 					if (event.button === 1) {
 						return;
 					}
 					if (this.mode === Mode.Map) {
 						if (this.entityEditor.gizmo.control.dragging) {
-							this.selectionHelper.enabled = false;
 							this.selectionBox.enabled = false;
 							return;
 						}
 						switch (taro.developerMode.activeButton) {
 							case 'cursor': {
-								if (this.selectionHelper.isDown && this.selectionHelper.enabled) {
+								if (this.selectionHelper.isDown) {
+									this.selectionHelper.onPointerMove(event);
 									this.selectionBox.endPoint.set(
 										(event.clientX / window.innerWidth) * 2 - 1,
 										-(event.clientY / window.innerHeight) * 2 + 1,
 										0.5
 									);
 									const allSelected = this.selectionBox.select();
+
 									if (allSelected) {
-										if (allSelected.filter((e) => e.entity instanceof InitEntity).length > 0) {
-											this.entityEditor.selectEntity(null);
-										}
-										allSelected.forEach((e) => {
-											if (e.entity instanceof InitEntity) {
-												this.entityEditor.showOrHideOutline(e.entity, true);
+										const filteredSelected: (THREE.Object3D & { entity?: InitEntity })[] = [];
+										allSelected.forEach((e: THREE.Object3D & { entity?: InitEntity }) => {
+											if (e.entity) {
+												filteredSelected.push(e);
+											} else if (e.parent) {
+												const findObj = Utils.tryFindInitEntity(e.parent);
+												if (findObj) {
+													filteredSelected.push(findObj);
+												}
 											}
 										});
+
+										if (filteredSelected.length > 0) {
+											filteredSelected.forEach((e) => {
+												if (e.entity instanceof InitEntity) {
+													if (!this.entityEditor.selectedEntities.includes(e.entity)) {
+														this.entityEditor.selectEntity(e.entity, 'add');
+													}
+												} else if (e instanceof InitEntity) {
+													{
+														if (!this.entityEditor.selectedEntities.includes(e)) {
+															this.entityEditor.selectEntity(e, 'add');
+														}
+													}
+												}
+											});
+										} else {
+											this.entityEditor.selectEntity(null);
+										}
 									}
 								}
 								break;
@@ -258,22 +391,23 @@ namespace Renderer {
 					}
 				});
 
-				let rightClickPos: { x: number; y: number } = undefined;
-
-				let lastTime = 0;
-
-				renderer.domElement.addEventListener('mousedown', (event: MouseEvent) => {
+				renderer.domElement.addEventListener('pointerdown', (event: MouseEvent) => {
+					if (taro.isMobile) {
+						this.pointer.set(
+							(event.clientX / window.outerWidth) * 2 - 1,
+							-(event.clientY / window.outerHeight) * 2 + 1
+						);
+					}
 					if (event.button === 1) {
 						return;
 					}
 					if (this.mode === Mode.Map) {
 						const developerMode = taro.developerMode;
 						if (developerMode.activeButton !== 'cursor') {
-							this.selectionHelper.enabled = false;
 							this.selectionBox.enabled = false;
 						} else {
-							// this.selectionHelper.enabled = true;
 							this.selectionBox.enabled = true;
+							this.selectionHelper.onPointerDown(event);
 						}
 						if (developerMode.regionTool) {
 							const worldPoint = this.camera.getWorldPoint(this.pointer);
@@ -300,7 +434,6 @@ namespace Renderer {
 										if (this.entityEditor.gizmo.control.dragging) {
 											return;
 										}
-										// this.selectionHelper.enabled = true;
 
 										this.selectionBox.enabled = true;
 										this.selectionBox.startPoint.set(
@@ -333,7 +466,6 @@ namespace Renderer {
 
 												taro.client.emit('block-rotation', !!initEntity.isBillboard);
 											} else if (clickDelay < 350) {
-												console.log('showing script for entity', initEntity.action.actionId);
 												if (inGameEditor && inGameEditor.showScriptForEntity) {
 													inGameEditor.showScriptForEntity(initEntity.action.actionId);
 												}
@@ -570,20 +702,7 @@ namespace Renderer {
 							-(event.clientY / window.innerHeight) * 2 + 1,
 							0.5
 						);
-
-						const allSelected = this.selectionBox.select();
-						if (allSelected) {
-							allSelected.forEach((e) => {
-								if (e.entity instanceof InitEntity) {
-									this.entityEditor.showOrHideOutline(e.entity, true);
-									if (!this.entityEditor.selectedEntities.includes(e.entity)) {
-										this.entityEditor.selectEntity(e.entity, 'addOrRemove');
-									}
-								}
-							});
-						}
-						this.selectionHelper.enabled = false;
-
+						this.selectionHelper.onPointerUp(event);
 						this.selectionBox.enabled = false;
 					}
 					if (developerMode.regionTool) {
@@ -639,53 +758,29 @@ namespace Renderer {
 					}
 				});
 
-				this.forceLoadUnusedCSSFonts();
-
-				this.initLoadingManager.onLoad = () => {
-					this.init();
-					taro.input.setupListeners(this.renderer.domElement);
-					taro.client.rendererLoaded.resolve();
-
-					window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
-				};
-
-				const isPixelArt = taro.game.data.defaultData.renderingFilter === 'pixelArt';
-				gAssetManager.setFilter(isPixelArt ? THREE.NearestFilter : THREE.LinearFilter);
-
-				this.loadAssets();
-
-				taro.client.on('enterPlayTab', () => {
-					this.mode = Mode.Play;
-					this.onEnterPlayMode();
+				renderer.domElement.addEventListener('touchstart', (event: TouchEvent) => {
+					if (event.touches.length > 1) {
+						const secondaryTouch = event.touches[1];
+						this.secondaryPointer.set(
+							(secondaryTouch.clientX / window.innerWidth) * 2 - 1,
+							-(secondaryTouch.clientY / window.innerHeight) * 2 + 1
+						);
+					}
 				});
 
-				taro.client.on('leavePlayTab', () => {
-					this.onExitPlayMode();
+				renderer.domElement.addEventListener('touchend', (event: TouchEvent) => {
+					if (event.touches.length === 0) {
+						this.secondaryPointer = null;
+					}
 				});
 
-				taro.client.on('enterMapTab', () => {
-					this.mode = Mode.Map;
-					this.onEnterMapMode();
-				});
-
-				taro.client.on('leaveMapTab', () => {
-					this.onExitMapMode();
-				});
-
-				taro.client.on('enterEntitiesTab', () => {
-					this.mode = Mode.Entities;
-					this.onEnterEntitiesMode();
-				});
-
-				taro.client.on('leaveEntitiesTab', () => {
-					this.onExitEntitiesMode();
-				});
-
-				taro.client.on('update-region-name', (data: { name: string; newName: string }) => {
-					const region = this.entityManager.entities.find((e) => e instanceof Region && e.name === data.name) as Region;
-					if (region) {
-						region.name = data.newName;
-						region.updateLabel(data.newName);
+				renderer.domElement.addEventListener('touchmove', (event: TouchEvent) => {
+					if (event.touches.length > 1) {
+						const secondaryTouch = event.touches[1];
+						this.secondaryPointer.set(
+							(secondaryTouch.clientX / window.innerWidth) * 2 - 1,
+							-(secondaryTouch.clientY / window.innerHeight) * 2 + 1
+						);
 					}
 				});
 			}
@@ -794,12 +889,20 @@ namespace Renderer {
 			getViewportBounds() {
 				const halfWidth = (window.innerWidth * 0.5) / this.camera.zoom;
 				const halfHeight = (window.innerHeight * 0.5) / this.camera.zoom;
-				const p = this.camera.instance.position;
+				const p = this.camera.getPosition2D();
 				return {
 					x: Utils.worldToPixel(p.x) - halfWidth,
-					y: Utils.worldToPixel(p.z) - halfHeight,
+					y: Utils.worldToPixel(p.y) - halfHeight,
 					width: halfWidth * 2,
 					height: halfHeight * 2,
+				};
+			}
+
+			getCameraPosition() {
+				const pos = this.camera.getPosition2D();
+				return {
+					x: Utils.worldToPixel(pos.x),
+					y: Utils.worldToPixel(pos.y),
 				};
 			}
 
@@ -845,7 +948,6 @@ namespace Renderer {
 				}
 
 				taro.network.send<any>('updateClientInitEntities', true);
-				// this.selectionHelper.enabled = true;
 				this.selectionBox.enabled = true;
 				this.entityManager.initEntities.forEach((initEntity) => {
 					initEntity.body.visible = true;
@@ -854,9 +956,8 @@ namespace Renderer {
 
 			private onExitMapMode() {
 				this.showEntities();
-				this.selectionHelper.enabled = false;
-
 				this.selectionBox.enabled = false;
+				this.selectionHelper.onPointerUp(null, true);
 				this.entityManager.regions.forEach((r) => r.setMode(RegionMode.Normal));
 				this.voxelEditor.voxels.updateLayer(new Map(), this.voxelEditor.currentLayerIndex);
 				this.voxelEditor.showAllLayers();
@@ -991,10 +1092,9 @@ namespace Renderer {
 
 				this.particleSystem = new ParticleSystem();
 				this.scene.add(this.particleSystem);
-
 				this.entitiesLayer.position.y = 0.51;
 				this.scene.add(this.entitiesLayer);
-				this.projectilPool = ProjectilePool.create();
+				this.projectilPool = InstancedMeshPool.create();
 				this.regionsLayer.position.y = 0.51;
 				this.scene.add(this.regionsLayer);
 
@@ -1117,21 +1217,20 @@ namespace Renderer {
 					this.camera.setBounds(0, 0, width, height);
 					this.camera.useBounds = true;
 				}
+				this.addEventListener();
+			}
+
+			private updateAllEntitiesMatirx() {
+				this.entitiesNeedsUpdate.forEach((e) => {
+					e.matrixWorldAutoUpdate = true;
+				});
 			}
 
 			private render() {
 				window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
-				// Call this function before rendering
-				this.camera.instance.updateMatrixWorld(); // Ensure the camera matrix is updated
-				this.cameraViewProjectionMatrix.multiplyMatrices(
-					this.camera.instance.projectionMatrix,
-					this.camera.instance.matrixWorldInverse
-				);
-				this.frustum.setFromProjectionMatrix(this.cameraViewProjectionMatrix);
-				this.updateFrustumCulling();
 				taro.client.emit('tick');
-				if (this.entityEditor) this.entityEditor.update();
-				if (this.camera.target) {
+				// Call this function before rendering
+				if (this.camera) {
 					const worldPos = this.camera.getWorldPoint(this.pointer);
 					const x = Utils.worldToPixel(worldPos.x);
 					const y = Utils.worldToPixel(worldPos.z);
@@ -1140,6 +1239,27 @@ namespace Renderer {
 					taro.input.emit('pointermove', [{ x, y, yaw, pitch }]);
 				}
 
+				if (taro.isMobile && this.secondaryPointer) {
+					const worldPosSecondary = this.camera.getWorldPoint(this.pointer);
+					const x = Utils.worldToPixel(worldPosSecondary.x);
+					const y = Utils.worldToPixel(worldPosSecondary.z);
+					taro.input.emit('secondarytouchpointermove', [
+						{
+							x: x,
+							y: y,
+						},
+					]);
+				}
+
+				this.camera.instance.updateMatrixWorld(); // Ensure the camera matrix is updated
+				this.cameraViewProjectionMatrix.multiplyMatrices(
+					this.camera.instance.projectionMatrix,
+					this.camera.instance.matrixWorldInverse
+				);
+				this.frustum.setFromProjectionMatrix(this.cameraViewProjectionMatrix);
+				this.updateFrustumCulling();
+				this.updateAllEntitiesMatirx();
+				if (this.entityEditor) this.entityEditor.update();
 				// TODO: Is this the proper way to get deltaTime or should I get it from the
 				// engine somewhere? Also it feels a little weird that the renderer triggers
 				// the engine update. It should be the other way around.
@@ -1153,10 +1273,26 @@ namespace Renderer {
 				this.camera.update(dt);
 				this.voxelEditor.update();
 				this.initEntityLayer.children.forEach((child) => {
-					if (child instanceof InitEntity) {
+					if (child instanceof InitEntity && child) {
 						child.update();
 					}
 				});
+
+				let i = 0;
+				for (const entity of this.entityManager.entities) {
+					if (!(entity instanceof Unit || entity instanceof Item) || !entity.taroEntity._stats.shadow) {
+						continue;
+					}
+
+					dummy.position.copy(entity.position);
+					dummy.position.y = 0.501; // should be on floor layer
+					dummy.rotation.y = entity.body.rotation.y;
+					dummy.scale.set(entity.size.x, 1, entity.size.y);
+					dummy.updateMatrix();
+					this.shadowMesh.setMatrixAt(i++, dummy.matrix);
+				}
+				this.shadowMesh.instanceMatrix.needsUpdate = true;
+				this.shadowMesh.computeBoundingSphere();
 
 				if (this.camera.target) {
 					this.sky.position.copy(this.camera.target.position);
@@ -1164,11 +1300,11 @@ namespace Renderer {
 
 				TWEEN.update();
 				this.renderer.render(this.scene, this.camera.instance);
-
+				this.effectComposer.render();
 				this.timeSinceLastRaycast += dt;
 				if (this.timeSinceLastRaycast > this.raycastIntervalSeconds) {
 					this.timeSinceLastRaycast = 0;
-					this.checkForHiddenEntities();
+					// this.checkForHiddenEntities();
 				}
 			}
 

@@ -59,7 +59,7 @@ var Player = TaroEntity.extend({
 				// mouse move listener
 				taro.input.on('pointermove', function (point) {
 					if (taro.client.myPlayer) {
-						if (taro.isMobile && !taro.client?.selectedUnit?._stats?.cameraPointerLock) {
+						if (taro.client.joystickExists && !taro.client?.selectedUnit?._stats?.cameraPointerLock) {
 							return;
 						}
 						self.control.input.mouse.x = point.x.toFixed(0);

@@ -293,6 +293,20 @@ namespace Renderer {
 				return location.hash === '#debug';
 			}
 
+			export function tryFindInitEntity(obj: THREE.Object3D) {
+				if (typeof obj === 'object') {
+					if (obj instanceof InitEntity) {
+						return obj;
+					} else {
+						if (obj.parent) {
+							return tryFindInitEntity(obj.parent);
+						}
+					}
+				} else {
+					return null;
+				}
+			}
+
 			export function removeFromParentAndRecalcTransform(o: THREE.Object3D) {
 				if (o.parent && (o.parent as any).tag === Three.EntityEditor.TAG) {
 					const renderer = Renderer.Three.instance();

@@ -15,19 +15,16 @@ class SelectionHelper {
 		this.pointBottomRight = new THREE.Vector2();
 
 		this.isDown = false;
-		this.enabled = false;
 
 		this.onPointerDown = function (event) {
 
-			if (this.enabled === false || event.button !== 0) return;
+			if (event.button !== 0) return;
 			this.isDown = true;
 			this.onSelectStart(event);
 
 		}.bind(this);
 
 		this.onPointerMove = function (event) {
-
-			if (this.enabled === false) return;
 
 			if (this.isDown) {
 
@@ -37,27 +34,18 @@ class SelectionHelper {
 
 		}.bind(this);
 
-		this.onPointerUp = function () {
+		this.onPointerUp = function (event, forceToEnd) {
 
-			if (this.enabled === false || event.button !== 0) return;
+			if (event?.button !== 0 && !forceToEnd) return;
 
 			this.isDown = false;
 			this.onSelectOver();
 
 		}.bind(this);
 
-		this.renderer.domElement.addEventListener('pointerdown', this.onPointerDown);
-		this.renderer.domElement.addEventListener('pointermove', this.onPointerMove);
-		this.renderer.domElement.addEventListener('pointerup', this.onPointerUp);
-
 	}
 
 	dispose() {
-
-		this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown);
-		this.renderer.domElement.removeEventListener('pointermove', this.onPointerMove);
-		this.renderer.domElement.removeEventListener('pointerup', this.onPointerUp);
-
 	}
 
 	onSelectStart(event) {

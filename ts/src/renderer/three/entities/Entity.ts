@@ -24,13 +24,11 @@ namespace Renderer {
 			private setLayer(layer: number) {
 				this.layer = layer;
 				this.position.y = Utils.getLayerZOffset(this.layer) + this.zOffset;
-				this.updateMatrix();
 			}
 
 			private setZOffset(offset: number) {
 				this.zOffset = offset;
 				this.position.y = Utils.getLayerZOffset(this.layer) + this.zOffset;
-				this.updateMatrix();
 			}
 		}
 	}

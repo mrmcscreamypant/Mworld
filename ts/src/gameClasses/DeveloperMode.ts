@@ -894,7 +894,6 @@ class DeveloperMode {
 	updateEntityScript(data) {
 		if (taro.isClient) {
 			Object.entries(data.newData.scripts).forEach(([scriptId, script]: any) => {
-				debugger;
 				if (!script.deleted) {
 					if (data.apply) {
 						taro.developerMode.serverEntityScriptData[data.entityType][data.typeId][scriptId] = script;
@@ -909,7 +908,7 @@ class DeveloperMode {
 				taro.developerMode.serverEntityScriptData[data.entityType][data.typeId]
 			);
 		}
-		
+
 		if (taro.isServer && data.apply) {
 			Object.entries(data.newData.scripts).forEach(([scriptId, script]: any) => {
 				if (!script.deleted) {
@@ -1168,7 +1167,6 @@ class DeveloperMode {
 						case 'delete':
 							//this.deleteUnit(data);
 							break;
-
 					}
 				} else if (data.entityType === 'itemTypes') {
 					switch (data.action) {

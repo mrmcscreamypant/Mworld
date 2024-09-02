@@ -17,6 +17,9 @@ var Item = TaroEntityPhysics.extend({
 		}
 
 		self._stats = _.merge(itemData, data);
+		if (self._stats.streamMode === undefined) {
+			self._stats.streamMode = 1;
+		}
 		self._stats.particleEmitters = {};
 
 		if (self._stats.projectileType) {
@@ -144,6 +147,7 @@ var Item = TaroEntityPhysics.extend({
 				}
 			}
 		}
+
 		// if body exists and item is not hidden, show
 		if (body && body.type != 'none') {
 			TaroEntityPhysics.prototype.updateBody.call(self, initTransform);
@@ -151,6 +155,11 @@ var Item = TaroEntityPhysics.extend({
 			if (taro.isClient) {
 				self.updateTexture();
 			} else {
+				// check if it's in backpack first
+				let owner = self.getOwnerUnit();
+				if (owner && self._stats.slotIndex >= owner._stats.inventorySize) {
+					return;
+				}
 				self.show();
 			}
 		} else {
