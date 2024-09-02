@@ -175,15 +175,14 @@ class VoxelEditor {
 			case 'edit': {
 				//save tile change to taro.game.data.map and taro.map.data
 				const nowValue = dataValue as TileData<'edit'>['edit'];
-				nowValue.selectedTiles.forEach((v, idx) => {
+				for (let [idx, v] of nowValue.selectedTiles.entries()) {
 					if (
 						taro.game.data.map.layers[nowValue.layer[idx]].type === 'tilelayer' &&
 						taro.game.data.map.layers[nowValue.layer[idx]].data
 					) {
 						this.putTiles(nowValue.x, nowValue.y, v, nowValue.size, nowValue.shape, nowValue.layer[idx], true);
 					}
-				});
-
+				}
 				break;
 			}
 			case 'clear': {
@@ -492,23 +491,26 @@ class VoxelEditor {
 		}
 		this.currentLayerIndex = value;
 
-		Object.values(voxels.meshes[value]).forEach((mesh) => (mesh.visible = true));
+		for (let mesh of Object.values(voxels.meshes[value])) {
+			mesh.visible = true;
+		}
 	}
 
 	hideLayer(layer: number, state: boolean): void {
 		const voxels = Renderer.Three.getVoxels();
-		Object.values(voxels.meshes[layer]).forEach((mesh) => (mesh.visible = !state));
+		for (let mesh of Object.values(voxels.meshes[layer])) {
+			mesh.visible = !state;
+		}
 	}
 
 	showAllLayers(): void {
 		const voxels = Renderer.Three.getVoxels();
-		Object.entries(voxels.meshes).forEach(([layer, chunkKey]) =>
-			Object.values(chunkKey).forEach((mesh) => {
+		for (let [layer, chunkKey] of Object.entries(voxels.meshes)) {
+			for (let mesh of Object.values(chunkKey))
 				if (mesh.visible === false) {
 					this.hideLayer(parseInt(layer), false);
 				}
-			})
-		);
+		}
 	}
 
 	update(): void {
