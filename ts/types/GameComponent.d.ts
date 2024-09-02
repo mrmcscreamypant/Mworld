@@ -199,6 +199,7 @@ declare class GameComponent extends TaroEntity {
 					};
 				};
 			};
+			shadowQuality: undefined | 'simple' | 'low' | 'medium' | 'high';
 		};
 		heightBasedZIndex: boolean;
 		texturePack: any;
