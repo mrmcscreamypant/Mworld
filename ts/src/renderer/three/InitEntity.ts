@@ -224,11 +224,7 @@ namespace Renderer {
 						if (isNaN(this.action.scale.z)) {
 							this.action.scale.z = 0;
 						}
-						this.setSize(
-							Utils.pixelToWorld(this.defaultWidth * action.scale.x),
-							Utils.pixelToWorld(this.defaultDepth * action.scale.z),
-							Utils.pixelToWorld(this.defaultHeight * action.scale.y)
-						);
+						this.setSize(action.scale.x, action.scale.z, action.scale.y);
 					}
 					if (!isNaN(this.action.width) && !isNaN(action.width)) {
 						this.action.width = action.width;
