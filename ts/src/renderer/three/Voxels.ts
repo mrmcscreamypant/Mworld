@@ -52,9 +52,9 @@ namespace Renderer {
 					let numTileLayers = 0;
 					for (const [idx, layer] of config.entries()) {
 						if (layer.type === 'tilelayer' && layer.data) {
+							voxels.setLayerLookupTable(idx, numTileLayers);
 							const voxelsData = Voxels.generateVoxelsFromLayerData(layer, numTileLayers, false);
 							voxels.updateLayer(voxelsData, idx);
-							voxels.setLayerLookupTable(idx, numTileLayers);
 							numTileLayers++;
 						}
 					}
@@ -109,9 +109,9 @@ namespace Renderer {
 
 			clearLayer(rawLayerIdx: number) {
 				this.voxelsCellData[rawLayerIdx] = new Map();
-				Object.values(this.meshes[rawLayerIdx]).forEach((mesh) => {
+				for (let mesh of Object.values(this.meshes[rawLayerIdx])) {
 					this.remove(mesh);
-				});
+				}
 			}
 
 			updateLayer(updatedVoxels: Map<string, VoxelCell>, layerIdx: number, isPreview = false, forceUpdateAll = false) {
@@ -157,10 +157,11 @@ namespace Renderer {
 							for (let z = chunkZ * chunkBlockCounts.y; z < (1 + chunkZ) * chunkBlockCounts.y; z++) {
 								const pos = { x: x + 0.5, y: height + Renderer.Three.Voxels.Y_OFFSET * height, z: z + 0.5 };
 								const key = Renderer.Three.getKeyFromPos(pos.x, pos.y, pos.z);
-								if (this.voxelsCellData[layerIdx].has(key)) {
-									if (updatedVoxels.get(key)?.isPreview === true) {
-										subVoxels.set(key, rfdc()(updatedVoxels.get(key)));
-									} else {
+
+								if (updatedVoxels.get(key)?.isPreview === true) {
+									subVoxels.set(key, rfdc()(updatedVoxels.get(key)));
+								} else {
+									if (this.voxelsCellData[layerIdx].has(key)) {
 										subVoxels.set(key, rfdc()(this.voxelsCellData[layerIdx].get(key)));
 									}
 								}
