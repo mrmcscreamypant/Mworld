@@ -3138,7 +3138,7 @@ var ParameterComponent = TaroEntity.extend({
 			elementFromObject: function (text, vars) {
 				var object = self.getValue(text.object, vars);
 				var key = self.getValue(text.key, vars);
-				var valid = !taro.workerComponent?.isSafeObject(object);
+				var valid = taro.workerComponent?.isSafeObject(object);
 				if (object && valid && Object.hasOwn(object, key)) {
 					return object[key];
 				}
