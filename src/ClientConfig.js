@@ -148,6 +148,7 @@ var taroClientConfig = {
 		'renderer/three/VoxelMarker.js',
 		'renderer/three/MarkerLines.js',
 		'renderer/three/Model.js',
+		'renderer/three/Environment.js',
 
 		'renderer/three/Mapper.js',
 		'renderer/three/hud/Element.js',

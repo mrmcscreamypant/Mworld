@@ -125,6 +125,7 @@ namespace Renderer {
 				if (!this.voxelsCellData[layerIdx]) {
 					this.voxelsCellData[layerIdx] = new Map();
 				}
+
 				for (let [k, v] of updatedVoxels.entries()) {
 					if (!this.voxelsCellData[layerIdx].has(k) || this.voxelsCellData[layerIdx].get(k).type !== v.type) {
 						if (!isPreview) {
@@ -219,11 +220,13 @@ namespace Renderer {
 							map: this.sidesTileset.texture,
 							side: THREE.DoubleSide,
 							alphaTest: 0.5,
+              shadowSide: THREE.BackSide,
 						});
 						const mat2 = new THREE.MeshStandardMaterial({
 							map: this.topTileset.texture,
 							side: THREE.DoubleSide,
 							alphaTest: 0.5,
+              shadowSide: THREE.BackSide,
 						});
 						const [mat1Preview, mat2Preview] = [mat1.clone(), mat2.clone()];
 						[mat1Preview, mat2Preview].forEach((mat) => {
