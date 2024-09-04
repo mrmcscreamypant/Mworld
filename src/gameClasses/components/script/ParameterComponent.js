@@ -2680,7 +2680,6 @@ var ParameterComponent = TaroEntity.extend({
 
 			objectToString: function (text, vars) {
 				var object = self.getValue(text.object, vars);
-				console.log(object);
 				var str = typeof object === 'string' ? object : JSON.stringify(object); // remove opening & ending quotes
 				return str;
 			},
