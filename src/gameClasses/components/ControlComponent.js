@@ -414,7 +414,7 @@ var ControlComponent = TaroEntity.extend({
 					(self.newMouseState[0] != self.lastMouseState[0] || self.newMouseState[1] != self.lastMouseState[1])
 				) {
 					// if we are using mobile controls don't send mouse moves to server here as we will do so from a look touch stick
-					if (!taro.isMobile) {
+					if (!taro.isMobile || !taro.client.joystickExists) {
 						// absolute mouse position wrt window
 						if (
 							taro._mouseAbsoluteTranslation &&

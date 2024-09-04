@@ -50,6 +50,7 @@ namespace Renderer {
 			frustum = new THREE.Frustum();
 			cameraViewProjectionMatrix = new THREE.Matrix4();
 			entitiesNeedsUpdate: (Unit | Item)[] = [];
+			touchActive: boolean;
 
 			tryFindMesh(object: THREE.Object3D) {
 				const meshes: THREE.Mesh[] = [];
@@ -252,7 +253,7 @@ namespace Renderer {
 
 				let lastTime = 0;
 				const renderer = this.renderer;
-				renderer.domElement.addEventListener('pointermove', (event: MouseEvent) => {
+				renderer.domElement.addEventListener('mousemove', (event: MouseEvent) => {
 					if (event.button === 1) {
 						return;
 					}
@@ -326,13 +327,7 @@ namespace Renderer {
 					}
 				});
 
-				renderer.domElement.addEventListener('pointerdown', (event: MouseEvent) => {
-					if (taro.isMobile) {
-						this.pointer.set(
-							(event.clientX / window.outerWidth) * 2 - 1,
-							-(event.clientY / window.outerHeight) * 2 + 1
-						);
-					}
+				renderer.domElement.addEventListener('mousedown', (event: MouseEvent) => {
 					if (event.button === 1) {
 						return;
 					}
@@ -694,6 +689,14 @@ namespace Renderer {
 				});
 
 				renderer.domElement.addEventListener('touchstart', (event: TouchEvent) => {
+					if (event.touches.length > 0) {
+						this.touchActive = true;
+						this.pointer.set(
+							(event.touches[0].clientX / window.innerWidth) * 2 - 1,
+							-(event.touches[0].clientY / window.innerHeight) * 2 + 1
+						);
+						this.emitPointerPosition();
+					}
 					if (event.touches.length > 1) {
 						const secondaryTouch = event.touches[1];
 						this.secondaryPointer.set(
@@ -705,11 +708,19 @@ namespace Renderer {
 
 				renderer.domElement.addEventListener('touchend', (event: TouchEvent) => {
 					if (event.touches.length === 0) {
+						this.touchActive = false;
+					} else if (!event.touches[1]) {
 						this.secondaryPointer = null;
 					}
 				});
 
 				renderer.domElement.addEventListener('touchmove', (event: TouchEvent) => {
+					if (event.touches.length > 0) {
+						this.pointer.set(
+							(event.touches[0].clientX / window.innerWidth) * 2 - 1,
+							-(event.touches[0].clientY / window.innerHeight) * 2 + 1
+						);
+					}
 					if (event.touches.length > 1) {
 						const secondaryTouch = event.touches[1];
 						this.secondaryPointer.set(
@@ -1123,19 +1134,22 @@ namespace Renderer {
 				});
 			}
 
+			private emitPointerPosition() {
+				const worldPos = this.camera.getWorldPoint(this.pointer);
+				const x = Utils.worldToPixel(worldPos.x);
+				const y = Utils.worldToPixel(worldPos.z);
+				const yaw = this.camera.getAzimuthAngle();
+				const pitch = this.camera.getElevationAngle();
+				taro.input.emit('pointermove', [{ x, y, yaw, pitch }]);
+			}
+
 			private render() {
 				window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
 				taro.client.emit('tick');
 				// Call this function before rendering
-				if (this.camera) {
-					const worldPos = this.camera.getWorldPoint(this.pointer);
-					const x = Utils.worldToPixel(worldPos.x);
-					const y = Utils.worldToPixel(worldPos.z);
-					const yaw = this.camera.getAzimuthAngle();
-					const pitch = this.camera.getElevationAngle();
-					taro.input.emit('pointermove', [{ x, y, yaw, pitch }]);
+				if (this.camera && this.touchActive) {
+					this.emitPointerPosition();
 				}
-
 				if (taro.isMobile && this.secondaryPointer) {
 					const worldPosSecondary = this.camera.getWorldPoint(this.pointer);
 					const x = Utils.worldToPixel(worldPosSecondary.x);
