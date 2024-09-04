@@ -2,6 +2,7 @@ declare class TaroEngine extends TaroClass {
 	profiler: any;
 	script: any;
 	clearLayer: (payload: TileData<'clear'>) => void;
+	_bounds2d: any;
 
 	newIdHex(): any;
 	tiled: any;
