@@ -720,7 +720,6 @@ namespace Renderer {
 							(event.touches[0].clientX / window.innerWidth) * 2 - 1,
 							-(event.touches[0].clientY / window.innerHeight) * 2 + 1
 						);
-						this.emitPointerPosition();
 					}
 					if (event.touches.length > 1) {
 						const secondaryTouch = event.touches[1];
