@@ -1275,7 +1275,7 @@ var ParameterComponent = TaroEntity.extend({
 					case 'entityWidth':
 						if (entity && self._entity.script.action.entityCategories.indexOf(entity._category) > -1) {
 							// returnValue = entity._aabb.width;
-							returnValue = entity.width();
+							returnValue = entity.width() * (isNaN(entity._stats.scaleBody) ? 1 : entity._stats.scaleBody);
 							// console.log("entityWidth", returnValue);
 						}
 
@@ -1284,7 +1284,7 @@ var ParameterComponent = TaroEntity.extend({
 					case 'entityHeight':
 						if (entity && self._entity.script.action.entityCategories.indexOf(entity._category) > -1) {
 							// returnValue = entity._aabb.height;
-							returnValue = entity.height();
+							returnValue = entity.height() * (isNaN(entity._stats.scaleBody) ? 1 : entity._stats.scaleBody);
 						}
 
 						break;
