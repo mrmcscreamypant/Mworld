@@ -4067,11 +4067,8 @@ var ActionComponent = TaroEntity.extend({
 					case 'changeScaleOfEntityBody':
 						var entity = self._script.param.getValue(action.entity, vars);
 						var scale = self._script.param.getValue(action.scale, vars);
-						var fixedScale = parseFloat(scale).toFixed(2);
 						if (entity && self.entityCategories.indexOf(entity._category) > -1 && !isNaN(scale)) {
-							entity.width(entity.width() * fixedScale);
-							entity.height(entity.height() * fixedScale);
-							entity.streamUpdateData([{ scaleBody: fixedScale }]);
+							entity.streamUpdateData([{ scaleBody: parseFloat(scale).toFixed(2) }]);
 						}
 						break;
 
