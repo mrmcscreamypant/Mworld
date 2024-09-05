@@ -51,7 +51,15 @@ namespace Renderer {
 			private cameraP: THREE.PerspectiveCamera;
 			private dt = 1 / 60;
 
-			private trackingDelay = Math.min(Math.max(0.01, taro?.game?.data?.settings?.camera?.trackingDelay || 3), 60);
+			private trackingDelay = Math.min(
+				Math.max(
+					0,
+					taro?.game?.data?.settings?.camera?.trackingDelay === undefined
+						? 3
+						: taro?.game?.data?.settings?.camera?.trackingDelay
+				),
+				60
+			);
 
 			lastTouch: { x: number; y: number };
 			touchStart: { x: number; y: number };
@@ -356,7 +364,7 @@ namespace Renderer {
 					this.target.getWorldPosition(targetWorldPos);
 					const angle = this.controls.getAzimuthalAngle();
 					targetWorldPos.add(this.offset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle));
-					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z, true);
+					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z, this.trackingDelay !== 0);
 				}
 
 				if (
@@ -561,6 +569,10 @@ namespace Renderer {
 					const result = pointer.clone().add(v.multiplyScalar(dist));
 					return result;
 				}
+			}
+
+			getTrackingDelay() {
+				return this.trackingDelay;
 			}
 
 			setPosition(x: number, y: number, z: number, lerp = false) {
