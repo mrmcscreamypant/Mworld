@@ -115,6 +115,11 @@ namespace Renderer {
 			}
 
 			updateLayer(updatedVoxels: Map<string, VoxelCell>, layerIdx: number, isPreview = false, forceUpdateAll = false) {
+				const renderOrder = (layerIdx + 1) * 100;
+				if (this.layerPlanes[layerIdx] === undefined) {
+					const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 1 - renderOrder / 100);
+					this.layerPlanes[layerIdx] = plane;
+				}
 				if (updatedVoxels.size === 0 && !forceUpdateAll) {
 					return;
 				}
@@ -129,7 +134,11 @@ namespace Renderer {
 				for (let [k, v] of updatedVoxels.entries()) {
 					if (!this.voxelsCellData[layerIdx].has(k) || this.voxelsCellData[layerIdx].get(k).type !== v.type) {
 						if (!isPreview) {
-							this.voxelsCellData[layerIdx].set(k, rfdc()(v));
+							if (v.type < 0) {
+								this.voxelsCellData[layerIdx].delete(k);
+							} else {
+								this.voxelsCellData[layerIdx].set(k, rfdc()(v));
+							}
 						}
 						changedKeys.push(k);
 						chunksNeedsUpdate.push(Renderer.Three.getChunkKeyFromBlockPos(v.position[0], v.position[2]));
@@ -139,7 +148,6 @@ namespace Renderer {
 				if (!changed && !forceUpdateAll) {
 					return;
 				}
-				const renderOrder = (layerIdx + 1) * 100;
 				for (let chunkX = 0; chunkX < Math.ceil(taro.map.data.width / chunkBlockCounts.x); chunkX++) {
 					for (let chunkZ = 0; chunkZ < Math.ceil(taro.map.data.height / chunkBlockCounts.y); chunkZ++) {
 						const chunkKey = Renderer.Three.getChunkKeyFromPos(chunkX, chunkZ);
@@ -240,11 +248,6 @@ namespace Renderer {
 						const mesh = new THREE.Mesh(geometry, [mat1, mat2, mat1Preview, mat2Preview]);
 						this.meshes[layerIdx][chunkKey] = mesh;
 						this.add(mesh);
-
-						if (this.layerPlanes[layerIdx] === undefined) {
-							const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 1 - renderOrder / 100);
-							this.layerPlanes[layerIdx] = plane;
-						}
 					}
 				}
 				if (isPreview) {

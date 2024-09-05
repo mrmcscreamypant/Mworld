@@ -23,9 +23,8 @@ class CommandController implements CommandControllerProps {
 	 * sure it could point to right cache;
 	 */
 	offset = 0;
-	constructor(defaultCommands: Record<DefaultCommands, () => void>, map?: Phaser.Tilemaps.Tilemap, maxCommands = 200) {
+	constructor(defaultCommands: Record<DefaultCommands, () => void>, map?: Phaser.Tilemaps.Tilemap) {
 		this.defaultCommands = defaultCommands;
-		this.maxCommands = maxCommands;
 		this.map = map;
 	}
 
@@ -53,13 +52,6 @@ class CommandController implements CommandControllerProps {
 			} else {
 				this.commands.push(command);
 				this.nowInsertIndex += 1;
-			}
-
-			if (this.commands.length > this.maxCommands) {
-				this.commands.shift();
-				this.offset += 1;
-				this.nowInsertIndex -= 1;
-				this.commands.push(command);
 			}
 		}
 		this.commands[this.commands.length - 1].cache = cache;

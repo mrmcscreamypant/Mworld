@@ -587,7 +587,7 @@ class TileEditor {
 								const nowCommandCount = this.commandController.nowInsertIndex;
 								const addToLimits = (v2d: Vector2D) => {
 									setTimeout(() => {
-										const cache = this.commandController.commands[nowCommandCount - this.commandController.offset]
+										const cache = this.commandController.commands[nowCommandCount]
 											.cache as Record<number, Record<number, number>>;
 										if (!cache[v2d.x]) {
 											cache[v2d.x] = {};
@@ -630,7 +630,7 @@ class TileEditor {
 													pointerTileX,
 													pointerTileY,
 													false,
-													this.commandController.commands[nowCommandCount - this.commandController.offset].cache
+													this.commandController.commands[nowCommandCount].cache
 												);
 												taro.network.send<'fill'>('editTile', {
 													fill: {
@@ -639,7 +639,7 @@ class TileEditor {
 														x: pointerTileX,
 														y: pointerTileY,
 														limits:
-															this.commandController.commands[nowCommandCount - this.commandController.offset].cache,
+															this.commandController.commands[nowCommandCount].cache,
 													},
 												});
 											},
