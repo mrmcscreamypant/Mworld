@@ -1147,19 +1147,25 @@ namespace Renderer {
 				window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
 				taro.client.emit('tick');
 				// Call this function before rendering
-				if (this.camera && this.touchActive) {
-					this.emitPointerPosition();
-				}
-				if (taro.isMobile && this.secondaryPointer) {
-					const worldPosSecondary = this.camera.getWorldPoint(this.pointer);
-					const x = Utils.worldToPixel(worldPosSecondary.x);
-					const y = Utils.worldToPixel(worldPosSecondary.z);
-					taro.input.emit('secondarytouchpointermove', [
-						{
-							x: x,
-							y: y,
-						},
-					]);
+				if (this.camera) {
+					if (taro.isMobile) {
+						if (this.touchActive) {
+							this.emitPointerPosition();
+						}
+						if (this.secondaryPointer) {
+							const worldPosSecondary = this.camera.getWorldPoint(this.pointer);
+							const x = Utils.worldToPixel(worldPosSecondary.x);
+							const y = Utils.worldToPixel(worldPosSecondary.z);
+							taro.input.emit('secondarytouchpointermove', [
+								{
+									x: x,
+									y: y,
+								},
+							]);
+						}
+					} else {
+						this.emitPointerPosition();
+					}
 				}
 
 				this.camera.instance.updateMatrixWorld(); // Ensure the camera matrix is updated
