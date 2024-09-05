@@ -287,19 +287,24 @@ namespace Renderer {
 										});
 
 										if (filteredSelected.length > 0) {
-											filteredSelected.forEach((e) => {
-												if (e.entity instanceof InitEntity) {
-													if (!this.entityEditor.selectedEntities.includes(e.entity)) {
-														this.entityEditor.selectEntity(e.entity, 'add');
-													}
-												} else if (e instanceof InitEntity) {
-													{
-														if (!this.entityEditor.selectedEntities.includes(e)) {
-															this.entityEditor.selectEntity(e, 'add');
+											if ((filteredSelected.length > 1)) {
+												for (let e of filteredSelected) {
+													if (e.entity instanceof InitEntity) {
+														if (!this.entityEditor.selectedEntities.includes(e.entity)) {
+															this.entityEditor.selectEntity(e.entity, 'add');
+														}
+													} else if (e instanceof InitEntity) {
+														{
+															if (!this.entityEditor.selectedEntities.includes(e)) {
+																this.entityEditor.selectEntity(e, 'add');
+															}
 														}
 													}
 												}
-											});
+											} else {
+												this.entityEditor.selectEntity(filteredSelected[0].entity, 'select');
+											}
+
 										} else {
 											this.entityEditor.selectEntity(null);
 										}
