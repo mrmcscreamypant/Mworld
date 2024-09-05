@@ -10,8 +10,8 @@ class VoxelEditor {
 	tileSize: number;
 	prevData: { edit: MapEditTool['edit'] } | undefined;
 	commandController: CommandController = new CommandController({
-		increaseBrushSize: () => {},
-		decreaseBrushSize: () => {},
+		increaseBrushSize: () => { },
+		decreaseBrushSize: () => { },
 	});
 	leftButtonDown: boolean;
 
@@ -34,9 +34,9 @@ class VoxelEditor {
 			this.voxels.voxelsCellData = [];
 			for (const [idx, layer] of taro.game.data.map.layers.entries()) {
 				if (layer.type === 'tilelayer' && layer.data) {
+					this.voxels.setLayerLookupTable(idx, numTileLayers);
 					const voxels = Renderer.Three.Voxels.generateVoxelsFromLayerData(layer, numTileLayers, false);
 					this.voxels.updateLayer(voxels, idx);
-					this.voxels.setLayerLookupTable(idx, numTileLayers);
 					numTileLayers++;
 				}
 			}
@@ -313,9 +313,8 @@ class VoxelEditor {
 		const oldTile = this.getTile(_x, this.voxels.calcLayersHeight(this.currentLayerIndex), _y);
 		nowTile[_x][_y] = oldTile;
 		const nowLayer = this.currentLayerIndex;
-		if (!this.leftButtonDown) {
-			this.voxelMarker.updatePreview();
-		} else {
+		this.voxelMarker.updatePreview();
+		if (this.leftButtonDown) {
 			switch (taro.developerMode.activeButton) {
 				case 'eraser':
 				case 'brush': {
@@ -334,7 +333,7 @@ class VoxelEditor {
 					const nowLayer = this.currentLayerIndex;
 					const addToLimits = (v2d: Vector2D) => {
 						setTimeout(() => {
-							const cache = this.commandController.commands[nowCommandCount - this.commandController.offset]
+							const cache = this.commandController.commands[nowCommandCount]
 								.cache as Record<number, Record<number, number>>;
 							if (!cache[v2d.x]) {
 								cache[v2d.x] = {};
@@ -358,7 +357,7 @@ class VoxelEditor {
 									_x,
 									_y,
 									false,
-									this.commandController.commands[nowCommandCount - this.commandController.offset].cache,
+									this.commandController.commands[nowCommandCount].cache,
 									undefined,
 									true
 								);
@@ -486,10 +485,10 @@ class VoxelEditor {
 
 	switchLayer(value: number): void {
 		const voxels = Renderer.Three.getVoxels();
+		this.currentLayerIndex = value;
 		if (!voxels.meshes[value]) {
 			return;
 		}
-		this.currentLayerIndex = value;
 
 		for (let mesh of Object.values(voxels.meshes[value])) {
 			mesh.visible = true;

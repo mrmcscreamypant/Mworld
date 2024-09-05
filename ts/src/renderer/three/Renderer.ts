@@ -773,6 +773,9 @@ namespace Renderer {
 				const raycaster = new THREE.Raycaster();
 				raycaster.setFromCamera(this.pointer, this.camera.instance);
 				let intersectionPoint = new THREE.Vector3();
+				if (!this.voxels.layerPlanes[layer ?? this.voxelEditor.currentLayerIndex]) {
+					return;
+				}
 				const intersect = raycaster.ray.intersectPlane(
 					this.voxels.layerPlanes[layer ?? this.voxelEditor.currentLayerIndex],
 					intersectionPoint
@@ -915,9 +918,9 @@ namespace Renderer {
 				});
 			}
 
-			private onEnterEntitiesMode() {}
+			private onEnterEntitiesMode() { }
 
-			private onExitEntitiesMode() {}
+			private onExitEntitiesMode() { }
 
 			private showEntities() {
 				this.setEntitiesVisible(true);
