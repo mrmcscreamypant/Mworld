@@ -1273,6 +1273,7 @@ var ParameterComponent = TaroEntity.extend({
 						break;
 
 					case 'entityWidth':
+						// return the size of physics bodies, not the sprite one
 						if (entity && self._entity.script.action.entityCategories.indexOf(entity._category) > -1) {
 							// returnValue = entity._aabb.width;
 							returnValue = entity.width() * (isNaN(entity._stats.scaleBody) ? 1 : entity._stats.scaleBody);
@@ -1282,6 +1283,7 @@ var ParameterComponent = TaroEntity.extend({
 						break;
 
 					case 'entityHeight':
+						// return the size of physics bodies, not the sprite one
 						if (entity && self._entity.script.action.entityCategories.indexOf(entity._category) > -1) {
 							// returnValue = entity._aabb.height;
 							returnValue = entity.height() * (isNaN(entity._stats.scaleBody) ? 1 : entity._stats.scaleBody);
