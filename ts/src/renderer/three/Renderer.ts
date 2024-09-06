@@ -76,13 +76,16 @@ namespace Renderer {
 						}
 						if (!(object.body as Sprite).sprite) {
 							const meshes = this.tryFindMesh(object);
-							let culled = true;
-							meshes.forEach((mesh) => {
-								if (this.frustum.intersectsObject(mesh)) {
-									culled = false;
-								}
-							});
-							entity.culled = culled && !this.frustum.containsPoint(object.position);
+							let posNotInViewport = !this.frustum.containsPoint(object.position);
+							let noChildrenInViewport = true;
+							if (posNotInViewport) {
+								meshes.forEach((mesh) => {
+									if (this.frustum.intersectsObject(mesh)) {
+										noChildrenInViewport = false;
+									}
+								});
+							}
+							entity.culled = posNotInViewport && noChildrenInViewport;
 							if (!entity.culled && !entity._stats.instancedMesh) {
 								this.entitiesNeedsUpdate.push(object);
 							} else {
@@ -93,8 +96,8 @@ namespace Renderer {
 								const pos = object.position.clone();
 								pos.setY(this.initEntityLayer.position.y + 1 + object.position.y);
 								if (
-									!this.frustum.intersectsObject((object.body as Sprite)?.sprite) &&
 									!this.frustum.containsPoint(pos) &&
+									!this.frustum.intersectsObject((object.body as Sprite)?.sprite) &&
 									(object as THREE.Object3D).position.distanceTo(zeroVec3) !== 0
 								) {
 									entity.culled = true;
@@ -287,7 +290,7 @@ namespace Renderer {
 										});
 
 										if (filteredSelected.length > 0) {
-											if ((filteredSelected.length > 1)) {
+											if (filteredSelected.length > 1) {
 												for (let e of filteredSelected) {
 													if (e.entity instanceof InitEntity) {
 														if (!this.entityEditor.selectedEntities.includes(e.entity)) {
@@ -304,7 +307,6 @@ namespace Renderer {
 											} else {
 												this.entityEditor.selectEntity(filteredSelected[0].entity, 'select');
 											}
-
 										} else {
 											this.entityEditor.selectEntity(null);
 										}
@@ -923,9 +925,9 @@ namespace Renderer {
 				});
 			}
 
-			private onEnterEntitiesMode() { }
+			private onEnterEntitiesMode() {}
 
-			private onExitEntitiesMode() { }
+			private onExitEntitiesMode() {}
 
 			private showEntities() {
 				this.setEntitiesVisible(true);
