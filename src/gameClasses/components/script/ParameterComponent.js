@@ -2935,7 +2935,7 @@ var ParameterComponent = TaroEntity.extend({
 
 			getItemTypeName: function (text, vars) {
 				var itemTypeId = self.getValue(text.itemType, vars);
-				var itemType = taro.game.cloneAsset('itemTypes', itemTypeId);
+				var itemType = taro.game.getAsset('itemTypes', itemTypeId);
 
 				if (itemType) {
 					return itemType.name;
