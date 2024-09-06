@@ -313,7 +313,7 @@ var AIComponent = TaroEntity.extend({
 			this.targetUnitId = undefined;
 		}
 
-		if (this.pathFindingMethod == 'a*') {
+		if (this.pathFindingMethod == 'a*' && unit) {
 			this.aStar.previousTargetPosition = { x: unit._translate.x, y: unit._translate.y };
 		}
 	},

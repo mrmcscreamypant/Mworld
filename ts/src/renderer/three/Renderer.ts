@@ -69,7 +69,7 @@ namespace Renderer {
 				const zeroVec3 = new THREE.Vector3(0, 0, 0);
 				this.entitiesNeedsUpdate = [];
 				[this.entityManager.units, this.entityManager.items, this.entityManager.projectiles].forEach((entities) => {
-					entities.forEach((object: Unit | Item) => {
+					for (let object of entities.values()) {
 						const entity: TaroEntityPhysics = object.taroEntity;
 						if (!object.body) {
 							return;
@@ -111,7 +111,7 @@ namespace Renderer {
 							}
 						}
 						(object as Unit).showHud?.(!entity.culled);
-					});
+					}
 				});
 			}
 
@@ -181,7 +181,9 @@ namespace Renderer {
 					this.effectComposer.setSize(window.innerWidth, window.innerHeight);
 					renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 					renderer.render(this.scene, this.camera.instance);
-					this.effectComposer.render();
+					if (taro.developerMode.activeTab === 'map') {
+						this.effectComposer.render();
+					}
 					taro.client.emit('scale', { ratio: this.camera.zoom });
 					taro.client.emit('update-abilities-position');
 					this.entityManager.scaleGui(1 / this.camera.zoom);
@@ -870,19 +872,36 @@ namespace Renderer {
 				return window.innerHeight;
 			}
 
+			private setMatrixAutoUpdateForDeveloperOnlyThings(needsUpdate: boolean) {
+				this.entityManager.regions.forEach((r) => {
+					r.matrixWorldAutoUpdate = needsUpdate;
+				});
+				this.voxels.matrixAutoUpdate = needsUpdate;
+				this.regionsLayer.matrixAutoUpdate = needsUpdate;
+				this.voxelEditor.voxelMarker.matrixAutoUpdate = needsUpdate;
+				this.voxelEditor.voxels.matrixAutoUpdate = needsUpdate;
+				this.entityEditor.selectedGroup.matrixAutoUpdate = needsUpdate;
+				this.initEntityLayer.matrixAutoUpdate = needsUpdate;
+				this.entityEditor.gizmo.control.matrixAutoUpdate = needsUpdate;
+			}
+
 			private onEnterPlayMode() {
+				this.setMatrixAutoUpdateForDeveloperOnlyThings(false);
 				this.camera.setEditorMode(false);
 				this.environment.show();
 			}
 
 			private onExitPlayMode() {
+				this.setMatrixAutoUpdateForDeveloperOnlyThings(true);
 				this.camera.setEditorMode(true);
 				this.environment.hide();
 			}
 
 			private onEnterMapMode() {
 				this.hideEntities();
-				this.entityManager.regions.forEach((r) => r.setMode(RegionMode.Development));
+				this.entityManager.regions.forEach((r) => {
+					r.setMode(RegionMode.Development);
+				});
 				if (this.showRepublishWarning) {
 					inGameEditor.showRepublishToInitEntitiesWarning();
 				}
@@ -1209,7 +1228,9 @@ namespace Renderer {
 
 				TWEEN.update();
 				this.renderer.render(this.scene, this.camera.instance);
-				this.effectComposer.render();
+				if (taro.developerMode.activeTab === 'map') {
+					this.effectComposer.render();
+				}
 				this.timeSinceLastRaycast += dt;
 				if (this.timeSinceLastRaycast > this.raycastIntervalSeconds) {
 					this.timeSinceLastRaycast = 0;
