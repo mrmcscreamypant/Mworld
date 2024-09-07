@@ -194,6 +194,7 @@ namespace Renderer {
 				this.initLoadingManager.onLoad = () => {
 					this.init();
 					taro.input.setupListeners(this.renderer.domElement);
+					taro.client.setLoadingTime('rendererLoaded', performance.now() - taro.client.tempLoadingTime.rendererStartTime);
 					taro.client.rendererLoaded.resolve();
 
 					window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));

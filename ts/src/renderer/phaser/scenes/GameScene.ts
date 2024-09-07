@@ -364,6 +364,7 @@ class GameScene extends PhaserScene {
 	create(): void {
 		this.events.once('render', () => {
 			this.scene.launch('DevMode');
+			taro.client.setLoadingTime('rendererLoaded', performance.now() - taro.client.tempLoadingTime.rendererStartTime);
 			taro.client.rendererLoaded.resolve();
 			document.dispatchEvent(new Event('taro rendered'));
 		});
