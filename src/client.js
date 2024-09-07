@@ -447,6 +447,21 @@ const Client = TaroEventingClass.extend({
 		// doing these with this.taroEngineStarted.done()
 		// we can move the Deferred for mapLoaded to before engine start
 
+		$.when(this.taroEngineStarted).done(() => {
+			console.log('taroEngineStarted');
+			window.dispatchEvent(new CustomEvent('taroEngineStarted'));
+		});
+
+		$.when(this.mapLoaded).done(() => {
+			console.log('mapLoaded');
+			window.dispatchEvent(new CustomEvent('taroMapLoaded'));
+		});
+		
+		$.when(this.rendererLoaded).done(() => {
+			console.log('rendererLoaded');
+			window.dispatchEvent(new CustomEvent('taroRendererLoaded'));
+		});
+
 		$.when(this.taroEngineStarted, this.mapLoaded, this.rendererLoaded).done(() => {
 			// old comment => 'center camera while loading'
 			const tileWidth = taro.scaleMapDetails.tileWidth;
