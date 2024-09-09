@@ -556,7 +556,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 								// this does NOT run for items
 								if (
 									(entity == taro.client.selectedUnit && entity._stats.controls?.cspMode) ||
-									(entity._category == 'projectile' && !entity._stats.streamMode) ||
+									(entity._category == 'projectile' && entity._stats.streamMode !== 1) ||
 									(entity._category == 'unit' && entity._stats.streamMode !== 1)
 								) {
 									// if client-authoritative mode is enabled, and tab became active within the last 3 seconds let server dictate my unit's position
