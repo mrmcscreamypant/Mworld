@@ -104,7 +104,8 @@ namespace Renderer {
 					this.renderer.renderer.shadowMap.enabled = true;
 					this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-					const shadowMapSize = this.shadowQuality === ShadowQuality.Low ? 512 : ShadowQuality.Medium ? 1024 : 2048;
+					const shadowMapSize =
+						this.shadowQuality === ShadowQuality.Low ? 512 : this.shadowQuality === ShadowQuality.Medium ? 1024 : 2048;
 
 					this.directionalLight.castShadow = true;
 					this.directionalLight.shadow.mapSize.width = shadowMapSize;
