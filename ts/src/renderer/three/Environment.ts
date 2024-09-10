@@ -1,3 +1,6 @@
+const dummy = new THREE.Object3D();
+const tempVec = new THREE.Vector3();
+
 enum ShadowQuality {
 	Simple,
 	Low,
@@ -166,10 +169,29 @@ namespace Renderer {
 									continue;
 								}
 
-								dummy.position.copy(entity.position);
-								dummy.position.y = 0.501; // should be on floor layer
+								const scaleX = entity.size.x;
+								let scaleZ = entity.size.y;
+								let posX = entity.position.x;
+								let posY = entity.position.y;
+								let posZ = entity.position.z;
+
+								if (entity.body instanceof Sprite) {
+									if (entity.body.billboard) {
+										scaleZ = scaleX;
+
+										if (entity instanceof Unit) {
+											const bottomHudPos = entity.bottomHud.getWorldPosition(tempVec);
+											posX = bottomHudPos.x;
+											posY = bottomHudPos.y;
+											posZ = bottomHudPos.z;
+										}
+									}
+								}
+
+								dummy.position.set(posX, posY, posZ);
+								dummy.position.y = 0.501; // TODO: move floor layer to be at 0, not 0.5
 								dummy.rotation.y = entity.body.rotation.y;
-								dummy.scale.set(entity.size.x, 1, entity.size.y);
+								dummy.scale.set(scaleX, 1, scaleZ);
 								dummy.updateMatrix();
 								this.shadowMesh.setMatrixAt(i++, dummy.matrix);
 							}

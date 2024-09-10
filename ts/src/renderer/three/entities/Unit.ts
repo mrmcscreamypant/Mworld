@@ -14,7 +14,7 @@ namespace Renderer {
 
 			private hud = new THREE.Group();
 			private topHud = new THREE.Group();
-			private bottomHud = new THREE.Group();
+			bottomHud = new THREE.Group();
 			private label: Label;
 			private topAttributes = new Attributes();
 			private bottomAttributes = new Attributes();

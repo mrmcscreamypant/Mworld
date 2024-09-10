@@ -1,7 +1,5 @@
 /// <reference types="@types/google.analytics" />
 
-const dummy = new THREE.Object3D();
-
 namespace Renderer {
 	export enum Mode {
 		Play,
@@ -194,7 +192,10 @@ namespace Renderer {
 				this.initLoadingManager.onLoad = () => {
 					this.init();
 					taro.input.setupListeners(this.renderer.domElement);
-					taro.client.setLoadingTime('rendererLoaded', performance.now() - taro.client.tempLoadingTime.rendererStartTime);
+					taro.client.setLoadingTime(
+						'rendererLoaded',
+						performance.now() - taro.client.tempLoadingTime.rendererStartTime
+					);
 					taro.client.rendererLoaded.resolve();
 
 					window.lastRequestAnimationFrameId = requestAnimationFrame(this.render.bind(this));
