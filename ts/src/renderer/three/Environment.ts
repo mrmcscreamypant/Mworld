@@ -161,7 +161,7 @@ namespace Renderer {
 
 						const setInstancesToEntitiesTransform = (entities: Unit[] | Item[]) => {
 							for (const entity of entities) {
-								if (!entity.taroEntity._stats.shadow) {
+								if (!entity.taroEntity._stats.shadow || !entity.visible) {
 									continue;
 								}
 
@@ -178,6 +178,7 @@ namespace Renderer {
 						setInstancesToEntitiesTransform(this.renderer.entityManager.items);
 						setInstancesToEntitiesTransform(this.renderer.entityManager.projectiles);
 
+						this.shadowMesh.count = i;
 						this.shadowMesh.instanceMatrix.needsUpdate = true;
 						this.shadowMesh.computeBoundingSphere();
 
@@ -188,7 +189,7 @@ namespace Renderer {
 					case ShadowQuality.High: {
 						const setCastShadowSettingOnEntities = (entities: Unit[] | Item[]) => {
 							for (const entity of entities) {
-								const shadowsEnabled = entity.taroEntity._stats.shadow;
+								const shadowsEnabled = !!entity.taroEntity._stats.shadow && entity.visible;
 
 								if (entity.castShadow !== shadowsEnabled) {
 									entity.castShadow = shadowsEnabled;
@@ -196,7 +197,7 @@ namespace Renderer {
 									entity.body.traverse((child) => {
 										if (child instanceof THREE.Mesh) {
 											if (child.castShadow !== shadowsEnabled) {
-												child.castShadow = child.visible;
+												child.castShadow = entity.castShadow;
 											}
 										}
 									});
