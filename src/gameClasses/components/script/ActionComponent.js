@@ -2665,7 +2665,6 @@ var ActionComponent = TaroEntity.extend({
 											y: Math.sin(angle) * force,
 										},
 									},
-									streamMode: 1,
 								});
 
 								var projectile = new Projectile(data);
