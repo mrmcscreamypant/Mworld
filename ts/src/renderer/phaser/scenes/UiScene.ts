@@ -106,7 +106,16 @@ class UiScene extends PhaserScene {
 		} else {
 			htmlButton.textContent = type;
 		}
-		document.getElementById('abilities-buttons').appendChild(htmlButton);
+
+		let abilitiesDiv = document.getElementById('abilities-buttons');
+
+		if (!abilitiesDiv) {
+			console.error('unable to add abilities button bcoz there is no div with id abilities-button');
+			return;
+		}
+
+		abilitiesDiv.appendChild(htmlButton);
+
 		htmlButton.addEventListener('mousedown', function () {
 			if (taro.isClient) {
 				let timerElement = document.getElementById(type + '_button_timer');

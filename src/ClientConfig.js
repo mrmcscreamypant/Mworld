@@ -158,7 +158,6 @@ var taroClientConfig = {
 		'renderer/three/hud/FloatingText.js',
 		'renderer/three/hud/DynamicFloatingText.js',
 		'renderer/three/hud/ChatBubble.js',
-		'renderer/three/hud/UiScene.js',
 
 		'renderer/three/entities/Entity.js',
 		'renderer/three/entities/Unit.js',
