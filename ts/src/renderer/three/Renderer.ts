@@ -1088,6 +1088,33 @@ namespace Renderer {
 					this.entityManager.scaleGui(1 / this.camera.zoom);
 				});
 
+				// listens to ability bar updates
+				taro.client.on(
+					'create-ability-bar',
+					(data: { keybindings: Record<string, ControlAbility>; abilities: Record<string, UnitAbility> }) => {
+						console.log('reached create ability button');
+
+						const keybindings = data.keybindings;
+						const abilities = data.abilities;
+						if (abilities) {
+							Object.entries(abilities).forEach(([abilityId, ability]) => {
+								let key;
+								if (
+									(keybindings && taro.isMobile && ability.visibility !== 'desktop' && ability.visibility !== 'none') ||
+									(!taro.isMobile && ability.visibility !== 'mobile' && ability.visibility !== 'none')
+								) {
+									Object.entries(keybindings).forEach(([keybindingKey, keybinding]) => {
+										if (keybinding.keyDown?.abilityId === abilityId || keybinding.keyUp?.abilityId === abilityId) {
+											key = keybindingKey;
+										}
+									});
+									this.generateHTMLButton(key, abilityId, key, ability);
+								}
+							});
+						}
+					}
+				);
+
 				taro.client.on('stop-follow', () => this.camera.unfollow());
 				taro.client.on('camera-pitch', (deg: number) => this.camera.setElevationAngle(deg));
 				taro.client.on('camera-yaw', (deg: number) => this.camera.setAzimuthAngle(deg));
@@ -1294,6 +1321,95 @@ namespace Renderer {
 
 					unit.showHud(intersects.length === 0);
 				}
+			}
+
+			private generateHTMLButton(type: string, abilityId: String, keybinding: any, ability: any): void {
+				if (document.getElementById(type + '_button')) {
+					return;
+				}
+
+				// buttons position
+				// create a new button using html
+				const htmlButton = document.createElement('button');
+				htmlButton.id = type + '_button';
+				// setting style for button
+				Object.assign(htmlButton.style, {
+					width: '60px',
+					height: '60px',
+					fontSize: '16px',
+					color: '#fff',
+					backgroundColor: '#33333366',
+					border: '2px solid #555',
+					backdropFilter: 'blur(4px)',
+					borderRadius: '8px',
+					zIndex: '1000',
+					cursor: 'pointer',
+				});
+
+				let cooldownInterval: any;
+
+				if (ability && ability.iconUrl) {
+					htmlButton.innerHTML = `<img src="${ability.iconUrl}" style="width: 100%; height: 100%; object-fit: cover;"/>`;
+				} else {
+					htmlButton.textContent = type;
+				}
+
+				let abilitiesDiv = document.getElementById('abilities-buttons');
+
+				if (!abilitiesDiv) {
+					console.error('unable to add abilities button bcoz there is no div with id abilities-button');
+					return;
+				}
+
+				abilitiesDiv.appendChild(htmlButton);
+				htmlButton.addEventListener('mousedown', function () {
+					if (taro.isClient) {
+						let timerElement = document.getElementById(type + '_button_timer');
+						let button = document.getElementById(type + '_button');
+						if (timerElement) return;
+						taro.client.emit('key-down', {
+							device: 'key',
+							key: type.toLowerCase(),
+						});
+						if (ability && ability.cooldown && !timerElement) {
+							let cooldown = ability.cooldown;
+							// cooldown logic
+							let cooldownCount = 0;
+							if (!timerElement) {
+								timerElement = document.createElement('h5');
+								timerElement.id = type + '_button_timer';
+								Object.assign(timerElement.style, {
+									right: 0,
+									position: 'absolute',
+									fontSize: '0.8rem',
+								});
+								timerElement.innerHTML = (cooldown - cooldownCount).toString();
+								button.append(timerElement);
+							}
+							cooldownInterval = setInterval(() => {
+								if (cooldownCount >= cooldown) {
+									//ts-ignore
+									// button.disabled =  false;
+									timerElement.parentNode.removeChild(timerElement);
+									clearInterval(cooldownInterval);
+								} else {
+									console.log(cooldown, cooldownCount);
+									// button.disabled = true;
+									cooldownCount++;
+									timerElement.innerHTML = (cooldown - cooldownCount).toString();
+								}
+							}, 1000);
+						}
+					}
+				});
+				htmlButton.addEventListener('mouseup', function () {
+					if (taro.isClient) {
+						taro.client.emit('key-up', {
+							device: 'key',
+							key: type.toLowerCase(),
+						});
+					}
+				});
 			}
 		}
 	}

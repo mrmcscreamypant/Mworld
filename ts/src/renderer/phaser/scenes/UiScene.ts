@@ -33,7 +33,8 @@ class UiScene extends PhaserScene {
 									key = keybindingKey;
 								}
 							});
-							phaserButtonBar.addButton(abilityId, ability, key);
+							this.generateHTMLButton(key, abilityId, key, ability);
+							// phaserButtonBar.addButton(abilityId, ability, key);
 						}
 					});
 				}
@@ -72,6 +73,96 @@ class UiScene extends PhaserScene {
 
 		taro.client.on('stop-ability-cooldown', (key: string) => {
 			phaserButtonBar.buttons[key]?.cooldown(false);
+		});
+	}
+
+	generateHTMLButton(type: string, abilityId: String, keybinding: any, ability: any): void {
+		if (document.getElementById(type + '_button')) {
+			return;
+		}
+
+		// buttons position
+		// create a new button using html
+		const htmlButton = document.createElement('button');
+		htmlButton.id = type + '_button';
+		// setting style for button
+		Object.assign(htmlButton.style, {
+			width: '60px',
+			height: '60px',
+			fontSize: '16px',
+			color: '#fff',
+			backgroundColor: '#33333366',
+			border: '2px solid #555',
+			backdropFilter: 'blur(4px)',
+			borderRadius: '8px',
+			zIndex: '1000',
+			cursor: 'pointer',
+		});
+
+		let cooldownInterval: any;
+
+		if (ability && ability.iconUrl) {
+			htmlButton.innerHTML = `<img src="${ability.iconUrl}" style="width: 100%; height: 100%; object-fit: cover;"/>`;
+		} else {
+			htmlButton.textContent = type;
+		}
+
+		let abilitiesDiv = document.getElementById('abilities-buttons');
+
+		if (!abilitiesDiv) {
+			console.error('unable to add abilities button bcoz there is no div with id abilities-button');
+			return;
+		}
+
+		abilitiesDiv.appendChild(htmlButton);
+
+		htmlButton.addEventListener('mousedown', function () {
+			if (taro.isClient) {
+				let timerElement = document.getElementById(type + '_button_timer');
+				let button = document.getElementById(type + '_button');
+				if (timerElement) return;
+				taro.client.emit('key-down', {
+					device: 'key',
+					key: type.toLowerCase(),
+				});
+				if (ability && ability.cooldown && !timerElement) {
+					let cooldown = ability.cooldown;
+					// cooldown logic
+					let cooldownCount = 0;
+					if (!timerElement) {
+						timerElement = document.createElement('h5');
+						timerElement.id = type + '_button_timer';
+						Object.assign(timerElement.style, {
+							right: 0,
+							position: 'absolute',
+							fontSize: '0.8rem',
+						});
+						timerElement.innerHTML = (cooldown - cooldownCount).toString();
+						button.append(timerElement);
+					}
+					cooldownInterval = setInterval(() => {
+						if (cooldownCount >= cooldown) {
+							//ts-ignore
+							// button.disabled =  false;
+							timerElement.parentNode.removeChild(timerElement);
+							clearInterval(cooldownInterval);
+						} else {
+							console.log(cooldown, cooldownCount);
+							// button.disabled = true;
+							cooldownCount++;
+							timerElement.innerHTML = (cooldown - cooldownCount).toString();
+						}
+					}, 1000);
+				}
+			}
+		});
+		htmlButton.addEventListener('mouseup', function () {
+			if (taro.isClient) {
+				taro.client.emit('key-up', {
+					device: 'key',
+					key: type.toLowerCase(),
+				});
+			}
 		});
 	}
 

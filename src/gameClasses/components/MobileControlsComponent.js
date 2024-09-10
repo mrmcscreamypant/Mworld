@@ -172,7 +172,7 @@ var MobileControlsComponent = TaroEntity.extend({
 		// create a new button using html
 		const htmlButton = document.createElement('button');
 		htmlButton.id = type + '_button';
-
+		htmlButton.classList.add('mobile-html-buttons')
 		// setting style for button
 		Object.assign(htmlButton.style, {
 			position: 'absolute',
@@ -203,7 +203,7 @@ var MobileControlsComponent = TaroEntity.extend({
 		}
 
 		if (ability && ability.iconUrl) {
-			htmlButton.innerHTML = `<img src="${ability.iconUrl}" style="width: 100%; height: 100%; object-fit: cover;"/>`;
+			htmlButton.innerHTML = `<img src="${ability.iconUrl}" class="image-mobile-button" style="width: 100%; height: 100%; object-fit: contain;"/>`;
 		} else {
 			htmlButton.textContent = type;
 		}
