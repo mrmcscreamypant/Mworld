@@ -53,8 +53,18 @@ class AStarPathfindingComponent extends TaroEntity {
 			return returnValue;
 		}
 
+		/**
+		 * @type {Array<{current: {x: number, y: number}, parent: {x: number, y: number}, totalHeuristic: number}>}
+		 */
 		let openList = []; // store grid nodes that is under evaluation
+
+		/**
+		 * @type {Array<{current: {x: number, y: number}, parent: {x: number, y: number}, totalHeuristic: number}>}
+		 */
 		let closeList = []; // store grid nodes that finished evaluation
+		/**
+		 * @type {Array<{x: number, y: number}>}
+		 */
 		let tempPath = []; // store path to return (smaller index: closer to target, larger index: closer to start)
 		openList.push({ current: { ...unitTilePosition }, parent: { x: -1, y: -1 }, totalHeuristic: 0 }); // push start node to open List
 
@@ -358,27 +368,104 @@ class AStarPathfindingComponent extends TaroEntity {
 	}
 
 	/**
-	 * @param {{x: number, y: number}} path
+	 * @param {Array<{x: number, y: number}>} path
 	 * Optimise straight A Star path with diagonal path 
 	 */
 	prettifyAStarPath(path) {
+		if (path.length < 3) { // don't need to prettify if node count < 3
+			return path;
+		}
+
 		const tileWidth = taro.scaleMapDetails.tileWidth;
+		/**
+		 * @type {Array<{from: number, to: number, heuristic: number, largestCompatibleIndex: number, maxTotalHeuristic: number, shouldBackTracking: boolean}>}
+		 */
+		const possibleSegment = [];
+		/**
+		 * @type {Array<{x: number, y: number}>}
+		 */
+		const result = [];
+
+		// dummy segment
+		possibleSegment.push({
+			maxTotalHeuristic: 0
+		});
+
 		for (const [j, pathJ] of path.entries()) {
-			for (let i = path.length - 1; i > j + 1; i--) { // at least 1 node in between is required to further process
-				if (this.aStarIsPositionBlocked(
+			for (let i = path.length - 1; i > j; i--) { // at least 1 node in between is required to further process
+				const segmentIsBlocked = this.aStarIsPositionBlocked(
 					(path[i].x + 0.5) * tileWidth,
 					(path[i].y + 0.5) * tileWidth,
 					(pathJ.x + 0.5) * tileWidth,
-					(pathJ.y + 0.5) * tileWidth)
-				) {
+					(pathJ.y + 0.5) * tileWidth
+				);
+				if (segmentIsBlocked) {
 					continue;
 				} else {
-					path.splice(j + 1, i - j - 1); // remove redundant nodes
-					break;
+					const isDiagonal = (pathJ.x != path[i].x) && (pathJ.y != path[i].y);
+					possibleSegment.push({
+						from: j,
+						to: i,
+						// a square heuristic for diagonal, a normal heuristic for horizontal and vertical to encourage diagonal movement
+						heuristic: isDiagonal ? Math.pow(i - j, 2) : (i - j),
+						largestCompatibleIndex: 0, // init only, to be evaluated soon
+						maxTotalHeuristic: 0, // init only, to be evaluated soon
+						shouldBackTracking: false // init only, to be evaluated soon
+					});
 				}
 			}
 		}
-		return path;
+
+		// sort by end of segment (segment.to)
+		possibleSegment.sort((a, b) => {
+			if (a.to <= b.to) {
+				return -1;
+			} else {
+				return 1;
+			}
+		});
+
+		for (let i = 1; i < possibleSegment.length; i++) { // index 0 is dummy, start from 1
+			const segment = possibleSegment[i];
+			for (let j = 1; j < i; j++) {
+				if (possibleSegment[j].to <= segment.from) {
+					segment.largestCompatibleIndex = j;
+				} else {
+					break;
+				}
+			}
+			// compare to see using this segment + latest compatible segment of this segment, or previous segment do a better performance
+			segment.maxTotalHeuristic = Math.max(
+				possibleSegment[i - 1].maxTotalHeuristic,
+				segment.heuristic + possibleSegment[segment.largestCompatibleIndex].maxTotalHeuristic
+			);
+		}
+
+		// prepare for backtracking
+		let previousMaxTotalHeuristic = 0;
+		for (let i = 0; i < possibleSegment.length; i++) {
+			const segment = possibleSegment[i];
+			if (segment.maxTotalHeuristic > previousMaxTotalHeuristic) {
+				previousMaxTotalHeuristic = segment.maxTotalHeuristic;
+				segment.shouldBackTracking = true;
+			}
+		}
+
+		// backtracking
+		let previousLargestCompatibleIndex = 0;
+		for (let i = possibleSegment.length - 1; i > 0;) { // index 0 is dummy, stop before that
+			const segment = possibleSegment[i];
+			if (segment.shouldBackTracking) {
+				previousLargestCompatibleIndex = i;
+				i = segment.largestCompatibleIndex;
+				result.push(path[segment.to]);
+			} else {
+				i--;
+			}
+		}
+		result.push(path[possibleSegment[previousLargestCompatibleIndex].from]);
+		result.reverse(); // flip back the result
+		return result;
 	}
 }
 
