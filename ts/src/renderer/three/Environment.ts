@@ -214,17 +214,11 @@ namespace Renderer {
 							for (const entity of entities) {
 								const shadowsEnabled = !!entity.taroEntity._stats.shadow && entity.visible;
 
-								if (entity.castShadow !== shadowsEnabled) {
-									entity.castShadow = shadowsEnabled;
-
-									entity.body.traverse((child) => {
-										if (child instanceof THREE.Mesh) {
-											if (child.castShadow !== shadowsEnabled) {
-												child.castShadow = entity.castShadow;
-											}
-										}
-									});
-								}
+								entity.body.traverse((child) => {
+									if (child instanceof THREE.Mesh) {
+										child.castShadow = shadowsEnabled;
+									}
+								});
 							}
 						};
 
