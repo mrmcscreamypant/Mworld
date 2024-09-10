@@ -4517,6 +4517,7 @@ var TaroEntity = TaroObject.extend({
 								// don't use streamed effect call for my own unit or its items
 								if (
 									newValue.type != 'attacked' &&
+									this._stats.controls?.cspMode !== 0 &&
 									(this == taro.client.selectedUnit ||
 										(this._category == 'item' && this.getOwnerUnit() == taro.client.selectedUnit))
 								) {
