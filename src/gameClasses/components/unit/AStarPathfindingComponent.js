@@ -10,10 +10,10 @@ class AStarPathfindingComponent extends TaroEntity {
 		// everytime when path generate failure, path should set to empty array (this.path = aStarResult.path automatically done for it)
 		this.previousTargetPosition = undefined;
 	}
-	/*
-	 * @param x
-	 * @param y
-	 * @return .path = {Array}, .ok = {bool}
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @returns {{path: [], ok: boolean}}
 	 * Use .path to get return array with tiled x and y coordinates of the path (Start node exclusive)
 	 * if target position is not reachable (no road to go / inside wall) path will include tiled x and y passed only
 	 * if the unit already at the target location, .path return empty array
@@ -238,6 +238,7 @@ class AStarPathfindingComponent extends TaroEntity {
 					}
 				}
 			}
+			tempPath = this.prettifyAStarPath(tempPath);
 			tempPath.pop(); // omit start tile, no need to step on it again as we are on it already
 			returnValue.path = tempPath;
 			returnValue.ok = true;
@@ -251,7 +252,16 @@ class AStarPathfindingComponent extends TaroEntity {
 		this._entity.script.trigger('entityAStarPathFindingFailed', triggerParam);
 	}
 
-	aStarIsPositionBlocked(targetX, targetY) {
+	/**
+	 * 
+	 * @param {number} targetX 
+	 * @param {number} targetY 
+	 * @param {number=} fromX
+	 * @param {number=} fromY
+	 * @returns 
+	 * Values are world space coordinate instead of tile coordinate
+	 */
+	aStarIsPositionBlocked(targetX, targetY, fromX, fromY) {
 		let unit = this._entity;
 		const tileWidth = taro.scaleMapDetails.tileWidth;
 		const xTune = [0, -1, 1, -1, 1];
@@ -259,16 +269,18 @@ class AStarPathfindingComponent extends TaroEntity {
 		// center, top-left, top-right, bottom-left, bottom-right
 		const unitWidth = unit.getBounds().width;
 		const unitHeight = unit.getBounds().height;
+		if (!fromX) fromX = unit._translate.x;
+		if (!fromY) fromY = unit._translate.y;
 		const maxBodySizeShift = Math.sqrt(((unitWidth / 2) * unitWidth) / 2 + ((unitHeight / 2) * unitHeight) / 2);
 		for (let i = 0; i < 5; i++) {
 			taro.raycaster.raycastLine(
 				{
-					x: (unit._translate.x + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
-					y: (unit._translate.y + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
+					x: (fromX + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
+					y: (fromY + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
 				},
 				{
-					x: (targetX + (tileWidth / 2) * Math.sqrt(2) * xTune[i]) / taro.physics.getScaleRatio(),
-					y: (targetY + (tileWidth / 2) * Math.sqrt(2) * yTune[i]) / taro.physics.getScaleRatio(),
+					x: (targetX + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
+					y: (targetY + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
 				}
 			);
 			for (let i = 0; i < taro.game.entitiesCollidingWithLastRaycast.length; i++) {
@@ -343,6 +355,30 @@ class AStarPathfindingComponent extends TaroEntity {
 		if (!aStarResult.ok) {
 			this.onAStarFailedTrigger();
 		}
+	}
+
+	/**
+	 * @param {{x: number, y: number}} path
+	 * Optimise straight A Star path with diagonal path 
+	 */
+	prettifyAStarPath(path) {
+		const tileWidth = taro.scaleMapDetails.tileWidth;
+		for (const [j, pathJ] of path.entries()) {
+			for (let i = path.length - 1; i > j + 1; i--) { // at least 1 node in between is required to further process
+				if (this.aStarIsPositionBlocked(
+					(path[i].x + 0.5) * tileWidth,
+					(path[i].y + 0.5) * tileWidth,
+					(pathJ.x + 0.5) * tileWidth,
+					(pathJ.y + 0.5) * tileWidth)
+				) {
+					continue;
+				} else {
+					path.splice(j + 1, i - j - 1); // remove redundant nodes
+					break;
+				}
+			}
+		}
+		return path;
 	}
 }
 
