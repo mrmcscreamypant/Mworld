@@ -557,6 +557,8 @@ var TaroNetIoServer = {
 				ct: taro._currentTime,
 			});
 		} else {
+			// delete token as client might try rejoin
+			delete taro.server.usedConnectionJwts[socket._token?.token];
 			console.log('rejecting connection', clientRejectReason);
 			socket.close(clientRejectReason, null, true);
 		}

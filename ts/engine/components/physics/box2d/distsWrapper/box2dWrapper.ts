@@ -36,8 +36,6 @@ const box2dWrapper: PhysicsDistProps = {
 			component.b2World.prototype.isLocked = component.b2World.prototype.IsLocked;
 			component.b2World.prototype.createBody = component.b2World.prototype.CreateBody;
 			component.b2World.prototype.destroyBody = component.b2World.prototype.DestroyBody;
-			// component.b2World.prototype.createJoint = component.b2World.prototype.CreateJoint;
-			component.b2World.prototype.destroyJoint = component.b2World.prototype.DestroyJoint;
 			component.b2World.prototype.createFixture = component.b2World.prototype.CreateFixture;
 			component.b2World.prototype.clearForces = component.b2World.prototype.ClearForces;
 			component.b2World.prototype.getBodyList = component.b2World.prototype.GetBodyList;
@@ -45,14 +43,6 @@ const box2dWrapper: PhysicsDistProps = {
 			component.b2World.prototype.getFixtureList = component.b2World.prototype.GetFixtureList;
 			component.b2World.prototype.step = component.b2World.prototype.Step;
 			component.b2World.prototype.rayCast = component.b2World.prototype.RayCast;
-
-			// signature is backwards!
-			/*
-				component.b2World.prototype.queryAABB = function(aabb, queryCallback){
-					return component.b2World.prototype.QueryAABB(queryCallback,aabb);
-				}
-				*/
-
 			component.b2Body.prototype.getNext = component.b2Body.prototype.GetNext;
 			component.b2Body.prototype.getAngle = component.b2Body.prototype.GetAngle;
 			component.b2Body.prototype.setPosition = component.b2Body.prototype.SetPosition;
@@ -94,8 +84,30 @@ const box2dWrapper: PhysicsDistProps = {
 		self._world.SetContactListener(contactListener);
 	},
 
-	getmxfp: function (body) {
+	getBodyPosition: function (body) {
 		return body.m_xf.p;
+	},
+
+	getEntitiesInRegion: function (self, region) {
+		const aabb = new self.b2AABB();
+		aabb.lowerBound.set(region.x / self._scaleRatio, region.y / self._scaleRatio);
+		aabb.upperBound.set((region.x + region.width) / self._scaleRatio, (region.y + region.height) / self._scaleRatio);
+
+		const entities = [];
+		function getBodyCallback(fixture) {
+			if (fixture && fixture.m_body && fixture.m_body.m_fixtureList) {
+				const entityId = fixture.m_body.m_fixtureList.taroId;
+				const entity = taro.$(entityId);
+				if (entity) {
+					entities.push(entity);
+				}
+			}
+			return true;
+		}
+
+		this.queryAABB(self, aabb, getBodyCallback);
+
+		return entities;
 	},
 
 	queryAABB: function (self, aabb, callback) {
@@ -111,14 +123,12 @@ const box2dWrapper: PhysicsDistProps = {
 	createBody: function (self, entity, body) {
 		PhysicsComponent.prototype.log(`createBody of ${entity._stats.name}`);
 
-		// immediately destroy body if entity already has box2dBody
 		if (!entity) {
 			PhysicsComponent.prototype.log('warning: creating body for non-existent entity');
 			return;
 		}
 
-		// if there's already a body, destroy it first
-		if (entity.body) {
+		if (entity.hasPhysicsBody()) {
 			PhysicsComponent.prototype.log('body already exists, destroying body');
 			self.destroyBody(entity);
 		}
@@ -202,7 +212,15 @@ const box2dWrapper: PhysicsDistProps = {
 								fixtureDef = body.fixtures[i];
 
 								// Create the fixture
-								tempFixture = self.createFixture(fixtureDef);
+								tempFixture = new self.b2FixtureDef();
+								for (const param in fixtureDef) {
+									if (fixtureDef.hasOwnProperty(param)) {
+										if (param !== 'shape' && param !== 'filter') {
+											tempFixture[param] = fixtureDef[param];
+										}
+									}
+								}
+
 								tempFixture.taroId = fixtureDef.taroId;
 
 								// Check for a shape definition for the fixture
@@ -327,73 +345,28 @@ const box2dWrapper: PhysicsDistProps = {
 			}
 		}
 
-		// Store the entity that is linked to self body
 		tempBod._entity = entity;
 
-		// Add the body to the world with the passed fixture
-		entity.body = tempBod;
+		self.bodies.set(entity.id(), tempBod);
 
 		entity.gravitic(!!body.affectedByGravity);
-
-		// rotate body to its previous value
 		entity.rotateTo(0, 0, entity._rotate.z);
 
-		// Add the body to the world with the passed fixture
 		return tempBod;
 	},
 
-	createJoint: function (self, entityA, entityB, anchorA, anchorB) {
-		// if joint type none do nothing
-		var aBody = entityA._stats.currentBody;
-		var bBody = entityB._stats.currentBody;
+	destroyBody: function (self, entity) {
+		if (!entity?.hasPhysicsBody()) {
+			self.log("failed to destroy body - body doesn't exist.");
+			return;
+		}
 
-		if (!aBody || aBody.jointType == 'none' || aBody.type == 'none') return;
+		const isBodyDestroyed = self._world.destroyBody.apply(self._world, [self.bodies.get(entity.id())]);
+		if (isBodyDestroyed) {
+			self.bodies.delete(entity.id());
 
-		// create a joint only if there isn't pre-existing joint
-		PhysicsComponent.prototype.log(
-			`creating ${aBody.jointType} joint between ${entityA._stats.name} and ${entityB._stats.name}`
-		);
-
-		if (
-			entityA &&
-			entityA.body &&
-			entityB &&
-			entityB.body &&
-			entityA.id() != entityB.id() // im not creating joint to myself!
-		) {
-			// initialize function assumes that the two anys are in a correct position
-			if (aBody.jointType == 'distanceJoint') {
-				var joint_def = new box2dts.b2DistanceJointDef();
-
-				joint_def.Initialize(entityA.body, entityB.body, entityA.body.GetWorldCenter(), entityB.body.GetWorldCenter());
-			} else if (aBody.jointType == 'revoluteJoint') {
-				var joint_def = new box2dts.b2RevoluteJointDef();
-
-				joint_def.Initialize(entityA.body, entityB.body, entityA.body.GetWorldCenter(), entityB.body.GetWorldCenter());
-
-				// joint_def.enableLimit = true;
-				// joint_def.lowerAngle = aBody.itemAnchor.lowerAngle * 0.0174533; // degree to rad
-				// joint_def.upperAngle = aBody.itemAnchor.upperAngle * 0.0174533; // degree to rad
-
-				joint_def.localAnchorA.Set(anchorA.x / aBody.width, anchorA.y / aBody.height);
-				joint_def.localAnchorB.Set(anchorB.x / bBody.width, anchorB.y / bBody.height);
-			} // weld joint
-			else {
-				var joint_def = new box2dts.b2WeldJointDef();
-
-				joint_def.Initialize(entityA.body, entityB.body, entityA.body.GetWorldCenter());
-
-				// joint_def.frequencyHz = 1;
-				// joint_def.dampingRatio = 0;
-			}
-
-			var joint = self._world.CreateJoint(joint_def); // joint between two pieces
-
-			// var serverStats = taro.status.getSummary()
-			PhysicsComponent.prototype.log('joint created ', aBody.jointType);
-
-			entityA.jointsAttached[entityB.id()] = joint;
-			entityB.jointsAttached[entityA.id()] = joint;
+			entity._box2dOurContactFixture = null;
+			entity._box2dTheirContactFixture = null;
 		}
 	},
 };

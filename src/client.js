@@ -175,7 +175,7 @@ const Client = TaroEventingClass.extend({
 			if (!document.hidden) {
 				// this.applyInactiveTabEntityStream();
 				self.tabBecameActiveAt = Date.now();
-				console.log('tab became active at', self.tabBecameActiveAt);
+				// console.log('tab became active at', self.tabBecameActiveAt);
 			}
 
 			self.isActiveTab = !document.hidden;
@@ -189,10 +189,13 @@ const Client = TaroEventingClass.extend({
 		taro.mergeGameJson = mergeGameJson;
 		taro.tierFeaturesToggle = tierFeaturesToggle;
 		// we're going to try and insert the fetch here
+		let fetchStartTime = performance.now();
 		let promise = new Promise((resolve, reject) => {
 			// if the gameJson is available as a global object, use it instead of sending another ajax request
 			if (window.gameDetails.worldId && window.worldJson) {
+				let mergeStartTime = performance.now();
 				const gameJson = taro.mergeGameJson(window?.worldJson, window?.gameJson);
+				this.setLoadingTime('mergeGameJson', performance.now() - mergeStartTime);
 
 				resolve(gameJson);
 			} else if (window.gameJson) {
@@ -232,6 +235,7 @@ const Client = TaroEventingClass.extend({
 
 		promise
 			.then(async (game) => {
+				this.setLoadingTime('gameDataFetch', performance.now() - fetchStartTime);
 				taro.game.data = game.data;
 				if (window.isStandalone) {
 					if (!window.gameJson) {
@@ -241,13 +245,18 @@ const Client = TaroEventingClass.extend({
 
 				this.initializeConfigurationFields();
 
+				let engineStartTime = performance.now();
 				await this.configureEngine();
+				this.setLoadingTime('engineConfiguration', performance.now() - engineStartTime);
+
+				let componentStartTime = performance.now();
 				taro.addComponent(TaroInputComponent);
 
 				taro.entitiesToRender = new EntitiesToRender();
 
 				taro.developerMode = new DeveloperMode();
-
+				
+				taro.client.tempLoadingTime.rendererStartTime = performance.now();
 				if (taro.game.data.defaultData.defaultRenderer === '3d') {
 					const supportWebGL2 = document.createElement('canvas').getContext('webgl2');
 					if (supportWebGL2) {
@@ -276,6 +285,7 @@ const Client = TaroEventingClass.extend({
 				if (taro.isMobile) {
 					taro.addComponent(MobileControlsComponent);
 				}
+				this.setLoadingTime('componentAddition', performance.now() - componentStartTime);
 			})
 			.catch((err) => {
 				console.error(err);
@@ -379,6 +389,14 @@ const Client = TaroEventingClass.extend({
 		});
 	},
 
+	tempLoadingTime: {},
+
+	setLoadingTime: function (name, time) {
+		if (window.mEventObj && window.mEventObj.loadingTimes) {
+			window.mEventObj.loadingTimes[name] = time;
+		}
+	},
+
 	loadPhysics: function () {
 		// this will be empty string in data if no client-side physics
 
@@ -415,10 +433,12 @@ const Client = TaroEventingClass.extend({
 			gameData.isDeveloper = window.isStandalone;
 		}
 
+		let loadPhysicsStartTime = performance.now();
 		this.loadPhysics();
 
 		await new Promise((resolve) => {
 			$.when(this.physicsConfigLoaded).done(() => {
+				this.setLoadingTime('loadPhysics', performance.now() - loadPhysicsStartTime);
 				this.startTaroEngine();
 				this.loadMap();
 
@@ -439,13 +459,30 @@ const Client = TaroEventingClass.extend({
 			$(this.getCachedElementById('mod-this-game-menu-item')).removeClass('d-none');
 		}
 
+		let menuUiStartTime = performance.now();
 		//don't think these depend on physcis
 		taro.menuUi.toggleScoreBoard();
 		taro.menuUi.toggleLeaderBoard();
+		this.setLoadingTime('menuUiToggle', performance.now() - menuUiStartTime);
 
 		// this is viewport stuff
 		// doing these with this.taroEngineStarted.done()
 		// we can move the Deferred for mapLoaded to before engine start
+
+		$.when(this.taroEngineStarted).done(() => {
+			console.log('taroEngineStarted');
+			window.dispatchEvent(new CustomEvent('taroEngineStarted'));
+		});
+
+		$.when(this.mapLoaded).done(() => {
+			console.log('mapLoaded');
+			window.dispatchEvent(new CustomEvent('taroMapLoaded'));
+		});
+		
+		$.when(this.rendererLoaded).done(() => {
+			console.log('rendererLoaded');
+			window.dispatchEvent(new CustomEvent('taroRendererLoaded'));
+		});
 
 		$.when(this.taroEngineStarted, this.mapLoaded, this.rendererLoaded).done(() => {
 			// old comment => 'center camera while loading'
@@ -475,6 +512,7 @@ const Client = TaroEventingClass.extend({
 
 			this.setZoom(zoom);
 
+			let multipleComponentsStartTime = performance.now();
 			taro
 				.addComponent(TimerComponent)
 				.addComponent(ThemeComponent)
@@ -486,6 +524,7 @@ const Client = TaroEventingClass.extend({
 				.addComponent(ShopComponent);
 
 			taro.shop.enableShop();
+			this.setLoadingTime('addMultipleComponents', performance.now() - multipleComponentsStartTime);
 
 			//old comments => 'load sound and music when game starts'
 			taro.sound.preLoadSound();
@@ -506,6 +545,7 @@ const Client = TaroEventingClass.extend({
 	},
 
 	startTaroEngine: function () {
+		let taroEngineStartTime = performance.now();
 		taro.start((success) => {
 			if (success) {
 				this.rootScene = new TaroScene2d().id('rootScene').drawBounds(false);
@@ -528,6 +568,7 @@ const Client = TaroEventingClass.extend({
 				taro._selectedViewport = this.vp1;
 
 				this.taroEngineStarted.resolve();
+				this.setLoadingTime('taroEngineStart', performance.now() - taroEngineStartTime);
 			}
 		});
 	},
@@ -569,7 +610,6 @@ const Client = TaroEventingClass.extend({
 		let minPlayerCount = Number.MAX_SAFE_INTEGER; // ok this seems really unnecessary
 
 		for (let server of validServers) {
-
 			const playerCount = server.clientCount || server.playerCount;
 
 			const capacity = playerCount / server.maxPlayers;
@@ -640,7 +680,7 @@ const Client = TaroEventingClass.extend({
 			// old comment => 'create a listener that will fire whenever an entity is created because of the incoming stream data'
 			taro.network.stream.on('entityCreated', (entity) => {
 				if (entity._category == 'player') {
-					console.log('player created', entity._stats.clientId);
+					// console.log('player created', entity._stats.clientId);
 					// old comment => 'apply skin to all units owned by this player'
 					const player = entity;
 
@@ -714,9 +754,7 @@ const Client = TaroEventingClass.extend({
 		if (gravity) {
 			taro.physics.gravity(gravity.x, gravity.y);
 		}
-		taro.physics.setContinuousPhysics(!!taro?.game?.data?.settings?.continuousPhysics);
-		taro.physics.createWorld();
-		taro.physics.start();
+		taro.physics.start(!!taro?.game?.data?.settings?.continuousPhysics);
 		taro.raycaster = new Raycaster();
 	},
 
@@ -737,6 +775,8 @@ const Client = TaroEventingClass.extend({
 
 		taro.network.define('streamUpdateData', this._onStreamUpdateData);
 		taro.network.define('sendDataFromServer', this._onSendDataFromServer);
+		taro.network.define('mintItemCallback', this._onMintItemCallback);
+
 		taro.network.define('updateEntityAttribute', this._onUpdateEntityAttribute);
 
 		taro.network.define('updateUiText', this._onUpdateUiText);
@@ -787,7 +827,6 @@ const Client = TaroEventingClass.extend({
 		taro.network.define('updateProjectile', this._onUpdateProjectile);
 		taro.network.define('updateShop', this._onUpdateShop);
 		taro.network.define('updateDialogue', this._onUpdateDialogue);
-		taro.network.define('updateDevelopersData', this._onUpdateDevelopersData);
 
 		taro.network.define('renderSocketLogs', this._onRenderSocketLogs);
 	},

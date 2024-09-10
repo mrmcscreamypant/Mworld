@@ -369,13 +369,11 @@ var ControlComponent = TaroEntity.extend({
 						if (now - self.tabBecameActiveAt < 1000) {
 							return;
 						}
-						let velocity = unit.body?.getLinearVelocity();
+						const velocity = unit.getLinearVelocity();
 						taro.network.send('playerUnitMoved', [
 							parseFloat(unit._translate.x).toFixed(2),
 							parseFloat(unit._translate.y).toFixed(2),
 							parseFloat(unit._rotate.z).toFixed(4),
-							velocity?.get_x()?.toFixed(2),
-							velocity?.get_y()?.toFixed(2),
 						]);
 					}
 				}
@@ -416,7 +414,7 @@ var ControlComponent = TaroEntity.extend({
 					(self.newMouseState[0] != self.lastMouseState[0] || self.newMouseState[1] != self.lastMouseState[1])
 				) {
 					// if we are using mobile controls don't send mouse moves to server here as we will do so from a look touch stick
-					if (!taro.isMobile) {
+					if (!taro.isMobile && !taro.client.joystickExists) {
 						// absolute mouse position wrt window
 						if (
 							taro._mouseAbsoluteTranslation &&

@@ -824,20 +824,32 @@ var MenuUiComponent = TaroEntity.extend({
 			return;
 		}
 
-		message = message || 'Lost connection to the game server. Please refresh this page or visit our homepage.';
+		const failedConnectReason = 'Error trying to contact server. Please refresh this page or visit our homepage.';
+		const disconnectReason = 'Lost connection to the game server. Please refresh this page or visit our homepage.';
 
-		const autoRejoinReasons = [
+		message = message || (taro.game?.hasStarted ? disconnectReason : failedConnectReason);
+
+		const mustRejoinReasons = [
 			'Server not accepting players, refresh to join another server.',
-			'Error trying to contact server. Please refresh this page or visit our homepage.',
-			'Lost connection to the game server. Please refresh this page or visit our homepage.', // if reason is empty
+			'server not accepting connections',
+			'Sorry, the server you are trying to join is currently full. Please try again later or join a different server to play this game.',
 		];
 
-		if (!window.attemptedRejoin && !taro.game?.hasStarted && autoRejoinReasons.includes(message)) {
-			console.log('Attempting rejoin', window.attemptedRejoin, taro.network?._io?._socket?.readyState, taro.game?.hasStarted, message);
+		const autoRejoinReasons = [
+			failedConnectReason,
+			disconnectReason,
+		];
+
+		window.rejoinAttemps = window.rejoinAttemps || 0;
+		if (window.rejoinAttemps <= 2 && (mustRejoinReasons.includes(message) || (!window.attemptedRejoin && !taro.game?.hasStarted && autoRejoinReasons.includes(message)))) {
+			// reset state because user didn't join game yet
+			taro.network._state = 0;
+
+			console.log('Attempting rejoin', window.attemptedRejoin, window.rejoinAttemps, taro.network?._io?._socket?.readyState, taro.game?.hasStarted, message);
 			window.silentRejoin(message);
 			return;
 		} else {
-			console.log('Not attempting rejoin', window.attemptedRejoin, taro.network?._io?._socket?.readyState, taro.game?.hasStarted, message);
+			console.log('Not attempting rejoin', window.attemptedRejoin, window.rejoinAttemps, taro.network?._io?._socket?.readyState, taro.game?.hasStarted, message);
 		}
 
 		if ('Guest players not allowed to join this game.' === message) {
@@ -858,6 +870,7 @@ var MenuUiComponent = TaroEntity.extend({
 		if (window.STATIC_EXPORT_ENABLED || window.IS_CRAZY_GAMES_ENV) {
 			$('#return-to-homepage-server').hide();
 			$('.return-to-homepage-cta').hide();
+			$('.refresh-page-cta #connection-lost-refresh').text('Reconnect');
 		} else {
 			$('#return-to-homepage-server').show();
 		}

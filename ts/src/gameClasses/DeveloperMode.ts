@@ -195,8 +195,19 @@ class DeveloperMode {
 
 	initEntities: ActionData[];
 
-	serverScriptData: Record<string, ScriptData>;
-	savedScriptData: Record<string, ScriptData>;
+	serverScriptData: {
+		unitTypes: Record<string, ScriptData>;
+		itemTypes: Record<string, ScriptData>;
+		projectileTypes: Record<string, ScriptData>;
+	};
+	savedScriptData: {
+		unitTypes: Record<string, ScriptData>;
+		itemTypes: Record<string, ScriptData>;
+		projectileTypes: Record<string, ScriptData>;
+	};
+
+	serverEntityScriptData: Record<string, ScriptData>;
+	savedEntityScriptData: Record<string, ScriptData>;
 
 	serverVariableData: Record<string, VariableData>;
 
@@ -223,6 +234,7 @@ class DeveloperMode {
 					taro.developerMode.savedScriptData[scriptId] = script;
 				} else {
 					delete taro.developerMode.serverScriptData[scriptId];
+					delete taro.developerMode.savedScriptData[scriptId];
 				}
 			});
 
@@ -820,20 +832,10 @@ class DeveloperMode {
 					if (!isNaN(data.angle) && !isNaN(action.angle)) {
 						action.angle = data.angle;
 					}
-					if (
-						data.rotation &&
-						!isNaN(data.rotation.x) &&
-						!isNaN(data.rotation.y) &&
-						!isNaN(data.rotation.z)
-					) {
+					if (data.rotation && !isNaN(data.rotation.x) && !isNaN(data.rotation.y) && !isNaN(data.rotation.z)) {
 						action.rotation = data.rotation;
 					}
-					if (
-						data.scale &&
-						!isNaN(data.scale.x) &&
-						!isNaN(data.scale.y) &&
-						!isNaN(data.scale.z)
-					) {
+					if (data.scale && !isNaN(data.scale.x) && !isNaN(data.scale.y) && !isNaN(data.scale.z)) {
 						action.scale = data.scale;
 					}
 					if (!isNaN(data.width) && !isNaN(action.width)) {
@@ -889,28 +891,63 @@ class DeveloperMode {
 		}
 	}
 
-	updateUnit(data) {
+	updateEntityScript(data) {
+		if (taro.isClient) {
+			Object.entries(data.newData.scripts).forEach(([scriptId, script]: any) => {
+				if (!script.deleted) {
+					if (data.apply) {
+						taro.developerMode.serverEntityScriptData[data.entityType][data.typeId][scriptId] = script;
+					}
+					taro.developerMode.savedEntityScriptData[data.entityType][data.typeId][scriptId] = script;
+				} else {
+					delete taro.developerMode.serverEntityScriptData[data.entityType][data.typeId][scriptId];
+					delete taro.developerMode.savedEntityScriptData[data.entityType][data.typeId][scriptId];
+				}
+			});
+			taro.game.data[data.entityType][data.typeId].scripts = rfdc()(
+				taro.developerMode.serverEntityScriptData[data.entityType][data.typeId]
+			);
+		}
+
+		if (taro.isServer && data.apply) {
+			Object.entries(data.newData.scripts).forEach(([scriptId, script]: any) => {
+				if (!script.deleted) {
+					taro.game.data[data.entityType][data.typeId].scripts[scriptId] = script;
+				} else {
+					delete taro.game.data[data.entityType][data.typeId].scripts[scriptId];
+				}
+			});
+		}
+	}
+
+	updateUnit(data: EditEntityData) {
 		// 1. broadcast update to all players
 		// 2. force update its dimension/scale/layer/image
 		if (taro.game.data.unitTypes[data.typeId]) {
 			if (data.valueType === 'script') {
-				taro.game.data.unitTypes[data.typeId].scripts = rfdc()(data.newData.scripts);
+				this.updateEntityScript(data);
 			} else if (data.valueType === 'property') {
-				const oldScripts = rfdc()(taro.game.data.unitTypes[data.typeId].scripts);
-				taro.game.data.unitTypes[data.typeId] = rfdc()(data.newData);
-				taro.game.data.unitTypes[data.typeId].scripts = oldScripts;
+				if (data.apply) {
+					const oldScripts = rfdc()(taro.game.data.unitTypes[data.typeId].scripts);
+					taro.game.data.unitTypes[data.typeId] = rfdc()(data.newData);
+					taro.game.data.unitTypes[data.typeId].scripts = oldScripts;
+				}
 			}
 		} else {
-			taro.game.data.unitTypes[data.typeId] = rfdc()(data.newData);
+			if (data.apply) {
+				taro.game.data.unitTypes[data.typeId] = rfdc()(data.newData);
+			}
 		}
 
-		taro.$$('unit').forEach((unit) => {
-			if (unit._stats.type === data.typeId) {
-				unit.changeUnitType(data.typeId, {}, false);
-				unit.emit('update-texture', 'basic_texture_change');
-				if (data.shouldReset) unit.resetUnitType();
-			}
-		});
+		if (data.apply) {
+			taro.$$('unit').forEach((unit) => {
+				if (unit._stats.type === data.typeId) {
+					unit.changeUnitType(data.typeId, {}, false);
+					unit.emit('update-texture', 'basic_texture_change');
+					if (data.shouldReset) unit.resetUnitType();
+				}
+			});
+		}
 		if (taro.isServer) {
 			taro.network.send('updateUnit', data);
 		} else {
@@ -967,23 +1004,29 @@ class DeveloperMode {
 		// 3. we may need to re-mount the item on unit
 		if (taro.game.data.itemTypes[data.typeId]) {
 			if (data.valueType === 'script') {
-				taro.game.data.itemTypes[data.typeId].scripts = rfdc()(data.newData.scripts);
+				this.updateEntityScript(data);
 			} else if (data.valueType === 'property') {
-				const oldScripts = rfdc()(taro.game.data.itemTypes[data.typeId].scripts);
-				taro.game.data.itemTypes[data.typeId] = rfdc()(data.newData);
-				taro.game.data.itemTypes[data.typeId].scripts = oldScripts;
+				if (data.apply) {
+					const oldScripts = rfdc()(taro.game.data.itemTypes[data.typeId].scripts);
+					taro.game.data.itemTypes[data.typeId] = rfdc()(data.newData);
+					taro.game.data.itemTypes[data.typeId].scripts = oldScripts;
+				}
 			}
 		} else {
-			taro.game.data.itemTypes[data.typeId] = rfdc()(data.newData);
+			if (data.apply) {
+				taro.game.data.itemTypes[data.typeId] = rfdc()(data.newData);
+			}
 		}
 
-		taro.$$('item').forEach((item) => {
-			if (item._stats.itemTypeId === data.typeId) {
-				item.changeItemType(data.typeId, {}, false);
-				item.emit('update-texture', 'basic_texture_change');
-				if (data.shouldReset) item.resetItemType();
-			}
-		});
+		if (data.apply) {
+			taro.$$('item').forEach((item) => {
+				if (item._stats.itemTypeId === data.typeId) {
+					item.changeItemType(data.typeId, {}, false);
+					item.emit('update-texture', 'basic_texture_change');
+					if (data.shouldReset) item.resetItemType();
+				}
+			});
+		}
 		if (taro.isServer) {
 			taro.network.send('updateItem', data);
 		} else {
@@ -1007,30 +1050,36 @@ class DeveloperMode {
 		});
 	}
 
-	createProjectile(data) { }
+	createProjectile(data) {}
 
 	updateProjectile(data) {
 		// 1. broadcast update to all players
 		// 2. force update its dimension/scale/layer/image
 		if (taro.game.data.projectileTypes[data.typeId]) {
 			if (data.valueType === 'script') {
-				taro.game.data.projectileTypes[data.typeId].scripts = rfdc()(data.newData.scripts);
+				this.updateEntityScript(data);
 			} else if (data.valueType === 'property') {
-				const oldScripts = rfdc()(taro.game.data.projectileTypes[data.typeId].scripts);
-				taro.game.data.projectileTypes[data.typeId] = rfdc()(data.newData);
-				taro.game.data.projectileTypes[data.typeId].scripts = oldScripts;
+				if (data.apply) {
+					const oldScripts = rfdc()(taro.game.data.projectileTypes[data.typeId].scripts);
+					taro.game.data.projectileTypes[data.typeId] = rfdc()(data.newData);
+					taro.game.data.projectileTypes[data.typeId].scripts = oldScripts;
+				}
 			}
 		} else {
-			taro.game.data.projectileTypes[data.typeId] = rfdc()(data.newData);
+			if (data.apply) {
+				taro.game.data.projectileTypes[data.typeId] = rfdc()(data.newData);
+			}
 		}
 
-		taro.$$('projectile').forEach((projectile) => {
-			if (projectile._stats.type === data.typeId) {
-				projectile.changeProjectileType(data.typeId, {}, false);
-				projectile.emit('update-texture', 'basic_texture_change');
-				if (data.shouldReset) projectile.resetProjectileType();
-			}
-		});
+		if (data.apply) {
+			taro.$$('projectile').forEach((projectile) => {
+				if (projectile._stats.type === data.typeId) {
+					projectile.changeProjectileType(data.typeId, {}, false);
+					projectile.emit('update-texture', 'basic_texture_change');
+					if (data.shouldReset) projectile.resetProjectileType();
+				}
+			});
+		}
 		if (taro.isServer) {
 			taro.network.send('updateProjectile', data);
 		} else {
@@ -1117,10 +1166,6 @@ class DeveloperMode {
 
 						case 'delete':
 							//this.deleteUnit(data);
-							break;
-
-						case 'update-developers-data':
-							this.updateDevelopersData(data);
 							break;
 					}
 				} else if (data.entityType === 'itemTypes') {
@@ -1339,6 +1384,8 @@ interface EditEntityData {
 	extraData?: {
 		[key: string]: any;
 	};
+	apply: boolean;
+	shouldReset?: boolean;
 }
 
 type devModeTab = 'play' | 'map' | 'entities' | 'moderate' | 'debug';

@@ -59,6 +59,22 @@ var VariableComponent = TaroEntity.extend({
 				}
 			}
 
+			let clientId = null;
+			if (taro.isServer) {
+				switch (this._entity._category) {
+					case 'unit':
+						clientId = this._entity?.getOwner()?._stats?.clientId;
+						break;
+
+					case 'player':
+						clientId = this._entity?._stats?.clientId;
+						break;
+
+					case 'item':
+						clientId = this._entity?.getOwnerUnit()?.getOwner()?._stats?.clientId;
+						break;
+				}
+			}
 			// if datatype of value matches datatype of variable then set value
 			// otherwise set value to undefined and throw error
 			if (isDataTypeMatching) {
@@ -90,6 +106,17 @@ var VariableComponent = TaroEntity.extend({
 									},
 								},
 							]);
+						} else if (variableObj.streamMode == 3) {
+							self._entity.streamUpdateData(
+								[
+									{
+										variables: {
+											[variableId]: newValue,
+										},
+									},
+								],
+								clientId
+							);
 						}
 					}
 				}
@@ -110,6 +137,17 @@ var VariableComponent = TaroEntity.extend({
 								},
 							},
 						]);
+					} else if (variableObj.streamMode == 3) {
+						self._entity.streamUpdateData(
+							[
+								{
+									variables: {
+										[variableId]: { function: 'undefinedValue' },
+									},
+								},
+							],
+							clientId
+						);
 					}
 				}
 			} else {

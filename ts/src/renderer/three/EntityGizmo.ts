@@ -25,9 +25,15 @@ namespace Renderer {
 					case 'translate':
 						if (taro.is3D()) {
 							editedAction['position'] = {
-								x: Renderer.Three.Utils.worldToPixel(control.object.position.x + (e.parent.tag === Three.EntityEditor.TAG ? e.position.x : 0)),
-								y: Renderer.Three.Utils.worldToPixel(control.object.position.z + (e.parent.tag === Three.EntityEditor.TAG ? e.position.z : 0)),
-								z: Renderer.Three.Utils.worldToPixel(control.object.position.y + (e.parent.tag === Three.EntityEditor.TAG ? e.position.y : 0)),
+								x: Renderer.Three.Utils.worldToPixel(
+									control.object.position.x + (e.parent.tag === Three.EntityEditor.TAG ? e.position.x : 0)
+								),
+								y: Renderer.Three.Utils.worldToPixel(
+									control.object.position.z + (e.parent.tag === Three.EntityEditor.TAG ? e.position.z : 0)
+								),
+								z: Renderer.Three.Utils.worldToPixel(
+									control.object.position.y + (e.parent.tag === Three.EntityEditor.TAG ? e.position.y : 0)
+								),
 								function: 'vector3',
 							};
 						} else {
@@ -74,9 +80,16 @@ namespace Renderer {
 								};
 							} else if (control.object.body instanceof Model) {
 								editedAction['scale'] = {
-									x: Utils.worldToPixel(control.object.body.getSize().x / control.object.defaultWidth),
-									y: Utils.worldToPixel(control.object.body.getSize().z / control.object.defaultHeight),
-									z: Utils.worldToPixel(control.object.body.getSize().y / control.object.defaultDepth),
+									x: Utils.worldToPixel(
+										(control.object.body.getSize().x / control.object.defaultWidth) *
+											(e.parent.tag === Three.EntityEditor.TAG ? e.scale.x : 1)
+									),
+									y:
+										Utils.worldToPixel(control.object.body.getSize().z / control.object.defaultHeight) *
+										(e.parent.tag === Three.EntityEditor.TAG ? e.scale.z : 1),
+									z:
+										Utils.worldToPixel(control.object.body.getSize().y / control.object.defaultDepth) *
+										(e.parent.tag === Three.EntityEditor.TAG ? e.scale.y : 1),
 									function: 'vector3',
 								};
 							}
@@ -110,20 +123,17 @@ namespace Renderer {
 				const control = (this.control = new TransformControls(currentCamera, renderer.renderer.domElement));
 				control.matrixAutoUpdate = false;
 				this.undoAction = {};
-				control.addEventListener(
-					'nonePosition-changed',
-					function (event) {
-						if ((control.object as any)?.tag === Three.EntityEditor.TAG) {
-							control.object.children.forEach((e: THREE.Object3D) => {
-								// FIXME: handle the rotation and scale
-								// e.rotation.z += control.object.rotation.z
-							})
-							control.object.rotation.set(0, 0, 0);
-							control.object.scale.set(1, 1, 1);
-							control.reset();
-						}
+				control.addEventListener('nonePosition-changed', function (event) {
+					if ((control.object as any)?.tag === Three.EntityEditor.TAG) {
+						control.object.children.forEach((e: THREE.Object3D) => {
+							// FIXME: handle the rotation and scale
+							// e.rotation.z += control.object.rotation.z
+						});
+						control.object.rotation.set(0, 0, 0);
+						control.object.scale.set(1, 1, 1);
+						control.reset();
 					}
-				)
+				});
 				control.addEventListener(
 					'dragging-changed',
 					function (event) {
@@ -146,22 +156,35 @@ namespace Renderer {
 										{
 											func: () => {
 												const editedAction = JSON.parse(nowEditedAction);
-												const nowEntity = renderer.entityManager.initEntities.find((e) => e.action.actionId === editedAction.actionId);
+												const nowEntity = renderer.entityManager.initEntities.find(
+													(e) => e.action.actionId === editedAction.actionId
+												);
 												renderer.entityEditor.selectedGroup.position.copy(nowSelectedGroupPosition);
-												(nowEntity as InitEntity).edit(editedAction, (nowEntity.parent as any)?.tag === Three.EntityEditor.TAG ? nowEntity.parent.position.clone().multiplyScalar(-1) : undefined);
+												(nowEntity as InitEntity).edit(
+													editedAction,
+													(nowEntity.parent as any)?.tag === Three.EntityEditor.TAG
+														? nowEntity.parent.position.clone().multiplyScalar(-1)
+														: undefined
+												);
 											},
 											undo: () => {
 												const nowUndoAction = JSON.parse(undoAction);
-												const nowEntity = renderer.entityManager.initEntities.find((e) => e.action.actionId === nowUndoAction.actionId);
+												const nowEntity = renderer.entityManager.initEntities.find(
+													(e) => e.action.actionId === nowUndoAction.actionId
+												);
 												renderer.entityEditor.selectedGroup.position.copy(prevSelectedGroupPosition);
-												(nowEntity as InitEntity).edit(nowUndoAction, (nowEntity.parent as any)?.tag === Three.EntityEditor.TAG ? nowEntity.parent.position.clone().multiplyScalar(-1) : undefined);
+												(nowEntity as InitEntity).edit(
+													nowUndoAction,
+													(nowEntity.parent as any)?.tag === Three.EntityEditor.TAG
+														? nowEntity.parent.position.clone().multiplyScalar(-1)
+														: undefined
+												);
 											},
 											mergedUuid: uuid,
 										},
 										true,
 										true
 									);
-
 
 									this.undoAction[idx] = undefined;
 								} else if (editedAction && e instanceof Region) {
@@ -170,12 +193,14 @@ namespace Renderer {
 									renderer.voxelEditor.commandController.addCommand(
 										{
 											func: () => {
-												inGameEditor.updateRegionInReact && !window.isStandalone;
-												inGameEditor.updateRegionInReact(editedAction as RegionData, 'threejs');
+												inGameEditor.updateRegionInReact &&
+													!window.isStandalone &&
+													inGameEditor.updateRegionInReact(editedAction as RegionData, 'threejs');
 											},
 											undo: () => {
-												inGameEditor.updateRegionInReact && !window.isStandalone;
-												inGameEditor.updateRegionInReact(nowUndoAction as RegionData, 'threejs');
+												inGameEditor.updateRegionInReact &&
+													!window.isStandalone &&
+													inGameEditor.updateRegionInReact(nowUndoAction as RegionData, 'threejs');
 											},
 											mergedUuid: uuid,
 										},
@@ -185,8 +210,7 @@ namespace Renderer {
 
 									this.undoAction = [];
 								}
-							})
-
+							});
 						} else {
 							if (this.undoAction === undefined) {
 								this.undoAction = [];
@@ -195,8 +219,7 @@ namespace Renderer {
 								if (this.undoAction[idx] === undefined) {
 									this.undoAction[idx] = this.generateEditedAction(e);
 								}
-							})
-
+							});
 						}
 					}.bind(this)
 				);

@@ -15,22 +15,20 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 		this._entity = entity;
 		this._options = options;
-		this._mode = 0;
 		this._actionQueue = [];
 		this.physicsTickDuration = 0;
 		this.avgPhysicsTickDuration = 0;
 		this.totalBodiesCreated = 0;
 		this.lastSecondAt = Date.now();
-		this.totalDisplacement = 0;
-		this.totalTimeElapsed = 0;
-		this.exponent = 2;
-		this.divisor = 80;
 		this.metaData = {};
 		this.tryRecordLeak = (p) => p;
 		this.walls = [];
 		this.nullPtr = undefined;
 		this.getPointer = undefined;
 		this.engine = dists.defaultEngine;
+		this._scaleRatio = 30;
+
+		this.bodies = new Map();
 
 		if (taro.game && taro.game.data && taro.game.data.defaultData) {
 			if (taro.isServer) {
@@ -41,7 +39,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 
 		this.engine = this.engine.toUpperCase();
-		this._scaleRatio = 30;
+
 		console.log('Physics engine: ', this.engine);
 
 		if (this.engine) {
@@ -58,38 +56,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 	},
 
-	useWorker: function (val) {
-		if (typeof Worker !== 'undefined') {
-			if (val !== undefined) {
-				this._useWorker = val;
-				return this._entity;
-			}
-
-			return this._useWorker;
-		} else {
-			PhysicsComponent.prototype.log(
-				'Web workers were not detected on this browser. Cannot access useWorker() method.',
-				'warning'
-			);
-		}
-	},
-
-	/**
-	 * Gets / sets the world interval mode. In mode 0 (zero) the
-	 * box2d simulation is synced to the framerate of the engine's
-	 * renderer. In mode 1 the box2d simulation is stepped at a constant
-	 * speed regardless of the engine's renderer. This must be set *before*
-	 * calling the start() method in order for the setting to take effect.
-	 * @param {Integer} val The mode, either 0 or 1.
-	 * @returns {*}
-	 */
-	mode: function (val) {
-		if (val !== undefined) {
-			this._mode = val;
-			return this._entity;
-		}
-
-		return this._mode;
+	log: function (msg) {
+		console.log('PhysicsComponent:', msg);
 	},
 
 	/**
@@ -104,20 +72,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 		}
 
 		return this._sleep;
-	},
-
-	/**
-	 * Gets / sets the current engine to box2d scaling ratio.
-	 * @param val
-	 * @return {*}
-	 */
-	scaleRatio: function (val) {
-		if (val !== undefined) {
-			this._scaleRatio = val;
-			return this._entity;
-		}
-
-		return this._scaleRatio;
 	},
 
 	/**
@@ -143,30 +97,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 		return this._world;
 	},
 
-	createFixture: function (params) {
-		var tempDef = new this.b2FixtureDef();
-		var param;
-		for (param in params) {
-			if (params.hasOwnProperty(param)) {
-				if (param !== 'shape' && param !== 'filter') {
-					if (taro.physics.engine !== 'BOX2DWASM') {
-						tempDef[param] = params[param];
-					} else {
-						if (tempDef[`set_${param}`]) {
-							// call the setter, so it will update the box2d wasm runtime
-							tempDef[`set_${param}`](params[param]);
-						} else {
-							// this for something like taroId (which is only useful in js, and won't do anything in box2d)
-							// tempDef[param] = params[param];
-						}
-					}
-				}
-			}
-		}
-
-		return tempDef;
-	},
-
 	/**
 	 * Creates a Box2d body and attaches it to an taro entity
 	 * based on the supplied body definition.
@@ -179,128 +109,16 @@ var PhysicsComponent = TaroEventingClass.extend({
 		return dists[this.engine].createBody(this, entity, body, isLossTolerant);
 	},
 
-	destroyBody: function (entity, body) {
-		// immediately destroy body if entity already has box2dBody
-		if (body || (entity && entity.body)) {
-			body = body || entity.body;
-			if (this.engine === 'BOX2DWASM') {
-				var fixture = taro.physics.recordLeak(body.GetFixtureList());
-				while (
-					fixture !== undefined &&
-					taro.physics.getPointer(fixture) !== taro.physics.getPointer(taro.physics.nullPtr)
-				) {
-					body.DestroyFixture(fixture);
-					var fixture = taro.physics.recordLeak(fixture.GetNext());
-				}
-			}
-			destroyBody = this._world.destroyBody;
-			var isBodyDestroyed = destroyBody.apply(this._world, [body]);
-			if (this.engine === 'BOX2DWASM') {
-				delete this.metaData[this.getPointer(body)];
-				this.freeFromCache(body);
-			}
-			// clear references to prevent memory leak
-			if (this.engine === 'BOX2DWEB') {
-				this._world.m_contactSolver.m_constraints = [];
-				this._world.m_island.m_bodies = [];
-				this._world.m_island.m_contacts = [];
-				this._world.m_island.m_joints = [];
-				this._world.m_contactManager.m_broadPhase.m_pairBuffer = []; // clear Dynamic Tree
-				this._world.m_contactManager.m_broadPhase.m_tree.m_freeList = null; // clear Dynamic Tree
-
-				for (var i = 0; i < box2dweb.Dynamics.b2World.s_queue.length; i++) {
-					if (box2dweb.Dynamics.b2World.s_queue[i]._entity._id == entity._id) {
-						// box2dweb.Dynamics.b2World.s_queue[i].m_prev.m_next = box2dweb.Dynamics.b2World.s_queue[i].m_next
-						// box2dweb.Dynamics.b2World.s_queue[i].m_next.m_prev = box2dweb.Dynamics.b2World.s_queue[i].m_prev
-						box2dweb.Dynamics.b2World.s_queue.splice(i, 1);
-					}
-				}
-
-				for (var i = 0; i < this._world.m_contactManager.m_contactFactory.m_registers.length; i++) {
-					for (var j = 0; j < this._world.m_contactManager.m_contactFactory.m_registers[i].length; j++) {
-						delete this._world.m_contactManager.m_contactFactory.m_registers[i][j].pool;
-					}
-				}
-			}
-
-			if (isBodyDestroyed || this.engine === 'BOX2DWASM') {
-				entity.body = null;
-				entity._box2dOurContactFixture = null;
-				entity._box2dTheirContactFixture = null;
-			}
-		} else {
-			PhysicsComponent.prototype.log("failed to destroy body - body doesn't exist.");
-		}
+	destroyBody: function (entity) {
+		dists[this.engine].destroyBody(this, entity);
 	},
 
-	// move entityA to entityB's position and create joint
-	createJoint: function (entityA, entityB, anchorA, anchorB) {
-		// taro.devLog("joint created", entityA._category, entityA._translate.x, entityA._translate.y, entityB._category, entityB._translate.x, entityB._translate.y)
-		// dists[this.engine].createJoint(this, entityA, entityB, anchorA, anchorB);
+	hasBody(entity) {
+		return this.bodies.has(entity?.id());
 	},
 
-	destroyJoint: function (entityA, entityB) {
-		if (entityA && entityA.body && entityB && entityB.body) {
-			var joint = entityA.jointsAttached[entityB.id()];
-			if (joint) {
-				this._world.destroyJoint(joint);
-				if (this.engine === 'BOX2DWASM') {
-					this.freeFromCache(joint);
-				}
-				// console.log("joint destroyed")
-				delete entityA.jointsAttached[entityB.id()];
-				delete entityB.jointsAttached[entityA.id()];
-			}
-		} else {
-			PhysicsComponent.prototype.log('joint cannot be destroyed: one or more bodies missing');
-		}
-	},
-
-	// get entities within a region
-	getBodiesInRegion: function (region) {
-		var self = this;
-
-		var aabb = new self.b2AABB();
-
-		aabb.lowerBound.set(region.x / self._scaleRatio, region.y / self._scaleRatio);
-		aabb.upperBound.set((region.x + region.width) / self._scaleRatio, (region.y + region.height) / self._scaleRatio);
-
-		var entities = [];
-		if (self.engine === 'BOX2DWASM') {
-			const callback = Object.assign(new self.JSQueryCallback(), {
-				ReportFixture: (fixture_p) => {
-					const fixture = self.recordLeak(self.wrapPointer(fixture_p, self.b2Fixture));
-					const body = self.recordLeak(fixture.GetBody());
-					entityId = self.metaData[self.getPointer(body)].taroId;
-					var entity = taro.$(entityId);
-					if (entity) {
-						// taro.devLog("found", entity._category, entity._translate.x, entity._translate.y)
-						var entity = taro.$(entityId);
-						entities.push(taro.$(entityId));
-					}
-					return true;
-				},
-			});
-			dists[this.engine].queryAABB(self, aabb, callback);
-		} else {
-			function getBodyCallback(fixture) {
-				if (fixture && fixture.m_body && fixture.m_body.m_fixtureList) {
-					entityId = fixture.m_body.m_fixtureList.taroId;
-					var entity = taro.$(entityId);
-					if (entity) {
-						// taro.devLog("found", entity._category, entity._translate.x, entity._translate.y)
-						var entity = taro.$(entityId);
-						entities.push(taro.$(entityId));
-					}
-				}
-				return true;
-			}
-
-			dists[this.engine].queryAABB(self, aabb, getBodyCallback);
-		}
-		// Query the world for overlapping shapes.
-
-		return entities;
+	getEntitiesInRegion: function (region) {
+		return dists[this.engine].getEntitiesInRegion(this, region);
 	},
 
 	/**
@@ -474,13 +292,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 			// Set the debug draw for the world
 			this._world.SetDebugDraw(debugDraw);
-
-			// Create the debug painter entity and mount
-			// it to the passed scene
-			new taroClassStore.TaroBox2dDebugPainter(this._entity)
-				.depth(40000) // Set a really high depth
-				.drawBounds(false)
-				.mount(mountScene);
 		} else {
 			PhysicsComponent.prototype.log(
 				'Cannot enable box2d debug drawing because the passed argument is not an object on the scenegraph.',
@@ -513,42 +324,31 @@ var PhysicsComponent = TaroEventingClass.extend({
 		return this._updateCallback;
 	},
 
-	start: function () {
+	start: function (continuousPhysics) {
 		var self = this;
 
 		if (!this._active) {
 			this._active = true;
 
-			if (!this._networkDebugMode) {
-				if (this._mode === 0) {
-					// Add the box2d behaviour to the taro
-					// console.log('starting box2d', this._entity.id(), this._entity._category);
-					this._entity.addBehaviour('box2dStep', this._behaviour);
-				} else {
-					// this._intervalTimer = setInterval(this._behaviour, 1000 / 60);
-					console.log('b2d start');
-					// this._intervalTimer = setInterval(this._behaviour, taro._tickDelta);
-				}
-			}
-		}
+			this.setContinuousPhysics(!!continuousPhysics);
+			this.createWorld();
 
-		if (taro.isServer || (taro.isClient && taro.physics)) {
-			self._enableContactListener();
+			if (!this._networkDebugMode) {
+				this._entity.addBehaviour('box2dStep', this._behaviour);
+			}
+
+			if (taro.isServer || (taro.isClient && taro.physics)) {
+				self.contactListener(this._beginContactCallback, this._endContactCallback);
+			}
 		}
 	},
 
 	stop: function () {
 		if (this._active) {
 			this._active = false;
-
-			if (this._mode === 0) {
-				// Add the box2d behaviour to the taro
-				this._entity.removeBehaviour('box2dStep');
-				if (taro.isClient) {
-					clearInterval(this._intervalTimer);
-				}
-			} else {
-				// clearInterval(this._intervalTimer);
+			this._entity.removeBehaviour('box2dStep');
+			if (taro.isClient) {
+				clearInterval(this._intervalTimer);
 			}
 		}
 	},
@@ -593,14 +393,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 						case 'destroyBody':
 							self.destroyBody(action.entity);
 							break;
-
-						case 'createJoint':
-							self.createJoint(action.entityA, action.entityB, action.anchorA, action.anchorB);
-							break;
-
-						case 'destroyJoint':
-							self.destroyJoint(action.entityA, action.entityB);
-							break;
 					}
 				}
 			}
@@ -626,25 +418,28 @@ var PhysicsComponent = TaroEventingClass.extend({
 				if (tempBod.m_type !== 'static' && tempBod.isAwake() && (!tempBod.GetType || tempBod.GetType() !== 0)) {
 					if (entity && !entity._stats.isHidden) {
 						// apply movement if it's either human-controlled unit, or ai unit that's currently moving
-						if (entity.body && entity.vector && (entity.vector.x != 0 || entity.vector.y != 0)) {
-							if (entity._stats.controls) {
-								switch (
-									entity._stats.controls.movementMethod // velocity-based movement
-								) {
-									case 'velocity':
-										entity.setLinearVelocity(entity.vector.x, entity.vector.y);
-										break;
-									case 'force':
-										entity.applyForce(entity.vector.x, entity.vector.y);
-										break;
-									case 'impulse':
-										entity.applyImpulse(entity.vector.x, entity.vector.y);
-										break;
-								}
+						if (
+							entity.hasPhysicsBody() &&
+							entity._stats.controls &&
+							entity.vector &&
+							(entity.vector.x != 0 || entity.vector.y != 0)
+						) {
+							switch (
+								entity._stats.controls.movementMethod // velocity-based movement
+							) {
+								case 'velocity':
+									entity.setLinearVelocity(entity.vector.x, entity.vector.y);
+									break;
+								case 'force':
+									entity.applyForce(entity.vector.x, entity.vector.y);
+									break;
+								case 'impulse':
+									entity.applyImpulse(entity.vector.x, entity.vector.y);
+									break;
 							}
 						}
 
-						var mxfp = dists[taro.physics.engine].getmxfp(tempBod, self);
+						var mxfp = dists[taro.physics.engine].getBodyPosition(tempBod, self);
 						var x = mxfp.x * taro.physics._scaleRatio;
 						var y = mxfp.y * taro.physics._scaleRatio;
 						// make projectile auto-rotate toward its path. ideal for arrows or rockets that should point toward its direction
@@ -735,14 +530,24 @@ var PhysicsComponent = TaroEventingClass.extend({
 									// as the client's position isn't as reliable. for the next 3s, the client's position will be dictated by the server stream
 									if (now - clientStreamReceivedAt < 200 && now - player.tabBecameActiveAt > 1000) {
 										let clientStreamedPosition = entity.clientStreamedKeyFrame[1];
-										x += clientStreamedPosition[0] - x;
-										y += clientStreamedPosition[1] - y;
-										angle = clientStreamedPosition[2];
 
-										if (!isNaN(clientStreamedPosition[3]) && !isNaN(clientStreamedPosition[4])) {
-											// console.log(clientStreamedPosition[3], clientStreamedPosition[4]);
-											entity.setLinearVelocity(clientStreamedPosition[3], clientStreamedPosition[4]);
+										let xDiff = clientStreamedPosition[0] - x;
+										let yDiff = clientStreamedPosition[1] - y;
+
+										// if difference is less than 100, then rubberband, otherwise instantly teleport
+										if (Math.abs(xDiff) < 100 && Math.abs(yDiff) < 100) {
+											x += xDiff / 6;
+											y += yDiff / 6;
+										} else {
+											x = clientStreamedPosition[0];
+											y = clientStreamedPosition[1];
 										}
+
+										angle = clientStreamedPosition[2];
+										// if (!isNaN(clientStreamedPosition[3]) && !isNaN(clientStreamedPosition[4])) {
+										// 	// console.log(clientStreamedPosition[3], clientStreamedPosition[4]);
+										// 	entity.setLinearVelocity(clientStreamedPosition[3] / 2, clientStreamedPosition[4] / 2);
+										// }
 									}
 								}
 							} else if (taro.isClient) {
@@ -751,7 +556,7 @@ var PhysicsComponent = TaroEventingClass.extend({
 								// this does NOT run for items
 								if (
 									(entity == taro.client.selectedUnit && entity._stats.controls?.cspMode) ||
-									(entity._category == 'projectile' && !entity._stats.streamMode) ||
+									(entity._category == 'projectile' && entity._stats.streamMode !== 1) ||
 									(entity._category == 'unit' && entity._stats.streamMode !== 1)
 								) {
 									// if client-authoritative mode is enabled, and tab became active within the last 3 seconds let server dictate my unit's position
@@ -836,8 +641,8 @@ var PhysicsComponent = TaroEventingClass.extend({
 						}
 
 						if (!isNaN(x) && !isNaN(y)) {
-							entity.body.setPosition({ x: x / entity._b2dRef._scaleRatio, y: y / entity._b2dRef._scaleRatio });
-							entity.body.setAngle(angle);
+							entity.translateToLT(x, y);
+							entity.rotateToLT(angle);
 						}
 
 						if (tempBod.asleep) {
@@ -884,8 +689,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 			if (timeEnd - self.lastSecondAt > 1000) {
 				self.lastSecondAt = timeEnd;
 				self.avgPhysicsTickDuration = self.physicsTickDuration / taro._fpsRate;
-				self.totalDisplacement = 0;
-				self.totalTimeElapsed = 0;
 				self.physicsTickDuration = 0;
 			}
 
@@ -902,6 +705,144 @@ var PhysicsComponent = TaroEventingClass.extend({
 			clearInterval(this._intervalTimer);
 		}
 		// Destroy all box2d world bodies
+	},
+
+	gravitic: function (entity, toggle) {
+		const body = this.bodies.get(entity?.id());
+
+		if (!body || toggle === undefined) {
+			return;
+		}
+
+		if (taro.physics.engine === 'BOX2DWASM') {
+			body.SetGravityScale(!toggle ? 0 : 1);
+		} else {
+			body.m_nonGravitic = !toggle;
+			body.m_gravityScale = !toggle ? 0 : 1;
+			body.setAwake(true);
+		}
+	},
+
+	applyForce: function (entity, x, y) {
+		const body = this.bodies.get(entity?.id());
+
+		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+			return;
+		}
+
+		const force = new taro.physics.b2Vec2(x, y);
+		body.applyForce(force, body.getWorldCenter());
+
+		if (taro.physics.engine === 'BOX2DWASM') {
+			taro.physics.destroyB2dObj(force);
+		}
+	},
+
+	applyImpulse: function (entity, x, y) {
+		const body = this.bodies.get(entity?.id());
+
+		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+			return;
+		}
+
+		const impulse = new taro.physics.b2Vec2(x, y);
+		body.applyLinearImpulse(impulse, body.getWorldCenter());
+
+		if (taro.physics.engine === 'BOX2DWASM') {
+			taro.physics.destroyB2dObj(impulse);
+		}
+	},
+
+	applyTorque: function (entity, torque) {
+		const body = this.bodies.get(entity?.id());
+
+		if (!body || isNaN(torque) || !isFinite(torque)) {
+			return;
+		}
+
+		body.applyTorque(torque);
+	},
+
+	translateTo: function (entity, x, y) {
+		const body = this.bodies.get(entity?.id());
+
+		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+			return;
+		}
+
+		body.setPosition({ x, y });
+		body.setAwake(true);
+	},
+
+	rotateTo: function (entity, angle) {
+		const body = this.bodies.get(entity?.id());
+
+		if (!body || isNaN(angle) || !isFinite(angle)) {
+			return;
+		}
+
+		body.setAngle(angle);
+		body.setAwake(true);
+	},
+
+	setLinearVelocity: function (entity, x, y) {
+		const body = this.bodies.get(entity?.id());
+
+		if (!body || isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+			return;
+		}
+
+		if (taro.physics.engine === 'BOX2DWASM') {
+			const velocity = new taro.physics.b2Vec2(x, y);
+			body.setLinearVelocity(velocity);
+			taro.physics.destroyB2dObj(velocity);
+		} else {
+			body.setLinearVelocity(new TaroPoint3d(x, y, 0));
+		}
+	},
+
+	getLinearVelocity: function (entity) {
+		const body = this.bodies.get(entity?.id());
+
+		if (!body) {
+			return { x: 0, y: 0 };
+		}
+
+		const velocity = body.getLinearVelocity();
+		return {
+			x: velocity.x,
+			y: velocity.y,
+		};
+	},
+
+	getPosition: function (entity) {
+		const body = this.bodies.get(entity?.id());
+
+		if (!body) {
+			return { x: 0, y: 0 };
+		}
+
+		const position = body.getPosition();
+		return {
+			x: position.x,
+			y: position.y,
+		};
+	},
+
+	isLocked: function () {
+		return !!this._world?.isLocked();
+	},
+
+	getBodyCount: function () {
+		return this._world?.m_bodyCount || this._world?.GetBodyCount?.() || 0;
+	},
+
+	getContactCount: function () {
+		return this._world?.m_contactCount || this._world?.GetContactCount?.() || 0;
+	},
+
+	getScaleRatio: function () {
+		return this._scaleRatio;
 	},
 
 	_triggerContactEvent: function (entityA, entityB) {
@@ -1075,12 +1016,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 			taro.physics._triggerLeaveEvent(entityA, entityB);
 			taro.physics._triggerLeaveEvent(entityB, entityA);
 		}
-	},
-
-	_enableContactListener: function () {
-		// Set the contact listener methods to detect when
-		// contacts (collisions) begin and end
-		taro.physics.contactListener(this._beginContactCallback, this._endContactCallback);
 	},
 });
 

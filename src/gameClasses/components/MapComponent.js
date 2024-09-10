@@ -18,6 +18,7 @@ var MapComponent = TaroEntity.extend({
 				self.createRegions();
 			});
 		} else if (taro.isClient) {
+			let mapLoadStartTime = performance.now();
 			$.when(taro.client.taroEngineStarted).done(function () {
 				taro.addComponent(TaroTiledComponent).tiled.loadJson(data, function (TaroLayerArray, TaroLayersById) {
 					if (taro.physics && TaroLayersById.walls) {
@@ -25,6 +26,7 @@ var MapComponent = TaroEntity.extend({
 					}
 
 					taro.client.mapLoaded.resolve();
+					taro.client.setLoadingTime('mapLoaded', performance.now() - mapLoadStartTime);
 				});
 			});
 		}

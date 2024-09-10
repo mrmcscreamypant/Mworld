@@ -9,6 +9,29 @@ var ActionComponent = TaroEntity.extend({
 		this.lastProgressTrackedValue = null;
 	},
 
+	filterSerializable: function (obj) {
+		// Check for circular references or non-objects
+		if (Array.isArray(obj)) {
+			const result = [];
+			obj.forEach((element) => {
+				try {
+					result.push(JSON.stringify(element));
+				} catch (e) {}
+			});
+			return result;
+		} else if (typeof obj === 'object') {
+			const result = {};
+			Object.entries(obj).forEach(([k, v]) => {
+				try {
+					result[k] = JSON.stringify(v);
+				} catch (e) {}
+			});
+			return result;
+		} else {
+			return obj;
+		}
+	},
+
 	/**
 	 * Calculates the total number of actions within a nested action object, including disabled actions.
 
@@ -452,10 +475,9 @@ var ActionComponent = TaroEntity.extend({
 							const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
 							const localPlayer = self._script.param.getValue(action.player, vars);
 							localPlayer.streamUpdateData(
-								[{ script: { name: action.scriptName, params: localScriptParams } }],
+								[{ script: { name: action.scriptName, params: self.filterSerializable(localScriptParams) } }],
 								localPlayer._stats.clientId
 							);
-
 							self._script.currentScriptId = previousScriptId;
 							self._script.currentActionLineNumber = previousAcionBlockIdx;
 						}
@@ -471,7 +493,15 @@ var ActionComponent = TaroEntity.extend({
 								const localScriptParams = { ...vars, triggeredFrom: vars.isWorldScript ? 'world' : 'map' };
 								const localPlayer = self._script.param.getValue(action.player, vars);
 								localPlayer.streamUpdateData(
-									[{ script: { name: action.scriptName, entityId: entity.id(), params: localScriptParams } }],
+									[
+										{
+											script: {
+												name: action.scriptName,
+												entityId: entity.id(),
+												params: self.filterSerializable(localScriptParams),
+											},
+										},
+									],
 									localPlayer._stats.clientId
 								);
 
@@ -969,7 +999,7 @@ var ActionComponent = TaroEntity.extend({
 						var unit = self._script.param.getValue(action.unit, vars);
 						var ownerPlayer = unit.getOwner();
 						var userId = ownerPlayer._stats.userId || ownerPlayer._stats.guestUserId;
-						var isGuestUser = !!(!player._stats.userId && player._stats.guestUserId);
+						var isGuestUser = !!(!ownerPlayer._stats.userId && ownerPlayer._stats.guestUserId);
 
 						if (unit && ownerPlayer && userId && ownerPlayer.persistentDataLoaded) {
 							if (taro.game.isWorldMap && !vars.isWorldScript) {
@@ -2083,9 +2113,6 @@ var ActionComponent = TaroEntity.extend({
 						var radians = self._script.param.getValue(action.angle, vars); // entity's facing angle
 						if (entity && radians !== undefined && !isNaN(radians) && !isNaN(speed)) {
 							radians -= Math.radians(90);
-							// console.log("2. setting linear velocity", radians, speed)
-							// entity.body.setLinearVelocity(new TaroPoint3d(Math.cos(radians) * speed, Math.sin(radians) * speed, 0));
-							// entity.setLinearVelocityLT(Math.cos(radians) * speed, Math.sin(radians) * speed);
 							entity.setLinearVelocity(Math.cos(radians) * speed, Math.sin(radians) * speed);
 						}
 
@@ -2124,6 +2151,7 @@ var ActionComponent = TaroEntity.extend({
 					case 'setUnitNameLabel':
 						var unit = self._script.param.getValue(action.unit, vars);
 						var name = self._script.param.getValue(action.name, vars);
+
 						if (unit) {
 							unit.streamUpdateData([{ name: name }]);
 						}
@@ -2337,6 +2365,20 @@ var ActionComponent = TaroEntity.extend({
 						}
 						break;
 
+					case 'enableRotateToFaceMouseCursor':
+						var item = self._script.param.getValue(action.item, vars);
+						if (item && item._category == 'item') {
+							item.streamUpdateData([{ rotateToFaceMouseCursor: true }]);
+						}
+						break;
+
+					case 'disableRotateToFaceMouseCursor':
+						var item = self._script.param.getValue(action.item, vars);
+						if (item && item._category == 'item') {
+							item.streamUpdateData([{ rotateToFaceMouseCursor: false }]);
+						}
+						break;
+
 					// very old
 					case 'castAbility':
 						if (entity && entity._category == 'unit' && entity.ability && action.abilityName) {
@@ -2471,27 +2513,6 @@ var ActionComponent = TaroEntity.extend({
 							if (particleTypeId && entity) {
 								taro.client.emit('stop-emitting-particles', { particleTypeId, entityId: entity.id() });
 							}
-						}
-						break;
-
-					case 'rotateUnitClockwise':
-						var torque = self._script.param.getValue(action.torque, vars);
-						if (entity && entity._category == 'unit' && entity.body && !isNaN(torque)) {
-							// entity.body.m_torque = entity._stats.body.rotationSpeed
-							entity.body.m_torque = torque;
-						} else {
-							// throw new Error( action.type + " - invalid unit")
-						}
-						break;
-
-					// is deprecated ?
-					case 'rotateUnitCounterClockwise':
-						var torque = self._script.param.getValue(action.torque, vars);
-						if (entity && entity._category == 'unit' && entity.body && !isNaN(torque)) {
-							// entity.body.m_torque = -1 * entity._stats.body.rotationSpeed
-							entity.body.m_torque = -1 * torque;
-						} else {
-							// throw new Error( action.type + " - invalid unit")
 						}
 						break;
 
@@ -2644,7 +2665,6 @@ var ActionComponent = TaroEntity.extend({
 											y: Math.sin(angle) * force,
 										},
 									},
-									streamMode: 1,
 								});
 
 								var projectile = new Projectile(data);
@@ -2682,6 +2702,14 @@ var ActionComponent = TaroEntity.extend({
 						var angle = self._script.param.getValue(action.angle, vars);
 						if (player && player._stats.clientId) {
 							player.setCameraPitch(angle);
+						}
+						break;
+
+					case 'playerCameraSetYaw':
+						var player = self._script.param.getValue(action.player, vars);
+						var angle = self._script.param.getValue(action.angle, vars);
+						if (player && player._stats.clientId) {
+							player.setCameraYaw(angle);
 						}
 						break;
 
@@ -3883,20 +3911,7 @@ var ActionComponent = TaroEntity.extend({
 						) {
 							if (taro.isServer) {
 								var oldFacingAngle = entity._rotate.z;
-
-								// var rotateDiff = (newFacingAngle - (oldFacingAngle % (Math.PI * 2))) % (Math.PI * 2)
-								// if (rotateDiff > Math.PI) {
-								//     rotateDiff = - (2 * Math.PI) % rotateDiff
-								// }
-								// else if (rotateDiff < -Math.PI) {
-								//     rotateDiff = (2 * Math.PI) % rotateDiff
-								// }
-
-								// if (!isNaN(rotateDiff)) {
-								//     entity.rotateBy(0, 0, -rotateDiff);
-								// }
 								entity.streamUpdateData([{ rotate: newFacingAngle }]);
-								// console.log('rotating')
 							}
 							// &&
 							else if (
@@ -3942,7 +3957,6 @@ var ActionComponent = TaroEntity.extend({
 								var torque = degDiff > 0 ? Math.min(degDiff, rotationSpeed) : Math.max(degDiff, rotationSpeed * -1);
 
 								entity.applyTorque(torque);
-								// entity.body.applyTorque(torque);
 							} else {
 								throw new Error(`${action.type} - invalid position`);
 							}
@@ -4039,22 +4053,6 @@ var ActionComponent = TaroEntity.extend({
 						if (entity && torque) {
 							entity.applyTorque(torque);
 						}
-						// apply torque on entity here
-
-						break;
-					case 'attachEntityToEntity':
-						var entity = self._script.param.getValue(action.entity, vars);
-						var targetEntity = self._script.param.getValue(action.targetingEntity, vars);
-
-						if (
-							entity &&
-							self.entityCategories.indexOf(entity._category) > -1 &&
-							targetEntity &&
-							self.entityCategories.indexOf(targetEntity._category) > -1
-						) {
-							entity.attachTo(targetEntity);
-						}
-
 						break;
 
 					case 'changeScaleOfEntitySprite':
@@ -4286,7 +4284,8 @@ var ActionComponent = TaroEntity.extend({
 						var key = self._script.param.getValue(action.key, vars);
 						var value = self._script.param.getValue(action.value, vars);
 						var object = self._script.param.getValue(action.object, vars);
-						if (object && key && value) {
+						var valid = taro.workerComponent?.isSafeObject(object) ?? true;
+						if (object && valid && key && value) {
 							object[key] = value;
 						}
 
@@ -4296,8 +4295,8 @@ var ActionComponent = TaroEntity.extend({
 						var key = self._script.param.getValue(action.key, vars);
 						var value = self._script.param.getValue(action.value, vars);
 						var object = self._script.param.getValue(action.object, vars);
-
-						if (object && key && (value || value === 0)) {
+						var valid = taro.workerComponent?.isSafeObject(object) ?? true;
+						if (object && valid && key && (value || value === 0)) {
 							object[key] = parseFloat(value);
 						}
 
@@ -4307,8 +4306,8 @@ var ActionComponent = TaroEntity.extend({
 						var key = self._script.param.getValue(action.key, vars);
 						var value = self._script.param.getValue(action.value, vars);
 						var object = self._script.param.getValue(action.object, vars);
-
-						if (object && key && value) {
+						var valid = taro.workerComponent?.isSafeObject(object) ?? true;
+						if (object && valid && key && value) {
 							object[key] = value;
 						}
 

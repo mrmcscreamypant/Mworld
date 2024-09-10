@@ -8,6 +8,7 @@ class EntitiesToRender {
 	}
 
 	updateAllEntities(/*timeStamp*/): void {
+		const is3D = taro.game.data.defaultData.defaultRenderer === '3d';
 		for (var entityId in this.trackEntityById) {
 			// var timeStart = performance.now();
 
@@ -59,8 +60,6 @@ class EntitiesToRender {
 					var y = entity._translate.y;
 					var rotate = entity._rotate.z;
 				}
-
-				const is3D = taro.game.data.defaultData.defaultRenderer === '3d';
 
 				// if item is being carried by a unit
 				if (ownerUnit) {

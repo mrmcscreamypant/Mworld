@@ -13,10 +13,10 @@ type PhysicsDistsEnum = keyof PhysicsDists;
 
 type PhysicsDistProps = {
 	init: (component: any) => void;
-	getmxfp: (body: any, self: any) => any;
+	getBodyPosition: (body: any, self: any) => any;
 	queryAABB: (self: any, aabb: any, callback: (...args: any) => any) => void;
 	createBody: (self: any, entity: any, body: any, isLossTolerant: boolean) => any;
-	createJoint: (self: any, entityA: any, entityB: any, anchorA: any, anchorB: any) => void;
+	destroyBody: (self: any, entity: any) => void;
 	contactListener: (
 		self: any,
 		beginContactCallback: (contact: any) => any,
@@ -24,6 +24,7 @@ type PhysicsDistProps = {
 		preSolve: (contact: any) => any,
 		postSolve: (contact: any) => any
 	) => void;
+	getEntitiesInRegion: (self: any, region: { x: number; y: number; width: number; height: number }) => TaroEntity[];
 };
 
 const dists: PhysicsDists & { defaultEngine: PhysicsDistsEnum } = {

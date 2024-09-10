@@ -51,7 +51,15 @@ namespace Renderer {
 			private cameraP: THREE.PerspectiveCamera;
 			private dt = 1 / 60;
 
-			private trackingDelay = Math.min(Math.max(0.01, taro?.game?.data?.settings?.camera?.trackingDelay || 3), 60);
+			private trackingDelay = Math.min(
+				Math.max(
+					0,
+					taro?.game?.data?.settings?.camera?.trackingDelay === undefined
+						? 3
+						: taro?.game?.data?.settings?.camera?.trackingDelay
+				),
+				60
+			);
 
 			lastTouch: { x: number; y: number };
 			touchStart: { x: number; y: number };
@@ -265,10 +273,6 @@ namespace Renderer {
 				return Math.PI / 2 - this.controls.getPolarAngle();
 			}
 
-			getAzimuthAngle() {
-				return this.controls.getAzimuthalAngle();
-			}
-
 			setAzimuthAngle(deg: number) {
 				this.azimuthAngle = deg;
 
@@ -284,6 +288,10 @@ namespace Renderer {
 
 				this.cameraP.copy(this.perspectiveCamera);
 				this.cameraO.copy(this.orthographicCamera);
+			}
+
+			getAzimuthAngle() {
+				return this.controls.getAzimuthalAngle();
 			}
 
 			setDistance(distance: number) {
@@ -356,7 +364,16 @@ namespace Renderer {
 					this.target.getWorldPosition(targetWorldPos);
 					const angle = this.controls.getAzimuthalAngle();
 					targetWorldPos.add(this.offset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle));
-					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z, true);
+					this.setPosition(targetWorldPos.x, targetWorldPos.y, targetWorldPos.z, this.trackingDelay !== 0);
+				}
+
+				if (
+					!this.isEditorMode &&
+					!this.target &&
+					this.controls.target.x !== this.tempVec3.x &&
+					this.controls.target.z !== this.tempVec3.z
+				) {
+					this.setPosition(this.tempVec3.x, this.tempVec3.y, this.tempVec3.z, true);
 				}
 
 				if (!this.isLocked) {
@@ -554,6 +571,10 @@ namespace Renderer {
 				}
 			}
 
+			getTrackingDelay() {
+				return this.trackingDelay;
+			}
+
 			setPosition(x: number, y: number, z: number, lerp = false) {
 				// https://www.gamedeveloper.com/programming/improved-lerp-smoothing-
 				const rate = 2 ** Math.log2(this.trackingDelay * 3); // 3 is magic number to kind of match the old behavior in Phaser
@@ -568,7 +589,12 @@ namespace Renderer {
 			}
 
 			setPosition2D(x: number, z: number, lerp = false) {
+				this.tempVec3.set(x, this.controls.target.y, z);
 				this.setPosition(x, this.controls.target.y, z, lerp);
+			}
+
+			getPosition2D() {
+				return new THREE.Vector2(this.controls.target.x, this.controls.target.z);
 			}
 
 			onChange(cb: () => void) {

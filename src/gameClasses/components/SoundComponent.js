@@ -55,6 +55,9 @@ var SoundComponent = TaroEntity.extend({
 					self.stopMusic();
 				}
 			});
+			Object.values(taro.game.data.sound).forEach((v) => {
+				self.initSound(v.file);
+			});
 		}
 	},
 
@@ -194,6 +197,24 @@ var SoundComponent = TaroEntity.extend({
 		}
 	},
 
+	initSound: function (file) {
+		var self = this;
+		self.cachedAudioBuffer[file] = {
+			locked: true,
+			buffer: undefined,
+		};
+		let xhr = new XMLHttpRequest();
+		xhr.open('GET', file, true);
+		xhr.responseType = 'arraybuffer';
+		xhr.onload = function () {
+			self.audioCtx.decodeAudioData(xhr.response, function (buffer) {
+				self.cachedAudioBuffer[file].locked = false;
+				self.cachedAudioBuffer[file].buffer = buffer;
+			});
+		};
+		xhr.send();
+	},
+
 	playSound: function (sound, position, key, shouldRepeat = false) {
 		var self = this;
 		if (taro.isClient) {
@@ -207,6 +228,9 @@ var SoundComponent = TaroEntity.extend({
 					var settingsVolume = parseFloat(self.getItem('sound-volume'));
 					settingsVolume = isNaN(settingsVolume) ? 1 : settingsVolume / 100;
 					volume = settingsVolume * volume;
+				}
+				if (volume === 0) {
+					return;
 				}
 				if (sound && sound.file) {
 					if (self.preLoadedSounds[key] && self.preLoadedSounds[key].src == sound.file) {
@@ -225,21 +249,7 @@ var SoundComponent = TaroEntity.extend({
 						}
 					} else {
 						if (!self.cachedAudioBuffer[sound.file]) {
-							self.cachedAudioBuffer[sound.file] = {
-								locked: true,
-								buffer: undefined,
-								globalGainNode: self.audioCtx.createBiquadFilter(),
-							};
-							let xhr = new XMLHttpRequest();
-							xhr.open('GET', sound.file, true);
-							xhr.responseType = 'arraybuffer';
-							xhr.onload = function () {
-								self.audioCtx.decodeAudioData(xhr.response, function (buffer) {
-									self.cachedAudioBuffer[sound.file].locked = false;
-									self.cachedAudioBuffer[sound.file].buffer = buffer;
-								});
-							};
-							xhr.send();
+							self.initSound(sound.file);
 						} else {
 							if (self.cachedAudioBuffer[sound.file].locked === false) {
 								let source = self.audioCtx.createBufferSource();

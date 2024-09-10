@@ -95,6 +95,13 @@ var PlayerUiComponent = TaroEntity.extend({
 			taro.client.myPlayer.lastHtmlUiClickData = { id: $(this).attr('id') };
 			taro.script.trigger('htmlUiClick', { playerId: taro.client.myPlayer.id() });
 		});
+		
+		$(document).on('pointerup', '.trigger-up', function () {
+			taro.network.send('htmlUiClick', { id: $(this).attr('id') });
+			// Support for mouse up clicks (useful for sliders)
+			taro.client.myPlayer.lastHtmlUiClickData = { id: $(this).attr('id') };
+			taro.script.trigger('htmlUiClick', { playerId: taro.client.myPlayer.id() });
+		});
 	},
 
 	updatePlayerAttributesDiv: function (attributes) {

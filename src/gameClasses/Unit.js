@@ -27,7 +27,9 @@ var Unit = TaroEntityPhysics.extend({
 		unitData = taro.game.cloneAsset('unitTypes', data.type);
 
 		self._stats = _.merge(unitData, data);
-
+		if (self._stats.streamMode === undefined) {
+			self._stats.streamMode = 1;
+		}
 		self.entityId = entityIdFromServer;
 		self._stats.particleEmitters = {};
 
@@ -79,14 +81,11 @@ var Unit = TaroEntityPhysics.extend({
 		// initialize body & texture of the unit
 		self.changeUnitType(data.type, data.defaultData, true);
 
-		if (self._stats.scaleBody) {
-			self._stats.scale = parseFloat(self._stats.scaleBody);
-		} else {
-			if (!self._stats.scale) {
-				self._stats.scale =
-					self._stats.currentBody && self._stats.currentBody.spriteScale > 0 ? self._stats.currentBody.spriteScale : 1;
-			}
+		if (!self._stats.scale) {
+			self._stats.scale =
+				self._stats.currentBody && self._stats.currentBody.spriteScale > 0 ? self._stats.currentBody.spriteScale : 1;
 		}
+
 		self._stats.fadingTextQueue = [];
 
 		self._stats.buffs = [];
@@ -160,6 +159,8 @@ var Unit = TaroEntityPhysics.extend({
 			taro.script.trigger('entityCreatedGlobal', { entityId: this.id() });
 			this.script.trigger('entityCreated');
 		}
+		this.width(self._stats.width);
+		this.height(self._stats.height);
 	},
 
 	shouldRenderAttribute: function (attribute) {
@@ -1568,8 +1569,6 @@ var Unit = TaroEntityPhysics.extend({
 					self.updateStats(item.id(), true);
 				}
 
-				self.detachEntity(item.id()); // taroEntityPhysics comment: not working right now
-
 				const triggerParams = { itemId: item.id(), unitId: self.id() };
 				//we cant use queueTrigger here because it will be called after entity scripts and item or unit probably no longer exists
 				item.script.trigger('thisItemIsDropped', triggerParams); // this entity (item)
@@ -1798,25 +1797,11 @@ var Unit = TaroEntityPhysics.extend({
 					case 'scaleBody':
 						self._stats[attrName] = newValue;
 						if (taro.isServer) {
-							// finding all attach entities before changing body dimensions
-							if (self.jointsAttached) {
-								var attachedEntities = {};
-								for (var entityId in self.jointsAttached) {
-									var entity = self.jointsAttached[entityId];
-									if (entityId != self.id()) {
-										attachedEntities[entityId] = true;
-									}
-								}
-							}
-
-							// changing body dimensions
-							self._scaleBox2dBody(newValue);
+							self.scaleBodyBy(newValue);
 						} else if (taro.isClient) {
 							if (taro.physics) {
-								self._scaleBox2dBody(newValue);
+								self.scaleBodyBy(newValue);
 							}
-							self._stats.scale = newValue;
-							self._scaleTexture();
 						}
 						break;
 					case 'isNameLabelHidden':
@@ -2140,11 +2125,13 @@ var Unit = TaroEntityPhysics.extend({
 		if (ownerPlayer) {
 			// mobile control: rotate to rotation provided by the client and convert it to radians
 			if (this._stats.controls && this._stats.controls.absoluteRotation) {
-				if (taro.isMobile) this.angleToTarget = ownerPlayer.absoluteAngle * 0.017453;
-				else this.angleToTarget = ownerPlayer.absoluteAngle;
-
-				// desktop control: if this unit's not under a command, rotate to mouse xy coordinate
+				if (taro.isMobile) {
+					this.angleToTarget = ownerPlayer.absoluteAngle * 0.017453;
+				} else {
+					this.angleToTarget = ownerPlayer.absoluteAngle;
+				}
 			} else {
+				// desktop control: if this unit's not under a command, rotate to mouse xy coordinate
 				var mouse = ownerPlayer.control?.input?.mouse;
 				if (mouse) {
 					var a = this._translate.x - mouse.x;
@@ -2222,7 +2209,11 @@ var Unit = TaroEntityPhysics.extend({
 			self.script.trigger(trigger.name, trigger.params);
 		});
 
-		if (taro.isServer || (taro.isClient && (taro.client.selectedUnit == this || this._stats.streamMode !== 1))) {
+		// don't apply movement logic for this unit on client if it's not streaming its position
+		if (
+			taro.isServer ||
+			(taro.isClient && (taro.client.selectedUnit == this || this._stats.streamMode !== 1)) // streams position, create & destroy
+		) {
 			// ability component behaviour method call
 			this.ability._behaviour();
 
@@ -2286,20 +2277,20 @@ var Unit = TaroEntityPhysics.extend({
 
 					// ignore client-side movement input if cspMode is 2 (client-authoritative),
 					// this unit's position is now dictated by the position streamed by its owner
-					if (
-						!taro.game.data.defaultData.clientPhysicsEngine ||
-						!(taro.isServer && self._stats.controls?.cspMode == 2)
-					) {
-						// moving diagonally should reduce speed
-						if (self.direction.x != 0 && self.direction.y != 0) {
-							speed = speed / 1.41421356237;
-						}
-
-						self.vector = {
-							x: self.direction.x * speed,
-							y: self.direction.y * speed,
-						};
+					// if (
+					// 	!taro.game.data.defaultData.clientPhysicsEngine ||
+					// 	!(taro.isServer && self._stats.controls?.cspMode == 2)
+					// ) {
+					// moving diagonally should reduce speed
+					if (self.direction.x != 0 && self.direction.y != 0) {
+						speed = speed / 1.41421356237;
 					}
+
+					self.vector = {
+						x: self.direction.x * speed,
+						y: self.direction.y * speed,
+					};
+					// }
 				}
 
 				// update AI
@@ -2307,10 +2298,12 @@ var Unit = TaroEntityPhysics.extend({
 					self.distanceToTarget = self.ai.getDistanceToTarget();
 					self.ai.update();
 					// enable AI unit flipping based on target
-					if (!isNaN(this.angleToTarget) && this.angleToTarget > 0 && this.angleToTarget < Math.PI) {
-						this.flip(0);
-					} else {
-						this.flip(1);
+					if (this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse) {
+						if (!isNaN(this.angleToTarget) && this.angleToTarget > 0 && this.angleToTarget < Math.PI) {
+							this.flip(0);
+						} else {
+							this.flip(1);
+						}
 					}
 				}
 
@@ -2326,15 +2319,16 @@ var Unit = TaroEntityPhysics.extend({
 			}
 
 			// flip unit
-			if (
-				this._stats.controls &&
-				this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse &&
-				self.angleToTargetRelative
-			) {
-				if (self.angleToTargetRelative > 0 && self.angleToTargetRelative < Math.PI) {
-					self.flip(0);
-				} else {
-					self.flip(1);
+			let mouse = ownerPlayer.control?.input?.mouse;
+			if (mouse) {
+				let angleBetweenUnitAndMouse =
+					Math.atan2(mouse.y - this._translate.y, mouse.x - this._translate.x) + Math.radians(90);
+				if (this._stats.controls && this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse) {
+					if (angleBetweenUnitAndMouse > 0 && angleBetweenUnitAndMouse < Math.PI) {
+						self.flip(0);
+					} else {
+						self.flip(1);
+					}
 				}
 			}
 		}
@@ -2390,7 +2384,7 @@ var Unit = TaroEntityPhysics.extend({
 			taro.client.emit('unit-position', [this._translate.x, this._translate.y]);
 		}
 
-		this.processBox2dQueue();
+		this.processQueue();
 	},
 
 	destroy: function () {

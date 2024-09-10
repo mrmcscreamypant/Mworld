@@ -7,8 +7,8 @@ namespace Renderer {
 			originalSize = new THREE.Vector3();
 			originalScale = new THREE.Vector3();
 			firstTime = true;
-
-			private aabb = new THREE.Box3();
+			taroEntity?: TaroEntityPhysics;
+			aabb = new THREE.Box3();
 			// OBB is something just like Box3 but with rotation
 			private obb = new OBB();
 
@@ -17,14 +17,13 @@ namespace Renderer {
 			private center = new THREE.Vector3();
 			private meshSize = new THREE.Vector3(1, 1, 1);
 
-			constructor(name: string) {
+			constructor(name: string, taroEntity?: TaroEntityPhysics) {
 				super();
-
+				this.taroEntity = taroEntity;
 				this.add(this.root);
-
 				const model = gAssetManager.getModel(name);
 				this.mesh = SkeletonUtils.clone(model.scene);
-
+				(this.mesh as any).entity = this.taroEntity;
 				this.originalSize.copy(this.getSize());
 				this.originalScale.copy(this.mesh.scale);
 				this.aabb.setFromObject(this.mesh);
@@ -38,7 +37,7 @@ namespace Renderer {
 			setModel(model: GLTF) {
 				this.root.remove(this.mesh);
 				this.mesh = SkeletonUtils.clone(model.scene);
-
+				(this.mesh as any).entity = this.taroEntity;
 				this.firstTime = true;
 				this.originalSize.copy(this.getSize());
 				this.originalScale.copy(this.mesh.scale);

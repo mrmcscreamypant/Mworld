@@ -49,6 +49,9 @@ var Region = TaroEntityPhysics.extend({
 			self._translate.x = regionDimension.x + regionDimension.width / 2;
 			self._translate.y = regionDimension.y + regionDimension.height / 2;
 
+			this.width(self._stats.default.width);
+			this.height(self._stats.default.height);
+
 			self.updateBody({
 				translate: { x: self._translate.x, y: self._translate.y },
 			});
@@ -75,17 +78,17 @@ var Region = TaroEntityPhysics.extend({
 		this.height(regionCordinates.height);
 		//this.depth(regionCordinates.depth || 0);
 
-		if (taro.isServer) {
-			var shapeData = {};
-			var normalizer = 0.45;
-			shapeData.width = regionCordinates.width * normalizer;
-			shapeData.height = regionCordinates.height * normalizer;
-			//shapeData.depth = regionCordinates.depth * normalizer;
-			// shapeData.x = regionCordinates.x;
-			// shapeData.y = regionCordinates.y;
-			this._stats.currentBody.fixtures[0].shape.data = shapeData;
-			this.updateBody(this._stats.currentBody);
-		} else {
+		var shapeData = {};
+		var normalizer = 0.45;
+		shapeData.width = regionCordinates.width * normalizer;
+		shapeData.height = regionCordinates.height * normalizer;
+		//shapeData.depth = regionCordinates.depth * normalizer;
+		// shapeData.x = regionCordinates.x;
+		// shapeData.y = regionCordinates.y;
+		this._stats.currentBody.fixtures[0].shape.data = shapeData;
+		this.updateBody(this._stats.currentBody);
+
+		if (taro.isClient) {
 			// isClient
 			this.emit('transform');
 		}
@@ -137,7 +140,7 @@ var Region = TaroEntityPhysics.extend({
 			}
 		}
 
-		this.processBox2dQueue();
+		this.processQueue();
 	},
 });
 

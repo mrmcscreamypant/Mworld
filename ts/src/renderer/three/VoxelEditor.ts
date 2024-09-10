@@ -10,8 +10,8 @@ class VoxelEditor {
 	tileSize: number;
 	prevData: { edit: MapEditTool['edit'] } | undefined;
 	commandController: CommandController = new CommandController({
-		increaseBrushSize: () => {},
-		decreaseBrushSize: () => {},
+		increaseBrushSize: () => { },
+		decreaseBrushSize: () => { },
 	});
 	leftButtonDown: boolean;
 
@@ -23,7 +23,7 @@ class VoxelEditor {
 		this.voxelMarker = new Renderer.Three.VoxelMarker(this.commandController);
 		taro.client.on('switch-layer', (value) => {
 			if (value !== this.currentLayerIndex) {
-				this.voxels.updateLayer(new Map(), this.currentLayerIndex);
+				this.voxels.updateLayer(new Map(), this.currentLayerIndex, false, true);
 				this.switchLayer(value);
 				renderer.voxelEditor.voxelMarker.updatePreview();
 			}
@@ -31,12 +31,12 @@ class VoxelEditor {
 
 		taro.client.on('updateMap', () => {
 			let numTileLayers = 0;
-			this.voxels.voxels = [];
+			this.voxels.voxelsCellData = [];
 			for (const [idx, layer] of taro.game.data.map.layers.entries()) {
 				if (layer.type === 'tilelayer' && layer.data) {
+					this.voxels.setLayerLookupTable(idx, numTileLayers);
 					const voxels = Renderer.Three.Voxels.generateVoxelsFromLayerData(layer, numTileLayers, false);
 					this.voxels.updateLayer(voxels, idx);
-					this.voxels.setLayerLookupTable(idx, numTileLayers);
 					numTileLayers++;
 				}
 			}
@@ -55,12 +55,12 @@ class VoxelEditor {
 		});
 
 		taro.client.on('brush', () => {
-			this.voxels.updateLayer(new Map(), this.currentLayerIndex);
+			this.voxels.updateLayer(new Map(), this.currentLayerIndex, false, true);
 			this.voxelMarker.updatePreview(true, true);
 		});
 
 		taro.client.on('empty-tile', () => {
-			this.voxels.updateLayer(new Map(), this.currentLayerIndex);
+			this.voxels.updateLayer(new Map(), this.currentLayerIndex, false, true);
 			this.voxelMarker.updatePreview(true, true);
 		});
 
@@ -136,7 +136,7 @@ class VoxelEditor {
 	}
 
 	removePreview() {
-		this.voxels.updateLayer(new Map(), this.currentLayerIndex);
+		this.voxels.updateLayer(new Map(), this.currentLayerIndex, false, true);
 		this.voxelMarker.removeMeshes();
 	}
 
@@ -175,15 +175,14 @@ class VoxelEditor {
 			case 'edit': {
 				//save tile change to taro.game.data.map and taro.map.data
 				const nowValue = dataValue as TileData<'edit'>['edit'];
-				nowValue.selectedTiles.forEach((v, idx) => {
+				for (let [idx, v] of nowValue.selectedTiles.entries()) {
 					if (
 						taro.game.data.map.layers[nowValue.layer[idx]].type === 'tilelayer' &&
 						taro.game.data.map.layers[nowValue.layer[idx]].data
 					) {
 						this.putTiles(nowValue.x, nowValue.y, v, nowValue.size, nowValue.shape, nowValue.layer[idx], true);
 					}
-				});
-
+				}
 				break;
 			}
 			case 'clear': {
@@ -226,12 +225,11 @@ class VoxelEditor {
 		flat = false,
 		isPreview = false
 	) {
-		const voxels = new Map<string, Renderer.Three.VoxelCell>();
+		const voxels = new Map();
 		const allFacesVisible = [false, false, false, false, false, false];
 		const onlyBottomFaceVisible = [true, true, true, false, true, true];
 		const hiddenFaces = flat ? onlyBottomFaceVisible : allFacesVisible;
 		const calcData = this.brushArea.calcSample(selectedTiles, brushSize, shape, true);
-		const yOffset = 0.001;
 		const sample = calcData.sample;
 		const size = brushSize === 'fitContent' ? { x: calcData.xLength, y: calcData.yLength } : brushSize;
 		const taroMap = taro.game.data.map;
@@ -251,14 +249,18 @@ class VoxelEditor {
 					let tileId = sample[x][y];
 					tileId -= 1;
 					const height = this.voxels.calcHeight(layer);
-					const pos = { x: _x, y: height + yOffset * height, z: _z };
-
+					const pos = { x: _x, y: height + Renderer.Three.Voxels.Y_OFFSET * height, z: _z };
 					voxels.set(Renderer.Three.getKeyFromPos(pos.x, pos.y, pos.z), {
 						position: [pos.x, pos.y, pos.z],
 						type: tileId,
 						visible: true,
 						hiddenFaces: [...hiddenFaces],
+						uvs: [],
 						isPreview,
+						normals: [],
+						topIndices: [],
+						sidesIndices: [],
+						positions: [],
 					});
 					if (!isPreview) {
 						tileId += 1;
@@ -289,8 +291,7 @@ class VoxelEditor {
 	}
 
 	getTile(tileX: number, tileY: number, tileZ: number, layer?: number): number {
-		const renderer = Renderer.Three.instance();
-		const voxelsMap = Renderer.Three.getVoxels().voxels[layer ?? this.currentLayerIndex];
+		const voxelsMap = Renderer.Three.getVoxels().voxelsCellData[layer ?? this.currentLayerIndex];
 		let tileId = voxelsMap.get(Renderer.Three.getKeyFromPos(tileX + 0.5, tileY, tileZ + 0.5))?.type ?? -2;
 		return tileId + 1;
 	}
@@ -312,9 +313,8 @@ class VoxelEditor {
 		const oldTile = this.getTile(_x, this.voxels.calcLayersHeight(this.currentLayerIndex), _y);
 		nowTile[_x][_y] = oldTile;
 		const nowLayer = this.currentLayerIndex;
-		if (!this.leftButtonDown) {
-			this.voxelMarker.updatePreview();
-		} else {
+		this.voxelMarker.updatePreview();
+		if (this.leftButtonDown) {
 			switch (taro.developerMode.activeButton) {
 				case 'eraser':
 				case 'brush': {
@@ -333,7 +333,7 @@ class VoxelEditor {
 					const nowLayer = this.currentLayerIndex;
 					const addToLimits = (v2d: Vector2D) => {
 						setTimeout(() => {
-							const cache = this.commandController.commands[nowCommandCount - this.commandController.offset]
+							const cache = this.commandController.commands[nowCommandCount]
 								.cache as Record<number, Record<number, number>>;
 							if (!cache[v2d.x]) {
 								cache[v2d.x] = {};
@@ -357,7 +357,7 @@ class VoxelEditor {
 									_x,
 									_y,
 									false,
-									this.commandController.commands[nowCommandCount - this.commandController.offset].cache,
+									this.commandController.commands[nowCommandCount].cache,
 									undefined,
 									true
 								);
@@ -382,7 +382,7 @@ class VoxelEditor {
 		if (taroMap.layers[this.currentLayerIndex].data[_y * taroMap.width + _x] !== 0) {
 			renderer.tmp_tileId = taroMap.layers[this.currentLayerIndex].data[_y * taroMap.width + _x];
 		}
-		this.voxels.updateLayer(new Map(), this.currentLayerIndex);
+		this.voxels.updateLayer(new Map(), this.currentLayerIndex, false, true);
 	}
 
 	floodFill(
@@ -485,23 +485,30 @@ class VoxelEditor {
 
 	switchLayer(value: number): void {
 		const voxels = Renderer.Three.getVoxels();
+		this.currentLayerIndex = value;
 		if (!voxels.meshes[value]) {
 			return;
 		}
-		this.currentLayerIndex = value;
-		voxels.meshes[value].visible = true;
+
+		for (let mesh of Object.values(voxels.meshes[value])) {
+			mesh.visible = true;
+		}
 	}
 
 	hideLayer(layer: number, state: boolean): void {
-		Renderer.Three.getVoxels().meshes[layer].visible = !state;
+		const voxels = Renderer.Three.getVoxels();
+		for (let mesh of Object.values(voxels.meshes[layer])) {
+			mesh.visible = !state;
+		}
 	}
 
 	showAllLayers(): void {
 		const voxels = Renderer.Three.getVoxels();
-		for (let i = 0; i < voxels.meshes.length; i++) {
-			if (voxels?.meshes[i]?.visible === false) {
-				this.hideLayer(i, false);
-			}
+		for (let [layer, chunkKey] of Object.entries(voxels.meshes)) {
+			for (let mesh of Object.values(chunkKey))
+				if (mesh.visible === false) {
+					this.hideLayer(parseInt(layer), false);
+				}
 		}
 	}
 

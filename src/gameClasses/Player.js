@@ -59,7 +59,7 @@ var Player = TaroEntity.extend({
 				// mouse move listener
 				taro.input.on('pointermove', function (point) {
 					if (taro.client.myPlayer) {
-						if (taro.isMobile && !taro.client?.selectedUnit?._stats?.cameraPointerLock) {
+						if (taro.client.joystickExists && !taro.client?.selectedUnit?._stats?.cameraPointerLock) {
 							return;
 						}
 						self.control.input.mouse.x = point.x.toFixed(0);
@@ -142,7 +142,25 @@ var Player = TaroEntity.extend({
 
 					// Adding script data and default variables to the player join stream data for developer clients
 					if (taro.server.developerClientIds.includes(clientId)) {
+						const unitScripts = {};
+						Object.entries(taro.game.data.unitTypes).forEach((unitType) => {
+							unitScripts[unitType[0]] = unitType[1].scripts;
+						});
+						const itemScripts = {};
+						Object.entries(taro.game.data.itemTypes).forEach((itemType) => {
+							itemScripts[itemType[0]] = itemType[1].scripts;
+						});
+						const projectileScripts = {};
+						Object.entries(taro.game.data.projectileTypes).forEach((projectileType) => {
+							projectileScripts[projectileType[0]] = projectileType[1].scripts;
+						});
+						const entityScripts = {
+							unitTypes: unitScripts,
+							itemTypes: itemScripts,
+							projectileTypes: projectileScripts,
+						};
 						playerJoinStreamData.push({ scriptData: taro.game.data.scripts });
+						playerJoinStreamData.push({ entityScriptData: entityScripts });
 						playerJoinStreamData.push({ variableData: taro.defaultVariables });
 					}
 
@@ -287,6 +305,16 @@ var Player = TaroEntity.extend({
 			}
 		} else if (taro.isClient) {
 			taro.client.emit('camera-pitch', angle);
+		}
+	},
+
+	setCameraYaw: function (angle) {
+		if (taro.isServer) {
+			if (this._stats.clientId) {
+				this.streamUpdateData([{ cameraYaw: angle }], this._stats.clientId);
+			}
+		} else if (taro.isClient) {
+			taro.client.emit('camera-yaw', angle);
 		}
 	},
 
@@ -517,6 +545,10 @@ var Player = TaroEntity.extend({
 			if (taro.isServer) {
 				const i = taro.server.developerClientIds.indexOf(this._stats.clientId);
 				if (i != -1) taro.server.developerClientIds.splice(i, 1);
+
+				if (this.isTrading) {
+					taro.server._onTrade({ type: 'cancel', cancleBy: this.tradingWith, cancleTo: this.id() });
+				}
 			}
 
 			taro.script.trigger('playerLeavesGame', { playerId: this.id() });
@@ -688,9 +720,18 @@ var Player = TaroEntity.extend({
 								self.setCameraPitch(newValue);
 								break;
 
+							case 'cameraYaw':
+								self.setCameraYaw(newValue);
+								break;
+
 							case 'scriptData':
 								taro.developerMode.serverScriptData = newValue;
-								taro.developerMode.savedScriptData = newValue;
+								taro.developerMode.savedScriptData = rfdc()(newValue);
+								break;
+
+							case 'entityScriptData':
+								taro.developerMode.serverEntityScriptData = newValue;
+								taro.developerMode.savedEntityScriptData = rfdc()(newValue);
 								break;
 
 							case 'variableData':

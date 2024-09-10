@@ -14,6 +14,9 @@ var Projectile = TaroEntityPhysics.extend({
 
 		self.entityId = this._id;
 		self._stats = _.merge(projectileData, data);
+		if (self._stats.streamMode === undefined) {
+			self._stats.streamMode = 1;
+		}
 		self._stats.particleEmitters = {};
 
 		// dont save variables in _stats as _stats is stringified and synced
@@ -181,7 +184,7 @@ var Projectile = TaroEntityPhysics.extend({
 			}
 		}
 
-		this.processBox2dQueue();
+		this.processQueue();
 	},
 
 	changeProjectileType: function (type, defaultData) {
@@ -276,23 +279,21 @@ var Projectile = TaroEntityPhysics.extend({
 				var newValue = data[attrName];
 
 				switch (attrName) {
+					case 'scale':
+						this._stats[attrName] = newValue;
+						if (taro.isClient) {
+							this._scaleTexture();
+						}
+						break;
+
 					case 'scaleBody':
 						this._stats[attrName] = newValue;
 						if (taro.isServer) {
-							// finding all attach entities before changing body dimensions
-							if (this.jointsAttached) {
-								var attachedEntities = {};
-								for (var entityId in this.jointsAttached) {
-									if (entityId != this.id()) {
-										attachedEntities[entityId] = true;
-									}
-								}
-							}
-
-							this._scaleBox2dBody(newValue);
+							this.scaleBodyBy(newValue);
 						} else if (taro.isClient) {
-							this._stats.scale = newValue;
-							this._scaleTexture();
+							if (taro.physics) {
+								this.scaleBodyBy(newValue);
+							}
 						}
 						break;
 
