@@ -17,7 +17,7 @@ namespace Renderer {
 
 
 			constructor(private spriteSheet: TextureSheet, defaultSize?: [number, number]) {
-				super(spriteSheet.texture, [spriteSheet.originalWidth / defaultSize[0], spriteSheet.originalHeight / defaultSize[1]]);
+				super(spriteSheet.texture, defaultSize? [spriteSheet.originalWidth / defaultSize[0], spriteSheet.originalHeight / defaultSize[1]]: undefined);
 				this.originalWidth = spriteSheet.originalWidth;
 				this.originalHeight = spriteSheet.originalHeight;
 				this.tileH = 1 / (spriteSheet.width / spriteSheet.tileWidth);
