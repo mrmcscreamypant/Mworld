@@ -2323,13 +2323,32 @@ var Unit = TaroEntityPhysics.extend({
 			if (mouse) {
 				let angleBetweenUnitAndMouse =
 					Math.atan2(mouse.y - this._translate.y, mouse.x - this._translate.x) + Math.radians(90);
-				if (this._stats.controls && this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse) {
+				if (
+					this._stats.controls &&
+					(this._stats.controls.mouseBehaviour.flipSpriteHorizontallyWRTMouse ||
+						this._stats.controls.spriteFlipType === 'toward-mouse')
+				) {
 					if (angleBetweenUnitAndMouse > 0 && angleBetweenUnitAndMouse < Math.PI) {
 						self.flip(0);
 					} else {
 						self.flip(1);
 					}
 				}
+			}
+			if (
+				(this.vector.x !== 0 || this.vector.y !== 0) &&
+				this._stats.controls.spriteFlipType === 'movement-direction'
+			) {
+				let spriteFlipDirection = this._stats.controls.spriteFlipDirection ?? 0;
+				let flipMode = 0; // 0b00
+				// FlipMode.ts
+				if (this.vector.x <= 0 && spriteFlipDirection > 0) {
+					flipMode |= 1; // 0b01
+				}
+				if (this.vector.y <= 0 && spriteFlipDirection > 1) {
+					flipMode |= 2; // 0b10
+				}
+				this.flip(flipMode);
 			}
 		}
 

@@ -2232,13 +2232,16 @@ var TaroEntity = TaroObject.extend({
 		this._renderEntity(_ctx, dontTransform);
 	},
 
-	flip: function (isFlipping) {
-		if (taro.isServer && this._stats.flip !== isFlipping) {
-			this.streamUpdateData([{ flip: isFlipping }]);
-		} else if (taro.isClient) {
-			this.emit('flip', [isFlipping]);
+	flip: function (flipMode) {
+		if (this._stats.flip === flipMode) {
+			return;
 		}
-		this._stats.flip = isFlipping;
+		if (taro.isServer) {
+			this.streamUpdateData([{ flip: flipMode }]);
+		} else if (taro.isClient) {
+			this.emit('flip', [flipMode]);
+		}
+		this._stats.flip = flipMode;
 	},
 
 	/**
