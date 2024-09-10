@@ -33,7 +33,6 @@ class UiScene extends PhaserScene {
 									key = keybindingKey;
 								}
 							});
-							console.log(abilityId, ability, key);
 							this.generateHTMLButton(key, abilityId, key, ability);
 							// phaserButtonBar.addButton(abilityId, ability, key);
 						}
@@ -149,7 +148,6 @@ class UiScene extends PhaserScene {
 			}
 		});
 		htmlButton.addEventListener('mouseup', function () {
-			console.log('clicked ability button');
 			if (taro.isClient) {
 				taro.client.emit('key-up', {
 					device: 'key',

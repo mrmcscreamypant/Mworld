@@ -115,9 +115,6 @@ namespace Renderer {
 				const entity = new Unit(taroEntity._id, taroEntity._stats.ownerId, taroEntity, instancedMesh);
 				entity.setHudScale(1 / renderer.camera.lastAuthoritativeZoom);
 
-				console.log('taro entity unit created');
-				console.log(entity);
-
 				if (taroEntity._stats.cameraPointerLock) {
 					entity.cameraConfig.pointerLock = taroEntity._stats.cameraPointerLock;
 				}
@@ -349,8 +346,6 @@ namespace Renderer {
 			updateAttributes(data) {
 				this.topAttributes.clear();
 				this.bottomAttributes.clear();
-
-				console.log(data);
 
 				for (const attr of data.attrs) {
 					if (Mapper.ProgressBar(attr).anchorPosition != 'below') {
