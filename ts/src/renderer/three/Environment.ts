@@ -1,3 +1,6 @@
+const dummy = new THREE.Object3D();
+const tempVec = new THREE.Vector3();
+
 enum ShadowQuality {
 	Simple,
 	Low,
@@ -104,7 +107,8 @@ namespace Renderer {
 					this.renderer.renderer.shadowMap.enabled = true;
 					this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-					const shadowMapSize = this.shadowQuality === ShadowQuality.Low ? 512 : ShadowQuality.Medium ? 1024 : 2048;
+					const shadowMapSize =
+						this.shadowQuality === ShadowQuality.Low ? 512 : this.shadowQuality === ShadowQuality.Medium ? 1024 : 2048;
 
 					this.directionalLight.castShadow = true;
 					this.directionalLight.shadow.mapSize.width = shadowMapSize;
@@ -161,14 +165,33 @@ namespace Renderer {
 
 						const setInstancesToEntitiesTransform = (entities: Unit[] | Item[]) => {
 							for (const entity of entities) {
-								if (!entity.taroEntity._stats.shadow) {
+								if (!entity.taroEntity._stats.shadow || !entity.visible) {
 									continue;
 								}
 
-								dummy.position.copy(entity.position);
-								dummy.position.y = 0.501; // should be on floor layer
+								const scaleX = entity.size.x;
+								let scaleZ = entity.size.y;
+								let posX = entity.position.x;
+								let posY = entity.position.y;
+								let posZ = entity.position.z;
+
+								if (entity.body instanceof Sprite) {
+									if (entity.body.billboard) {
+										scaleZ = scaleX;
+
+										if (entity instanceof Unit) {
+											const bottomHudPos = entity.bottomHud.getWorldPosition(tempVec);
+											posX = bottomHudPos.x;
+											posY = bottomHudPos.y;
+											posZ = bottomHudPos.z;
+										}
+									}
+								}
+
+								dummy.position.set(posX, posY, posZ);
+								dummy.position.y = 0.501; // TODO: move floor layer to be at 0, not 0.5
 								dummy.rotation.y = entity.body.rotation.y;
-								dummy.scale.set(entity.size.x, 1, entity.size.y);
+								dummy.scale.set(scaleX, 1, scaleZ);
 								dummy.updateMatrix();
 								this.shadowMesh.setMatrixAt(i++, dummy.matrix);
 							}
@@ -178,6 +201,7 @@ namespace Renderer {
 						setInstancesToEntitiesTransform(this.renderer.entityManager.items);
 						setInstancesToEntitiesTransform(this.renderer.entityManager.projectiles);
 
+						this.shadowMesh.count = i;
 						this.shadowMesh.instanceMatrix.needsUpdate = true;
 						this.shadowMesh.computeBoundingSphere();
 
@@ -188,7 +212,7 @@ namespace Renderer {
 					case ShadowQuality.High: {
 						const setCastShadowSettingOnEntities = (entities: Unit[] | Item[]) => {
 							for (const entity of entities) {
-								const shadowsEnabled = entity.taroEntity._stats.shadow;
+								const shadowsEnabled = !!entity.taroEntity._stats.shadow && entity.visible;
 
 								if (entity.castShadow !== shadowsEnabled) {
 									entity.castShadow = shadowsEnabled;
@@ -196,7 +220,7 @@ namespace Renderer {
 									entity.body.traverse((child) => {
 										if (child instanceof THREE.Mesh) {
 											if (child.castShadow !== shadowsEnabled) {
-												child.castShadow = child.visible;
+												child.castShadow = entity.castShadow;
 											}
 										}
 									});
