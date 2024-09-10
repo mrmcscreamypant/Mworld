@@ -225,16 +225,12 @@ namespace Renderer {
 						if (isNaN(this.action.scale.z)) {
 							this.action.scale.z = 0;
 						}
-						if (this.body instanceof Renderer.Three.Model) {
-							this.setSize(
-								Utils.pixelToWorld(this.defaultWidth * action.scale.x),
-								Utils.pixelToWorld(this.defaultDepth * action.scale.z),
-								Utils.pixelToWorld(this.defaultHeight * action.scale.y)
-							);
-						} else {
 
-							this.setSize(action.scale.x, action.scale.z, action.scale.y);
-						}
+						this.setSize(
+							Utils.pixelToWorld(this.defaultWidth * action.scale.x),
+							Utils.pixelToWorld(this.defaultDepth * action.scale.z),
+							Utils.pixelToWorld(this.defaultHeight * action.scale.y)
+						);
 					}
 					if (!isNaN(this.action.width) && !isNaN(action.width)) {
 						this.action.width = action.width;
