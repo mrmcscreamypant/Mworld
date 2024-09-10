@@ -11,14 +11,14 @@ namespace Renderer {
 			private flipY = 1;
 			private angleOffset = 0;
 
-			constructor(protected tex: THREE.Texture) {
+			constructor(protected tex: THREE.Texture, sizeRatio?: [number, number]) {
 				super();
 
-				const geometry = new THREE.PlaneGeometry(1, 1);
+				const geometry = sizeRatio ? new THREE.PlaneGeometry(sizeRatio[0], sizeRatio[1]) : new THREE.PlaneGeometry(1, 1);
 				geometry.rotateX(-Math.PI / 2);
 				const material = new THREE.MeshStandardMaterial({
 					map: tex,
-					transparent: true,
+ 						transparent: true,
 					alphaTest: 0.3,
 					side: THREE.DoubleSide,
 				});

@@ -135,6 +135,7 @@ namespace Renderer {
 
 			setSize(x: number, y: number, z: number) {
 				if (this.body instanceof AnimatedSprite) {
+					this.body.originalHeight
 					this.scale.set(x, 1, z);
 				} else if (this.body instanceof Model) {
 					this.scale.x = this.body.originalScale.x * (x / this.body.originalSize.x);
