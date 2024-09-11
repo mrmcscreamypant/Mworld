@@ -406,8 +406,10 @@ class AStarPathfindingComponent extends TaroEntity {
 					possibleSegment.push({
 						from: j,
 						to: i,
-						// a square heuristic for diagonal, a normal heuristic for horizontal and vertical to encourage diagonal movement
-						heuristic: isDiagonal ? Math.pow(i - j, 2) : (i - j),
+						// a cubic heuristic for diagonal 
+						// a square heuristic for long horizontal and vertical,
+						// a normal heuristic for short horizontal and vertical to encourage diagonal movement
+						heuristic: isDiagonal ? Math.pow(i - j, 3) : (i - j > 1 ? Math.pow(i - j, 2) : 1),
 						largestCompatibleIndex: 0, // init only, to be evaluated soon
 						maxTotalHeuristic: 0, // init only, to be evaluated soon
 						shouldBackTracking: false // init only, to be evaluated soon
