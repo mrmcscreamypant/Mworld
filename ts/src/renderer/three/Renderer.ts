@@ -167,6 +167,7 @@ namespace Renderer {
 
 				this.camera = new Camera(window.innerWidth, window.innerHeight, this.renderer.domElement);
 				this.camera.setElevationAngle(taro.game.data.settings.camera.defaultPitch);
+				this.camera.setAzimuthAngle(taro.game.data.settings.camera.defaultYaw);
 				if (taro.game.data.settings.camera.projectionMode !== 'orthographic') {
 					this.camera.setProjection(taro.game.data.settings.camera.projectionMode);
 				}
