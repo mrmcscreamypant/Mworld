@@ -10,10 +10,10 @@ class AStarPathfindingComponent extends TaroEntity {
 		// everytime when path generate failure, path should set to empty array (this.path = aStarResult.path automatically done for it)
 		this.previousTargetPosition = undefined;
 	}
-	/*
-	 * @param x
-	 * @param y
-	 * @return .path = {Array}, .ok = {bool}
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @returns {{path: [], ok: boolean}}
 	 * Use .path to get return array with tiled x and y coordinates of the path (Start node exclusive)
 	 * if target position is not reachable (no road to go / inside wall) path will include tiled x and y passed only
 	 * if the unit already at the target location, .path return empty array
@@ -53,8 +53,18 @@ class AStarPathfindingComponent extends TaroEntity {
 			return returnValue;
 		}
 
+		/**
+		 * @type {Array<{current: {x: number, y: number}, parent: {x: number, y: number}, totalHeuristic: number}>}
+		 */
 		let openList = []; // store grid nodes that is under evaluation
+
+		/**
+		 * @type {Array<{current: {x: number, y: number}, parent: {x: number, y: number}, totalHeuristic: number}>}
+		 */
 		let closeList = []; // store grid nodes that finished evaluation
+		/**
+		 * @type {Array<{x: number, y: number}>}
+		 */
 		let tempPath = []; // store path to return (smaller index: closer to target, larger index: closer to start)
 		openList.push({ current: { ...unitTilePosition }, parent: { x: -1, y: -1 }, totalHeuristic: 0 }); // push start node to open List
 
@@ -238,6 +248,7 @@ class AStarPathfindingComponent extends TaroEntity {
 					}
 				}
 			}
+			tempPath = this.prettifyAStarPath(tempPath);
 			tempPath.pop(); // omit start tile, no need to step on it again as we are on it already
 			returnValue.path = tempPath;
 			returnValue.ok = true;
@@ -251,7 +262,16 @@ class AStarPathfindingComponent extends TaroEntity {
 		this._entity.script.trigger('entityAStarPathFindingFailed', triggerParam);
 	}
 
-	aStarIsPositionBlocked(targetX, targetY) {
+	/**
+	 * 
+	 * @param {number} targetX 
+	 * @param {number} targetY 
+	 * @param {number=} fromX
+	 * @param {number=} fromY
+	 * @returns 
+	 * Values are world space coordinate instead of tile coordinate
+	 */
+	aStarIsPositionBlocked(targetX, targetY, fromX, fromY) {
 		let unit = this._entity;
 		const tileWidth = taro.scaleMapDetails.tileWidth;
 		const xTune = [0, -1, 1, -1, 1];
@@ -259,16 +279,18 @@ class AStarPathfindingComponent extends TaroEntity {
 		// center, top-left, top-right, bottom-left, bottom-right
 		const unitWidth = unit.getBounds().width;
 		const unitHeight = unit.getBounds().height;
+		if (!fromX) fromX = unit._translate.x;
+		if (!fromY) fromY = unit._translate.y;
 		const maxBodySizeShift = Math.sqrt(((unitWidth / 2) * unitWidth) / 2 + ((unitHeight / 2) * unitHeight) / 2);
 		for (let i = 0; i < 5; i++) {
 			taro.raycaster.raycastLine(
 				{
-					x: (unit._translate.x + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
-					y: (unit._translate.y + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
+					x: (fromX + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
+					y: (fromY + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
 				},
 				{
-					x: (targetX + (tileWidth / 2) * Math.sqrt(2) * xTune[i]) / taro.physics.getScaleRatio(),
-					y: (targetY + (tileWidth / 2) * Math.sqrt(2) * yTune[i]) / taro.physics.getScaleRatio(),
+					x: (targetX + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
+					y: (targetY + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
 				}
 			);
 			for (let i = 0; i < taro.game.entitiesCollidingWithLastRaycast.length; i++) {
@@ -343,6 +365,109 @@ class AStarPathfindingComponent extends TaroEntity {
 		if (!aStarResult.ok) {
 			this.onAStarFailedTrigger();
 		}
+	}
+
+	/**
+	 * @param {Array<{x: number, y: number}>} path
+	 * Optimise straight A Star path with diagonal path 
+	 */
+	prettifyAStarPath(path) {
+		if (path.length < 3) { // don't need to prettify if node count < 3
+			return path;
+		}
+
+		const tileWidth = taro.scaleMapDetails.tileWidth;
+		/**
+		 * @type {Array<{from: number, to: number, heuristic: number, largestCompatibleIndex: number, maxTotalHeuristic: number, shouldBackTracking: boolean}>}
+		 */
+		const possibleSegment = [];
+		/**
+		 * @type {Array<{x: number, y: number}>}
+		 */
+		const result = [];
+
+		// dummy segment
+		possibleSegment.push({
+			maxTotalHeuristic: 0
+		});
+
+		for (const [j, pathJ] of path.entries()) {
+			for (let i = path.length - 1; i > j; i--) { // at least 1 node in between is required to further process
+				const segmentIsBlocked = this.aStarIsPositionBlocked(
+					(path[i].x + 0.5) * tileWidth,
+					(path[i].y + 0.5) * tileWidth,
+					(pathJ.x + 0.5) * tileWidth,
+					(pathJ.y + 0.5) * tileWidth
+				);
+				if (segmentIsBlocked) {
+					continue;
+				} else {
+					const isDiagonal = (pathJ.x != path[i].x) && (pathJ.y != path[i].y);
+					possibleSegment.push({
+						from: j,
+						to: i,
+						// a cubic heuristic for diagonal 
+						// a square heuristic for long horizontal and vertical,
+						// a normal heuristic for short horizontal and vertical to encourage diagonal movement
+						heuristic: isDiagonal ? Math.pow(i - j, 3) : (i - j > 1 ? Math.pow(i - j, 2) : 1),
+						largestCompatibleIndex: 0, // init only, to be evaluated soon
+						maxTotalHeuristic: 0, // init only, to be evaluated soon
+						shouldBackTracking: false // init only, to be evaluated soon
+					});
+				}
+			}
+		}
+
+		// sort by end of segment (segment.to)
+		possibleSegment.sort((a, b) => {
+			if (a.to <= b.to) {
+				return -1;
+			} else {
+				return 1;
+			}
+		});
+
+		for (let i = 1; i < possibleSegment.length; i++) { // index 0 is dummy, start from 1
+			const segment = possibleSegment[i];
+			for (let j = 1; j < i; j++) {
+				if (possibleSegment[j].to <= segment.from) {
+					segment.largestCompatibleIndex = j;
+				} else {
+					break;
+				}
+			}
+			// compare to see using this segment + latest compatible segment of this segment, or previous segment do a better performance
+			segment.maxTotalHeuristic = Math.max(
+				possibleSegment[i - 1].maxTotalHeuristic,
+				segment.heuristic + possibleSegment[segment.largestCompatibleIndex].maxTotalHeuristic
+			);
+		}
+
+		// prepare for backtracking
+		let previousMaxTotalHeuristic = 0;
+		for (let i = 0; i < possibleSegment.length; i++) {
+			const segment = possibleSegment[i];
+			if (segment.maxTotalHeuristic > previousMaxTotalHeuristic) {
+				previousMaxTotalHeuristic = segment.maxTotalHeuristic;
+				segment.shouldBackTracking = true;
+			}
+		}
+
+		// backtracking
+		let previousLargestCompatibleIndex = 0;
+		for (let i = possibleSegment.length - 1; i > 0;) { // index 0 is dummy, stop before that
+			const segment = possibleSegment[i];
+			if (segment.shouldBackTracking) {
+				previousLargestCompatibleIndex = i;
+				i = segment.largestCompatibleIndex;
+				result.push(path[segment.to]);
+			} else {
+				i--;
+			}
+		}
+		result.push(path[possibleSegment[previousLargestCompatibleIndex].from]);
+		result.reverse(); // flip back the result
+		return result;
 	}
 }
 
