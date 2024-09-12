@@ -1244,6 +1244,14 @@ var Item = TaroEntityPhysics.extend({
 
 					case 'slotIndex':
 						this._stats[attrName] = newValue;
+						if (taro.isClient) {
+							var owner = self.getOwnerUnit();
+							if (owner && taro.client.selectedUnit && taro.client.selectedUnit === owner) {
+								let triggerParams = { unitId: owner.id(), itemId: self.id() };
+								self.script.trigger('thisItemChangesInventorySlot', triggerParams); // this entity (item) (need to rename rename 'itemIsUsed' -> 'thisItemIsUsed')
+								owner.script.trigger('thisUnitMovesItemInInventory', triggerParams); // this entity (unit)
+							}
+						}
 						break;
 
 					case 'useQueued':
