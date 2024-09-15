@@ -10,20 +10,24 @@ class AStarPathfindingComponent extends TaroEntity {
 		// everytime when path generate failure, path should set to empty array (this.path = aStarResult.path automatically done for it)
 		this.previousTargetPosition = undefined;
 	}
+
 	/**
 	 * @param {number} x
 	 * @param {number} y
 	 * @returns {{path: [], ok: boolean}}
 	 * Use .path to get return array with tiled x and y coordinates of the path (Start node exclusive)
-	 * if target position is not reachable (no road to go / inside wall) path will include tiled x and y passed only
+	 * if target position is not reachable (no road to go / inside object [wall / static entity / kinematic entity]) path will include tiled x and y passed only
 	 * if the unit already at the target location, .path return empty array
 	 *
 	 * Use .ok to check if path correctly generated
 	 * .ok return true if .path is found or the unit already at the target location
-	 * .ok return false if the target location is inside a wall, not reachable
-	 * if there is no wall between the start position and the end position, it will return the end position in .path, and return true in .ok
+	 * .ok return false if the target location is inside a object, not reachable
+	 * if there is no object between the start position and the end position, it will return the end position in .path, and return true in .ok
 	 */
 	getAStarPath(x, y) {
+		// Update pathfindable tile data
+		taro.map.updateAStarPathfindingData();
+
 		const unit = this._entity;
 
 		const map = taro.map; // cache the map data for rapid use
@@ -42,14 +46,8 @@ class AStarPathfindingComponent extends TaroEntity {
 
 		let returnValue = { path: [{ ...targetTilePosition }], ok: false };
 
-		if (!this.aStarIsPositionBlocked(x, y)) {
-			// if there is no blocked, directly set the target to the end position
-			returnValue.ok = true;
-			return returnValue;
-		}
-
-		if (map.tileIsWall(targetTilePosition.x, targetTilePosition.y)) {
-			// teminate if the target position is wall
+		if (map.tileIsBlocked(targetTilePosition.x, targetTilePosition.y)) {
+			// teminate if the target position is object
 			return returnValue;
 		}
 
@@ -69,8 +67,8 @@ class AStarPathfindingComponent extends TaroEntity {
 		openList.push({ current: { ...unitTilePosition }, parent: { x: -1, y: -1 }, totalHeuristic: 0 }); // push start node to open List
 
 		// for dropping nodes that overlap with unit body at that new position
-		const unitTileWidthShift = Math.max(0, Math.floor((unit.getBounds().width + tileWidth) / 2 / tileWidth));
-		const unitTileHeightShift = Math.max(0, Math.floor((unit.getBounds().height + tileWidth) / 2 / tileWidth));
+		const unitTileWidthShift = Math.max(0, Math.floor((unit._stats.currentBody.width + tileWidth) / 2 / tileWidth));
+		const unitTileHeightShift = Math.max(0, Math.floor((unit._stats.currentBody.height + tileWidth) / 2 / tileWidth));
 		const averageTileShift = Math.sqrt(
 			unitTileWidthShift * unitTileWidthShift + unitTileHeightShift * unitTileHeightShift
 		);
@@ -121,33 +119,33 @@ class AStarPathfindingComponent extends TaroEntity {
 						break;
 				}
 
-				if (map.tileIsWall(newPosition.x, newPosition.y)) continue; // node inside wall, discard
-				// if new position is not goal, prune it if wall overlaps
+				if (map.tileIsBlocked(newPosition.x, newPosition.y)) continue; // node is blocked, discard
+				// if new position is not goal, prune it if object overlaps
 				let shouldPrune = false;
 				for (let i = 1; i <= averageTileShift; i++) {
-					// check 8 direction of average tile shift to see will unit overlap with wall at that node
+					// check 8 direction of average tile shift to see will unit overlap with object at that node
 					let cornersHaveWallCurrent =
-						map.tileIsWall(minNode.current.x + i, minNode.current.y) ||
-						map.tileIsWall(minNode.current.x - i, minNode.current.y) ||
-						map.tileIsWall(minNode.current.x, minNode.current.y + i) ||
-						map.tileIsWall(minNode.current.x, minNode.current.y - i);
+						map.tileIsBlocked(minNode.current.x + i, minNode.current.y) ||
+						map.tileIsBlocked(minNode.current.x - i, minNode.current.y) ||
+						map.tileIsBlocked(minNode.current.x, minNode.current.y + i) ||
+						map.tileIsBlocked(minNode.current.x, minNode.current.y - i);
 					let sidesHaveWallCurrent =
-						map.tileIsWall(minNode.current.x + i, minNode.current.y + i) ||
-						map.tileIsWall(minNode.current.x - i, minNode.current.y - i) ||
-						map.tileIsWall(minNode.current.x - i, minNode.current.y + i) ||
-						map.tileIsWall(minNode.current.x + i, minNode.current.y - i);
+						map.tileIsBlocked(minNode.current.x + i, minNode.current.y + i) ||
+						map.tileIsBlocked(minNode.current.x - i, minNode.current.y - i) ||
+						map.tileIsBlocked(minNode.current.x - i, minNode.current.y + i) ||
+						map.tileIsBlocked(minNode.current.x + i, minNode.current.y - i);
 					let cornersHaveWallNew =
-						map.tileIsWall(newPosition.x + i, newPosition.y) ||
-						map.tileIsWall(newPosition.x - i, newPosition.y) ||
-						map.tileIsWall(newPosition.x, newPosition.y + i) ||
-						map.tileIsWall(newPosition.x, newPosition.y - i);
+						map.tileIsBlocked(newPosition.x + i, newPosition.y) ||
+						map.tileIsBlocked(newPosition.x - i, newPosition.y) ||
+						map.tileIsBlocked(newPosition.x, newPosition.y + i) ||
+						map.tileIsBlocked(newPosition.x, newPosition.y - i);
 					let sidesHaveWallNew =
-						map.tileIsWall(newPosition.x + i, newPosition.y + i) ||
-						map.tileIsWall(newPosition.x - i, newPosition.y - i) ||
-						map.tileIsWall(newPosition.x - i, newPosition.y + i) ||
-						map.tileIsWall(newPosition.x + i, newPosition.y - i);
+						map.tileIsBlocked(newPosition.x + i, newPosition.y + i) ||
+						map.tileIsBlocked(newPosition.x - i, newPosition.y - i) ||
+						map.tileIsBlocked(newPosition.x - i, newPosition.y + i) ||
+						map.tileIsBlocked(newPosition.x + i, newPosition.y - i);
 
-					// Idea: avoid hitting outer corners of wall(dodge by going outer), and allow unit to walk next to walls
+					// Idea: avoid hitting outer corners of object(dodge by going outer), and allow unit to walk next to objects
 					shouldPrune =
 						(cornersHaveWallNew || sidesHaveWallNew) &&
 						(cornersHaveWallCurrent || sidesHaveWallCurrent) &&
@@ -272,16 +270,15 @@ class AStarPathfindingComponent extends TaroEntity {
 	 * Values are world space coordinate instead of tile coordinate
 	 */
 	aStarIsPositionBlocked(targetX, targetY, fromX, fromY) {
-		let unit = this._entity;
-		const tileWidth = taro.scaleMapDetails.tileWidth;
+		const unit = this._entity;
 		const xTune = [0, -1, 1, -1, 1];
 		const yTune = [0, -1, -1, 1, 1];
 		// center, top-left, top-right, bottom-left, bottom-right
-		const unitWidth = unit.getBounds().width;
-		const unitHeight = unit.getBounds().height;
+		const unitWidth = unit._stats.currentBody.width;
+		const unitHeight = unit._stats.currentBody.height;
 		if (!fromX) fromX = unit._translate.x;
 		if (!fromY) fromY = unit._translate.y;
-		const maxBodySizeShift = Math.sqrt(((unitWidth / 2) * unitWidth) / 2 + ((unitHeight / 2) * unitHeight) / 2);
+		const maxBodySizeShift = Math.sqrt(unitWidth * unitWidth + unitHeight * unitHeight) / 2;
 		for (let i = 0; i < 5; i++) {
 			taro.raycaster.raycastLine(
 				{
@@ -294,10 +291,13 @@ class AStarPathfindingComponent extends TaroEntity {
 				}
 			);
 			for (let i = 0; i < taro.game.entitiesCollidingWithLastRaycast.length; i++) {
-				if (
-					taro.game.entitiesCollidingWithLastRaycast[i]._category &&
-					taro.game.entitiesCollidingWithLastRaycast[i]._category == 'wall'
-				) {
+				const entity = taro.game.entitiesCollidingWithLastRaycast[i];
+				const blockedByWall = entity?._category == 'wall';
+				const blockedByEntity = (
+					entity?._stats?.currentBody?.type == "static" ||
+					entity?._stats?.currentBody?.type == "kinematic"
+				) && entity?._stats?.currentBody?.fixtures[0]?.isSensor === false;
+				if (blockedByWall || blockedByEntity) {
 					return true;
 				}
 			}
@@ -306,8 +306,22 @@ class AStarPathfindingComponent extends TaroEntity {
 	}
 
 	aStarPathIsBlocked() {
-		for (let i = 0; i < this.path.length; i++) {
-			if (taro.map.tileIsWall(this.path[i].x, this.path[i].y)) {
+		const unit = this._entity;
+		const tileWidth = taro.scaleMapDetails.tileWidth;
+		const nextPathIsBlocked = this.path.length > 0 && this.aStarIsPositionBlocked(
+			Math.floor(unit._translate.x / tileWidth) * tileWidth,
+			Math.floor(unit._translate.y / tileWidth) * tileWidth,
+			Math.floor(this.path[0].x / tileWidth) * tileWidth,
+			Math.floor(this.path[0].y / tileWidth) * tileWidth
+		);
+		if (nextPathIsBlocked) return true;
+		for (let i = 0; i < this.path.length - 1; i++) {
+			if (this.aStarIsPositionBlocked(
+				Math.floor(this.path[i].x / tileWidth) * tileWidth,
+				Math.floor(this.path[i].y / tileWidth) * tileWidth,
+				Math.floor((this.path[i].x + 1) / tileWidth) * tileWidth,
+				Math.floor((this.path[i].y + 1) / tileWidth) * tileWidth
+			)) {
 				return true;
 			}
 		}
