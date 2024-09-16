@@ -175,7 +175,6 @@ var TaroStreamComponent = TaroEventingClass.extend({
 	},
 
 	_onStreamCreate: function (data) {
-		console.log('onstreamcreate', data);
 		var classId = data[0];
 		var entityId = data[1];
 		var parentId = data[2];
