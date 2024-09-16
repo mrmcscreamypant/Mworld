@@ -1746,6 +1746,15 @@ var Unit = TaroEntityPhysics.extend({
 						}
 						break;
 
+					case 'isMoving':
+						if (taro.isClient && taro.client.selectedUnit !== this) {
+							if (newValue) {
+								self.startMoving();
+							} else {
+								self.stopMoving();
+							}
+						}
+
 					case 'itemIds':
 						self._stats[attrName] = newValue;
 						// update shop as player points are changed and when shop modal is open
@@ -2312,8 +2321,14 @@ var Unit = TaroEntityPhysics.extend({
 					if (!this.isMoving && (self.direction.x != 0 || self.direction.y != 0)) {
 						// ownerPlayer.control.lastInputSent = Date.now();
 						this.startMoving();
+						if (taro.isServer && this._stats.streamMode === 1) {
+							this.streamUpdateData([{ isMoving: true }]);
+						}
 					} else if (this.isMoving && self.direction.x === 0 && self.direction.y === 0) {
 						this.stopMoving();
+						if (taro.isServer && this._stats.streamMode === 1) {
+							this.streamUpdateData([{ isMoving: false }]);
+						}
 					}
 				}
 			}
