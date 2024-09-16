@@ -260,49 +260,72 @@ class AStarPathfindingComponent extends TaroEntity {
 		this._entity.script.trigger('entityAStarPathFindingFailed', triggerParam);
 	}
 
-	/**
-	 * 
-	 * @param {number} targetX 
-	 * @param {number} targetY 
-	 * @param {number=} fromX
-	 * @param {number=} fromY
-	 * @returns 
-	 * Values are world space coordinate instead of tile coordinate
-	 */
+	// /**
+	//  * 
+	//  * @param {number} targetX 
+	//  * @param {number} targetY 
+	//  * @param {number=} fromX
+	//  * @param {number=} fromY
+	//  * @returns 
+	//  * Values are world space coordinate instead of tile coordinate
+	//  */
+	// aStarIsPositionBlocked(targetX, targetY, fromX, fromY) {
+	// 	const unit = this._entity;
+	// 	const xTune = [0, -1, 1, -1, 1];
+	// 	const yTune = [0, -1, -1, 1, 1];
+	// 	// center, top-left, top-right, bottom-left, bottom-right
+	// 	const unitWidth = unit._stats.currentBody.width;
+	// 	const unitHeight = unit._stats.currentBody.height;
+	// 	if (!fromX) fromX = unit._translate.x;
+	// 	if (!fromY) fromY = unit._translate.y;
+	// 	const maxBodySizeShift = Math.sqrt(unitWidth * unitWidth + unitHeight * unitHeight) / 2;
+	// 	for (let i = 0; i < 5; i++) {
+	// 		taro.raycaster.raycastLine(
+	// 			{
+	// 				x: (fromX + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
+	// 				y: (fromY + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
+	// 			},
+	// 			{
+	// 				x: (targetX + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
+	// 				y: (targetY + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
+	// 			}
+	// 		);
+	// 		for (let i = 0; i < taro.game.entitiesCollidingWithLastRaycast.length; i++) {
+	// 			const entity = taro.game.entitiesCollidingWithLastRaycast[i];
+	// 			const blockedByWall = entity?._category == 'wall';
+	// 			const blockedByEntity = (
+	// 				entity?._stats?.currentBody?.type == "static" ||
+	// 				entity?._stats?.currentBody?.type == "kinematic"
+	// 			) && entity?._stats?.currentBody?.fixtures[0]?.isSensor === false;
+	// 			if (blockedByWall || blockedByEntity) {
+	// 				return true;
+	// 			}
+	// 		}
+	// 	}
+	// 	return false;
+	// }
+
 	aStarIsPositionBlocked(targetX, targetY, fromX, fromY) {
 		const unit = this._entity;
-		const xTune = [0, -1, 1, -1, 1];
-		const yTune = [0, -1, -1, 1, 1];
-		// center, top-left, top-right, bottom-left, bottom-right
-		const unitWidth = unit._stats.currentBody.width;
-		const unitHeight = unit._stats.currentBody.height;
-		if (!fromX) fromX = unit._translate.x;
-		if (!fromY) fromY = unit._translate.y;
 		const maxBodySizeShift = Math.sqrt(unitWidth * unitWidth + unitHeight * unitHeight) / 2;
-		for (let i = 0; i < 5; i++) {
-			taro.raycaster.raycastLine(
-				{
-					x: (fromX + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
-					y: (fromY + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
-				},
-				{
-					x: (targetX + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
-					y: (targetY + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
-				}
-			);
-			for (let i = 0; i < taro.game.entitiesCollidingWithLastRaycast.length; i++) {
-				const entity = taro.game.entitiesCollidingWithLastRaycast[i];
-				const blockedByWall = entity?._category == 'wall';
-				const blockedByEntity = (
-					entity?._stats?.currentBody?.type == "static" ||
-					entity?._stats?.currentBody?.type == "kinematic"
-				) && entity?._stats?.currentBody?.fixtures[0]?.isSensor === false;
-				if (blockedByWall || blockedByEntity) {
-					return true;
-				}
+		const tileWidth = taro.scaleMapDetails.tileWidth;
+		const direction = {
+			x: targetX - fromX,
+			y: targetY - fromY
+		};
+		let j = fromY;
+		let i = fromX;
+		while (
+			j * direction.y <= targetY * direction.y ||
+			i * direction.x <= targetY * direction.x
+		) {
+			if (j * direction.y <= targetY * direction.y) {
+				// j += tileWidth * direction.y;
+			}
+			if (i * direction.x <= targetY * direction.x) {
+				// i += tileWidth * direction.x;
 			}
 		}
-		return false;
 	}
 
 	aStarPathIsBlocked() {
