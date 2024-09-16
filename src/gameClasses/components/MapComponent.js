@@ -96,9 +96,12 @@ class MapComponent extends TaroEntity {
 		entityType.forEach(type => {
 			taro.$$(type).forEach(entity => {
 				const currentBody = entity._stats.currentBody;
+				// only continue if the body is static / kinematic and it is not sensor
 				if (currentBody.type == "static" || currentBody.type == "kinematic") {
 					if (currentBody.fixtures[0].isSensor === false) {
 						const entityVertices = [];
+
+						// get bounding box
 						vertexPosShift.forEach(shift => {
 							entityVertices.push({
 								x: entity._translate.x + (currentBody.width / 2 * Math.cos(entity._rotate.z) * shift.x - currentBody.height / 2 * Math.sin(entity._rotate.z) * shift.y),
@@ -113,6 +116,8 @@ class MapComponent extends TaroEntity {
 							x: Math.max(...entityVertices.map(vertex => vertex.x)),
 							y: Math.max(...entityVertices.map(vertex => vertex.y))
 						};
+
+						// fill occupying tiles
 						for (let j = Math.clamp(Math.floor(topLeftVertex.y / tileWidth), 0, mapData.height - 1); j <= Math.clamp(Math.floor(bottomRightVertex.y / tileWidth), 0, mapData.height - 1); j++) {
 							for (let i = Math.clamp(Math.floor(topLeftVertex.x / tileWidth), 0, mapData.width - 1); i <= Math.clamp(Math.floor(bottomRightVertex.x / tileWidth), 0, mapData.width - 1); i++) {
 								this.AStarPathfindingMap[j * mapData.width + i] = true;
@@ -122,6 +127,8 @@ class MapComponent extends TaroEntity {
 				}
 			});
 		});
+
+		// combine with wallMap
 		for (const tile in this.AStarPathfindingMap) {
 			this.AStarPathfindingMap[tile] = this.AStarPathfindingMap[tile] || this.wallMap[tile];
 		}

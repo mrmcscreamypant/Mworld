@@ -308,6 +308,8 @@ class AStarPathfindingComponent extends TaroEntity {
 	aStarPathIsBlocked() {
 		const unit = this._entity;
 		const tileWidth = taro.scaleMapDetails.tileWidth;
+
+		// current position to closest node of path
 		const nextPathIsBlocked = this.path.length > 0 && this.aStarIsPositionBlocked(
 			Math.floor(unit._translate.x / tileWidth) * tileWidth,
 			Math.floor(unit._translate.y / tileWidth) * tileWidth,
@@ -315,6 +317,8 @@ class AStarPathfindingComponent extends TaroEntity {
 			Math.floor(this.path[0].y / tileWidth) * tileWidth
 		);
 		if (nextPathIsBlocked) return true;
+
+		// other segments in the path
 		for (let i = 0; i < this.path.length - 1; i++) {
 			if (this.aStarIsPositionBlocked(
 				Math.floor(this.path[i].x / tileWidth) * tileWidth,
