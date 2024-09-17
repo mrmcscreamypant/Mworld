@@ -260,94 +260,115 @@ class AStarPathfindingComponent extends TaroEntity {
 		this._entity.script.trigger('entityAStarPathFindingFailed', triggerParam);
 	}
 
-	// /**
-	//  * 
-	//  * @param {number} targetX 
-	//  * @param {number} targetY 
-	//  * @param {number=} fromX
-	//  * @param {number=} fromY
-	//  * @returns 
-	//  * Values are world space coordinate instead of tile coordinate
-	//  */
-	// aStarIsPositionBlocked(targetX, targetY, fromX, fromY) {
-	// 	const unit = this._entity;
-	// 	const xTune = [0, -1, 1, -1, 1];
-	// 	const yTune = [0, -1, -1, 1, 1];
-	// 	// center, top-left, top-right, bottom-left, bottom-right
-	// 	const unitWidth = unit._stats.currentBody.width;
-	// 	const unitHeight = unit._stats.currentBody.height;
-	// 	if (!fromX) fromX = unit._translate.x;
-	// 	if (!fromY) fromY = unit._translate.y;
-	// 	const maxBodySizeShift = Math.sqrt(unitWidth * unitWidth + unitHeight * unitHeight) / 2;
-	// 	for (let i = 0; i < 5; i++) {
-	// 		taro.raycaster.raycastLine(
-	// 			{
-	// 				x: (fromX + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
-	// 				y: (fromY + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
-	// 			},
-	// 			{
-	// 				x: (targetX + maxBodySizeShift * xTune[i]) / taro.physics.getScaleRatio(),
-	// 				y: (targetY + maxBodySizeShift * yTune[i]) / taro.physics.getScaleRatio(),
-	// 			}
-	// 		);
-	// 		for (let i = 0; i < taro.game.entitiesCollidingWithLastRaycast.length; i++) {
-	// 			const entity = taro.game.entitiesCollidingWithLastRaycast[i];
-	// 			const blockedByWall = entity?._category == 'wall';
-	// 			const blockedByEntity = (
-	// 				entity?._stats?.currentBody?.type == "static" ||
-	// 				entity?._stats?.currentBody?.type == "kinematic"
-	// 			) && entity?._stats?.currentBody?.fixtures[0]?.isSensor === false;
-	// 			if (blockedByWall || blockedByEntity) {
-	// 				return true;
-	// 			}
-	// 		}
-	// 	}
-	// 	return false;
-	// }
-
-	aStarIsPositionBlocked(targetX, targetY, fromX, fromY) {
+	/**
+	 * 
+	 * @param {number} targetX 
+	 * @param {number} targetY 
+	 * @param {number} fromX
+	 * @param {number} fromY
+	 * @returns 
+	 * Values are world space coordinate instead of tiled coordinate
+	 */
+	aStarIsSegmentBlocked(targetX, targetY, fromX, fromY) {
 		const unit = this._entity;
-		const maxBodySizeShift = Math.sqrt(unitWidth * unitWidth + unitHeight * unitHeight) / 2;
+		const unitWidth = unit._stats.currentBody.width;
+		const unitHeight = unit._stats.currentBody.height;
 		const tileWidth = taro.scaleMapDetails.tileWidth;
-		const direction = {
+		const map = taro.map;
+		const mapData = map.data;
+		const maxBodySizeShift = Math.max(unitWidth, unitHeight) / 2;
+		// get occupied size of unit with small step (for precise detection)
+		const maxHalfTileShift = Math.floor(maxBodySizeShift / (tileWidth / 4));
+
+		// set target and from as center of tile
+		targetX = (Math.floor(targetX / tileWidth) + 0.5) * tileWidth;
+		targetY = (Math.floor(targetY / tileWidth) + 0.5) * tileWidth;
+		fromX = (Math.floor(fromX / tileWidth) + 0.5) * tileWidth;
+		fromY = (Math.floor(fromY / tileWidth) + 0.5) * tileWidth;
+
+		// convert position to grid position
+		const diff = {
 			x: targetX - fromX,
 			y: targetY - fromY
 		};
-		let j = fromY;
-		let i = fromX;
-		while (
-			j * direction.y <= targetY * direction.y ||
-			i * direction.x <= targetY * direction.x
-		) {
-			if (j * direction.y <= targetY * direction.y) {
-				// j += tileWidth * direction.y;
-			}
-			if (i * direction.x <= targetY * direction.x) {
-				// i += tileWidth * direction.x;
+		/** slope */
+		const m = (diff.x == 0 ? undefined : diff.y / diff.x);
+		/** y-intercept */
+		const c = (diff.x == 0 ? undefined : fromY - m * fromX);
+		/** for determine if x or y is the main axis */
+		const smallSlope = Math.abs(m) <= 1;
+
+		// compute with x if slope is small, y if slope is large
+		let startPos = {
+			x: fromX,
+			y: fromY
+		};
+		let endPos = {
+			x: targetX,
+			y: targetY
+		};
+
+		const primaryDirection = (smallSlope ? "x" : "y");
+		const secondaryDirection = (smallSlope ? "y" : "x");
+
+		if (Math.sign(diff[primaryDirection]) != 0) {
+			while (
+				startPos[primaryDirection] * Math.sign(diff[primaryDirection]) <=
+				endPos[primaryDirection] * Math.sign(diff[primaryDirection])
+			) {
+				// check tiles within unit size to see if they are occupied by object
+				for (let j = -maxHalfTileShift; j <= maxHalfTileShift; j++) {
+					for (let i = -maxHalfTileShift; i <= maxHalfTileShift; i++) {
+						let x = Math.floor((startPos.x + i * tileWidth / 4) / tileWidth);
+						let y = Math.floor((startPos.y + j * tileWidth / 4) / tileWidth);
+						if (x < 0 || x >= mapData.width || y < 0 || y >= mapData.height || map.tileIsBlocked(x, y)) {
+							return true;
+						}
+					}
+				}
+
+				// update primary axis with small step (for precise detection)
+				const nextPrimary = startPos[primaryDirection] + (tileWidth / 4) * Math.sign(diff[primaryDirection]);
+				let nextSecondary;
+				// avoid changing secondary axis for pure vertical and horizontal
+				if (m != 0 && m !== undefined) {
+					if (secondaryDirection == "y") {
+						nextSecondary = m * nextPrimary + c;
+					} else {
+						nextSecondary = (nextPrimary - c) / m;
+					}
+					startPos[secondaryDirection] = nextSecondary;
+				}
+				startPos[primaryDirection] = nextPrimary;
 			}
 		}
+		return false;
 	}
 
+	/**
+	 * Check if there is any segment in the path is blocked
+	 * @returns
+	 */
 	aStarPathIsBlocked() {
 		const unit = this._entity;
 		const tileWidth = taro.scaleMapDetails.tileWidth;
 
 		// current position to closest node of path
-		const nextPathIsBlocked = this.path.length > 0 && this.aStarIsPositionBlocked(
-			Math.floor(unit._translate.x / tileWidth) * tileWidth,
-			Math.floor(unit._translate.y / tileWidth) * tileWidth,
-			Math.floor(this.path[0].x / tileWidth) * tileWidth,
-			Math.floor(this.path[0].y / tileWidth) * tileWidth
+		const nextPathIsBlocked = this.path.length > 0 && this.aStarIsSegmentBlocked(
+			unit._translate.x,
+			unit._translate.y,
+			this.path[0].x,
+			this.path[0].y
 		);
 		if (nextPathIsBlocked) return true;
 
 		// other segments in the path
 		for (let i = 0; i < this.path.length - 1; i++) {
-			if (this.aStarIsPositionBlocked(
-				Math.floor(this.path[i].x / tileWidth) * tileWidth,
-				Math.floor(this.path[i].y / tileWidth) * tileWidth,
-				Math.floor((this.path[i].x + 1) / tileWidth) * tileWidth,
-				Math.floor((this.path[i].y + 1) / tileWidth) * tileWidth
+			if (this.aStarIsSegmentBlocked(
+				this.path[i].x,
+				this.path[i].y,
+				this.path[i + 1].x,
+				this.path[i + 1].y
 			)) {
 				return true;
 			}
@@ -410,7 +431,7 @@ class AStarPathfindingComponent extends TaroEntity {
 
 	/**
 	 * @param {Array<{x: number, y: number}>} path
-	 * Optimise straight A Star path with diagonal path 
+	 * Optimise straight A Star path segment with diagonal path segment
 	 */
 	prettifyAStarPath(path) {
 		if (path.length < 3) { // don't need to prettify if node count < 3
@@ -434,7 +455,7 @@ class AStarPathfindingComponent extends TaroEntity {
 
 		for (const [j, pathJ] of path.entries()) {
 			for (let i = path.length - 1; i > j; i--) { // at least 1 node in between is required to further process
-				const segmentIsBlocked = this.aStarIsPositionBlocked(
+				const segmentIsBlocked = this.aStarIsSegmentBlocked(
 					(path[i].x + 0.5) * tileWidth,
 					(path[i].y + 0.5) * tileWidth,
 					(pathJ.x + 0.5) * tileWidth,
