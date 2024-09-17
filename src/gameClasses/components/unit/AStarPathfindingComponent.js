@@ -120,38 +120,13 @@ class AStarPathfindingComponent extends TaroEntity {
 				}
 
 				if (map.tileIsBlocked(newPosition.x, newPosition.y)) continue; // node is blocked, discard
-				// if new position is not goal, prune it if obstacle overlaps
-				let shouldPrune = false;
-				for (let i = 1; i <= averageTileShift; i++) {
-					// check 8 direction of average tile shift to see will unit overlap with obstacle at that node
-					let cornersHaveWallCurrent =
-						map.tileIsBlocked(minNode.current.x + i, minNode.current.y) ||
-						map.tileIsBlocked(minNode.current.x - i, minNode.current.y) ||
-						map.tileIsBlocked(minNode.current.x, minNode.current.y + i) ||
-						map.tileIsBlocked(minNode.current.x, minNode.current.y - i);
-					let sidesHaveWallCurrent =
-						map.tileIsBlocked(minNode.current.x + i, minNode.current.y + i) ||
-						map.tileIsBlocked(minNode.current.x - i, minNode.current.y - i) ||
-						map.tileIsBlocked(minNode.current.x - i, minNode.current.y + i) ||
-						map.tileIsBlocked(minNode.current.x + i, minNode.current.y - i);
-					let cornersHaveWallNew =
-						map.tileIsBlocked(newPosition.x + i, newPosition.y) ||
-						map.tileIsBlocked(newPosition.x - i, newPosition.y) ||
-						map.tileIsBlocked(newPosition.x, newPosition.y + i) ||
-						map.tileIsBlocked(newPosition.x, newPosition.y - i);
-					let sidesHaveWallNew =
-						map.tileIsBlocked(newPosition.x + i, newPosition.y + i) ||
-						map.tileIsBlocked(newPosition.x - i, newPosition.y - i) ||
-						map.tileIsBlocked(newPosition.x - i, newPosition.y + i) ||
-						map.tileIsBlocked(newPosition.x + i, newPosition.y - i);
-
-					// Idea: avoid hitting outer corners of obstacle(dodge by going outer), and allow unit to walk next to obstacles
-					shouldPrune =
-						(cornersHaveWallNew || sidesHaveWallNew) &&
-						(cornersHaveWallCurrent || sidesHaveWallCurrent) &&
-						!(cornersHaveWallNew && sidesHaveWallNew && cornersHaveWallCurrent && sidesHaveWallCurrent);
-					if (shouldPrune) break;
-				}
+				// prune if obstacle between old and new position
+				const shouldPrune = this.aStarIsSegmentBlocked(
+					(newPosition.x + 0.5) * tileWidth,
+					(newPosition.y + 0.5) * tileWidth,
+					(minNode.current.x + 0.5) * tileWidth,
+					(minNode.current.y + 0.5) * tileWidth
+				);
 				if (shouldPrune) continue;
 
 				if (!isNaN(parseInt(this.maxTravelDistance))) {
