@@ -16,13 +16,13 @@ class AStarPathfindingComponent extends TaroEntity {
 	 * @param {number} y
 	 * @returns {{path: [], ok: boolean}}
 	 * Use .path to get return array with tiled x and y coordinates of the path (Start node exclusive)
-	 * if target position is not reachable (no road to go / inside object [wall / static entity / kinematic entity]) path will include tiled x and y passed only
+	 * if target position is not reachable (no road to go / inside obstacle [wall / static entity / kinematic entity]) path will include tiled x and y passed only
 	 * if the unit already at the target location, .path return empty array
 	 *
 	 * Use .ok to check if path correctly generated
 	 * .ok return true if .path is found or the unit already at the target location
-	 * .ok return false if the target location is inside a object, not reachable
-	 * if there is no object between the start position and the end position, it will return the end position in .path, and return true in .ok
+	 * .ok return false if the target location is inside an obstacle, not reachable
+	 * if there is no obstacle between the start position and the end position, it will return the end position in .path, and return true in .ok
 	 */
 	getAStarPath(x, y) {
 		// Update pathfindable tile data
@@ -47,7 +47,7 @@ class AStarPathfindingComponent extends TaroEntity {
 		let returnValue = { path: [{ ...targetTilePosition }], ok: false };
 
 		if (map.tileIsBlocked(targetTilePosition.x, targetTilePosition.y)) {
-			// teminate if the target position is object
+			// teminate if the target position is obstacle
 			return returnValue;
 		}
 
@@ -120,10 +120,10 @@ class AStarPathfindingComponent extends TaroEntity {
 				}
 
 				if (map.tileIsBlocked(newPosition.x, newPosition.y)) continue; // node is blocked, discard
-				// if new position is not goal, prune it if object overlaps
+				// if new position is not goal, prune it if obstacle overlaps
 				let shouldPrune = false;
 				for (let i = 1; i <= averageTileShift; i++) {
-					// check 8 direction of average tile shift to see will unit overlap with object at that node
+					// check 8 direction of average tile shift to see will unit overlap with obstacle at that node
 					let cornersHaveWallCurrent =
 						map.tileIsBlocked(minNode.current.x + i, minNode.current.y) ||
 						map.tileIsBlocked(minNode.current.x - i, minNode.current.y) ||
@@ -145,7 +145,7 @@ class AStarPathfindingComponent extends TaroEntity {
 						map.tileIsBlocked(newPosition.x - i, newPosition.y + i) ||
 						map.tileIsBlocked(newPosition.x + i, newPosition.y - i);
 
-					// Idea: avoid hitting outer corners of object(dodge by going outer), and allow unit to walk next to objects
+					// Idea: avoid hitting outer corners of obstacle(dodge by going outer), and allow unit to walk next to obstacles
 					shouldPrune =
 						(cornersHaveWallNew || sidesHaveWallNew) &&
 						(cornersHaveWallCurrent || sidesHaveWallCurrent) &&
@@ -316,7 +316,7 @@ class AStarPathfindingComponent extends TaroEntity {
 				startPos[primaryDirection] * Math.sign(diff[primaryDirection]) <=
 				endPos[primaryDirection] * Math.sign(diff[primaryDirection])
 			) {
-				// check tiles within unit size to see if they are occupied by object
+				// check tiles within unit size to see if they are occupied by obstacle
 				for (let j = -maxHalfTileShift; j <= maxHalfTileShift; j++) {
 					for (let i = -maxHalfTileShift; i <= maxHalfTileShift; i++) {
 						let x = Math.floor((startPos.x + i * tileWidth / 4) / tileWidth);
