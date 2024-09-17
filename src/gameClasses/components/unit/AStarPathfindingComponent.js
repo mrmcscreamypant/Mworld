@@ -253,7 +253,7 @@ class AStarPathfindingComponent extends TaroEntity {
 		const mapData = map.data;
 		const maxBodySizeShift = Math.max(unitWidth, unitHeight) / 2;
 		// get occupied size of unit with small step (for precise detection)
-		const maxHalfTileShift = Math.floor(maxBodySizeShift / (tileWidth / 4));
+		const maxQuarterTileShift = Math.floor(maxBodySizeShift / (tileWidth / 4));
 
 		// set target and from as center of tile
 		targetX = (Math.floor(targetX / tileWidth) + 0.5) * tileWidth;
@@ -292,8 +292,8 @@ class AStarPathfindingComponent extends TaroEntity {
 				endPos[primaryDirection] * Math.sign(diff[primaryDirection])
 			) {
 				// check tiles within unit size to see if they are occupied by obstacle
-				for (let j = -maxHalfTileShift; j <= maxHalfTileShift; j++) {
-					for (let i = -maxHalfTileShift; i <= maxHalfTileShift; i++) {
+				for (let j = -maxQuarterTileShift; j <= maxQuarterTileShift; j++) {
+					for (let i = -maxQuarterTileShift; i <= maxQuarterTileShift; i++) {
 						let x = Math.floor((startPos.x + i * tileWidth / 4) / tileWidth);
 						let y = Math.floor((startPos.y + j * tileWidth / 4) / tileWidth);
 						if (x < 0 || x >= mapData.width || y < 0 || y >= mapData.height || map.tileIsBlocked(x, y)) {
