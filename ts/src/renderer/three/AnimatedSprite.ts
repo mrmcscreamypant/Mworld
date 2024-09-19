@@ -12,14 +12,12 @@ namespace Renderer {
 			private currentTile = 0;
 			private repeat = 0;
 			private cycle = 0;
-			originalWidth: number;
-			originalHeight: number;
+			defaultSize: [number, number];
 
 
 			constructor(private spriteSheet: TextureSheet, defaultSize?: [number, number]) {
-				super(spriteSheet.texture, defaultSize? [spriteSheet.originalWidth / defaultSize[0], spriteSheet.originalHeight / defaultSize[1]]: undefined);
-				this.originalWidth = spriteSheet.originalWidth;
-				this.originalHeight = spriteSheet.originalHeight;
+				super(spriteSheet.texture, defaultSize ? [Utils.pixelToWorld(defaultSize[0]), Utils.pixelToWorld(defaultSize[1])] : undefined);
+				this.defaultSize = defaultSize
 				this.tileH = 1 / (spriteSheet.width / spriteSheet.tileWidth);
 				this.tileV = 1 / (spriteSheet.height / spriteSheet.tileHeight);
 				spriteSheet.texture.repeat.set(this.tileH, this.tileV);
