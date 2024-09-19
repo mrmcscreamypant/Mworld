@@ -5,16 +5,19 @@ namespace Renderer {
 			sprite: THREE.Mesh;
 			billboard = false;
 			scaleUnflipped = new THREE.Vector2(1, 1);
+			sizeRatio = [1, 1];
 
 			private depth = 1;
 			private flipX = 1;
 			private flipY = 1;
 			private angleOffset = 0;
-
-			constructor(protected tex: THREE.Texture) {
+			constructor(protected tex: THREE.Texture, sizeRatio?: [number, number]) {
 				super();
 
 				const geometry = new THREE.PlaneGeometry(1, 1);
+				if (sizeRatio) {
+					this.sizeRatio = sizeRatio
+				}
 				geometry.rotateX(-Math.PI / 2);
 				const material = new THREE.MeshStandardMaterial({
 					map: tex,

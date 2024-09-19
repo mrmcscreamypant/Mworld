@@ -53,7 +53,7 @@ namespace Renderer {
 					const frameWidth = tex.image.width / cols;
 					const frameHeight = tex.image.height / rows;
 					const texture = new TextureSheet(key, tex, frameWidth, frameHeight);
-					body = this.body = new Renderer.Three.AnimatedSprite(texture) as Renderer.Three.AnimatedSprite & {
+					body = this.body = new Renderer.Three.AnimatedSprite(texture, [defaultWidth, defaultHeight]) as Renderer.Three.AnimatedSprite & {
 						entity: InitEntity;
 					};
 					(body.sprite as THREE.Mesh & { entity: InitEntity }).entity = this;
@@ -231,8 +231,7 @@ namespace Renderer {
 								Utils.pixelToWorld(this.defaultHeight * action.scale.y)
 							);
 						} else {
-
-							this.setSize(action.scale.x, action.scale.z, action.scale.y);
+							this.setSize(action.scale.x * this.body.sizeRatio[0], action.scale.z, action.scale.y * this.body.sizeRatio[1]);
 						}
 					}
 					if (!isNaN(this.action.width) && !isNaN(action.width)) {

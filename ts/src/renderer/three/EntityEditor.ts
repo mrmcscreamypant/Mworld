@@ -346,6 +346,9 @@ namespace Renderer {
 				taro.client.emit('show-transform-modes', true);
 				switch (mode) {
 					case 'select': {
+						if (!entity) {
+							return;
+						}
 						if ((entity.parent as any)?.tag !== Three.EntityEditor.TAG) {
 							this.selectedEntities.forEach((e) => {
 								Utils.removeFromParentAndRecalcTransform(e);

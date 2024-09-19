@@ -72,9 +72,10 @@ namespace Renderer {
 					case 'scale':
 						if (taro.is3D()) {
 							if (control.object.body instanceof AnimatedSprite) {
+
 								editedAction['scale'] = {
-									x: control.object.scale.x * (e.parent.tag === Three.EntityEditor.TAG ? e.scale.x : 1),
-									y: control.object.scale.z * (e.parent.tag === Three.EntityEditor.TAG ? e.scale.z : 1),
+									x: control.object.scale.x * (e.parent.tag === Three.EntityEditor.TAG ? e.scale.x : 1) / control.object.body.sizeRatio[0],
+									y: control.object.scale.z * (e.parent.tag === Three.EntityEditor.TAG ? e.scale.z : 1) / control.object.body.sizeRatio[1],
 									z: 0,
 									function: 'vector3',
 								};
@@ -82,7 +83,7 @@ namespace Renderer {
 								editedAction['scale'] = {
 									x: Utils.worldToPixel(
 										(control.object.body.getSize().x / control.object.defaultWidth) *
-											(e.parent.tag === Three.EntityEditor.TAG ? e.scale.x : 1)
+										(e.parent.tag === Three.EntityEditor.TAG ? e.scale.x : 1)
 									),
 									y:
 										Utils.worldToPixel(control.object.body.getSize().z / control.object.defaultHeight) *
