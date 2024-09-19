@@ -13,7 +13,6 @@ class MapComponent extends TaroEntity {
 		 * @type {Array<boolean>}
 		 */
 		this.wallMap;
-
 	}
 
 	load(data) {
@@ -82,44 +81,60 @@ class MapComponent extends TaroEntity {
 	 * Avoid execute within a short time < 250ms to avoid duplicate update
 	 */
 	updateAStarPathfindingData() {
-		const entityType = ["unit", "item", "projectile"];
+		const entityType = ['unit', 'item', 'projectile'];
 		const vertexPosShift = [
 			{ x: -1, y: -1 },
 			{ x: 1, y: -1 },
 			{ x: -1, y: 1 },
-			{ x: 1, y: 1 }
+			{ x: 1, y: 1 },
 		];
 		const tileWidth = taro.scaleMapDetails.tileWidth;
 		const mapData = taro.map.data;
-		this.AStarPathfindingMap = Array(this.wallMap.length).fill(false);
+		if (this.wallMap) {
+			this.AStarPathfindingMap = Array(this.wallMap.length).fill(false);
+		}
 
-		entityType.forEach(type => {
-			taro.$$(type).forEach(entity => {
+		entityType.forEach((type) => {
+			taro.$$(type).forEach((entity) => {
 				const currentBody = entity._stats.currentBody;
 				// only continue if the body is static / kinematic and it is not sensor
-				if (currentBody.type == "static" || currentBody.type == "kinematic") {
+				if (currentBody.type == 'static' || currentBody.type == 'kinematic') {
 					if (currentBody.fixtures[0].isSensor === false) {
 						const entityVertices = [];
 
 						// get bounding box
-						vertexPosShift.forEach(shift => {
+						vertexPosShift.forEach((shift) => {
 							entityVertices.push({
-								x: entity._translate.x + (currentBody.width / 2 * Math.cos(entity._rotate.z) * shift.x - currentBody.height / 2 * Math.sin(entity._rotate.z) * shift.y),
-								y: entity._translate.y + (currentBody.width / 2 * Math.sin(entity._rotate.z) * shift.x + currentBody.height / 2 * Math.cos(entity._rotate.z) * shift.y)
+								x:
+									entity._translate.x +
+									((currentBody.width / 2) * Math.cos(entity._rotate.z) * shift.x -
+										(currentBody.height / 2) * Math.sin(entity._rotate.z) * shift.y),
+								y:
+									entity._translate.y +
+									((currentBody.width / 2) * Math.sin(entity._rotate.z) * shift.x +
+										(currentBody.height / 2) * Math.cos(entity._rotate.z) * shift.y),
 							});
 						});
 						const topLeftVertex = {
-							x: Math.min(...entityVertices.map(vertex => vertex.x)),
-							y: Math.min(...entityVertices.map(vertex => vertex.y))
+							x: Math.min(...entityVertices.map((vertex) => vertex.x)),
+							y: Math.min(...entityVertices.map((vertex) => vertex.y)),
 						};
 						const bottomRightVertex = {
-							x: Math.max(...entityVertices.map(vertex => vertex.x)),
-							y: Math.max(...entityVertices.map(vertex => vertex.y))
+							x: Math.max(...entityVertices.map((vertex) => vertex.x)),
+							y: Math.max(...entityVertices.map((vertex) => vertex.y)),
 						};
 
 						// fill occupying tiles
-						for (let j = Math.clamp(Math.floor(topLeftVertex.y / tileWidth), 0, mapData.height - 1); j <= Math.clamp(Math.floor(bottomRightVertex.y / tileWidth), 0, mapData.height - 1); j++) {
-							for (let i = Math.clamp(Math.floor(topLeftVertex.x / tileWidth), 0, mapData.width - 1); i <= Math.clamp(Math.floor(bottomRightVertex.x / tileWidth), 0, mapData.width - 1); i++) {
+						for (
+							let j = Math.clamp(Math.floor(topLeftVertex.y / tileWidth), 0, mapData.height - 1);
+							j <= Math.clamp(Math.floor(bottomRightVertex.y / tileWidth), 0, mapData.height - 1);
+							j++
+						) {
+							for (
+								let i = Math.clamp(Math.floor(topLeftVertex.x / tileWidth), 0, mapData.width - 1);
+								i <= Math.clamp(Math.floor(bottomRightVertex.x / tileWidth), 0, mapData.width - 1);
+								i++
+							) {
 								this.AStarPathfindingMap[j * mapData.width + i] = true;
 							}
 						}
