@@ -864,8 +864,6 @@ var Unit = TaroEntityPhysics.extend({
 			this.streamUpdateData([{ currentItemIndex: itemIndex }]);
 		}
 
-		this.script.trigger('unitSelectsInventorySlot');
-
 		if (taro.isClient && this == taro.client.selectedUnit) {
 			this.inventory.highlightSlot(itemIndex + 1);
 			var item = this.inventory.getItemBySlotNumber(itemIndex + 1);
@@ -874,6 +872,7 @@ var Unit = TaroEntityPhysics.extend({
 
 		// update index and id in the same place
 		this.setCurrentItem(itemIndex);
+		this.script.trigger('unitSelectsInventorySlot');
 	},
 
 	// added boolean isUnitCreation to tell whether the function call came from init or elsewhere
