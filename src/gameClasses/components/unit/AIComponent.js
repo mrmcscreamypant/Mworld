@@ -376,12 +376,12 @@ var AIComponent = TaroEntity.extend({
 						const closestNode = this.aStar.getClosestAStarNode();
 						if (closestNode) {
 							// Move to the highest index of path saved (closest node to start node)
-							if (!this.aStar.aStarPathIsBlocked()) {
+							if (this.aStar.aStarResultIsLatest() && !this.aStar.aStarPathIsBlocked()) {
 								// only keep going if the path is still non blocked
 								this.setTargetPosition((closestNode.x + 0.5) * tileWidth, (closestNode.y + 0.5) * tileWidth);
 							} else {
+								// recalculate whole path once the next move is outdated / blocked
 								this.aStar.setTargetPosition(
-									// recalculate whole path once the next move is blocked
 									(this.aStar.path[0].x + 0.5) * tileWidth,
 									(this.aStar.path[0].y + 0.5) * tileWidth
 								);
@@ -432,7 +432,7 @@ var AIComponent = TaroEntity.extend({
 									this.aStar.path.pop(); // after moved to the closest A* node, pop the array and let ai move to next A* node
 								}
 								const closestNode = this.aStar.getClosestAStarNode();
-								if (closestNode && !this.aStar.aStarPathIsBlocked() && !this.aStar.aStarTargetUnitMoved()) {
+								if (this.aStar.aStarResultIsLatest() && closestNode && !this.aStar.aStarPathIsBlocked() && !this.aStar.aStarTargetUnitMoved()) {
 									// Move to the highest index of path saved (closest node to start node)
 									// only keep follow the old path if the path is still non blocked AND targetUnit is not closer than end node of the path
 									this.setTargetPosition((closestNode.x + 0.5) * tileWidth, (closestNode.y + 0.5) * tileWidth);
@@ -475,7 +475,7 @@ var AIComponent = TaroEntity.extend({
 							this.aStar.path.pop(); // after moved to the closest A* node, pop the array and let ai move to next A* node
 						}
 						const closestNode = this.aStar.getClosestAStarNode();
-						if (closestNode && !this.aStar.aStarPathIsBlocked() && !this.aStar.aStarTargetUnitMoved()) {
+						if (this.aStar.aStarResultIsLatest() && closestNode && !this.aStar.aStarPathIsBlocked() && !this.aStar.aStarTargetUnitMoved()) {
 							// Move to the highest index of path saved (closest node to start node)
 							this.setTargetPosition(
 								// only keep going if the path is still non blocked

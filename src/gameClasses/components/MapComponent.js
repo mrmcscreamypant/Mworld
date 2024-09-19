@@ -7,12 +7,24 @@ class MapComponent extends TaroEntity {
 		/**
 		 * @type {Array<boolean>}
 		 */
-		this.AStarPathfindingMap;
+		this.wallMap = [];
 
 		/**
 		 * @type {Array<boolean>}
 		 */
-		this.wallMap;
+		this.AStarPathfindingMap = [];
+
+		/**
+		 * Latest update time of the pathfinding data
+		 * @type {number}
+		 */
+		this.lastAStarMapUpdateTime = 0;
+
+		/**
+		 * Latest checking time of the pathfinding data
+		 * @type {number}
+		 */
+		this.lastAStarMapCheckingTime = 0;
 	}
 
 	load(data) {
@@ -63,8 +75,10 @@ class MapComponent extends TaroEntity {
 		}
 	}
 
+	/**
+	 * Call this after in-game map tile editing
+	 */
 	updateWallMapData() {
-		// call this after in-game map tile editing
 		var self = this;
 
 		let wallLayer = self.data.layers?.find((layerObject) => {
@@ -76,11 +90,15 @@ class MapComponent extends TaroEntity {
 	}
 
 	/**
-	 * Must create wallMap before this
-	 * Execute everytime before an A star path is generate
-	 * Avoid execute within a short time < 250ms to avoid duplicate update
+	 * Update pathfindable tile data
 	 */
 	updateAStarPathfindingData() {
+		// avoid updating pathfinding data too much within a short time
+		// avoid executing if `this.wallMap` is not exist
+		if (Date.now() - this.lastAStarMapCheckingTime < 250 || !Array.isArray(this.wallMap)) {
+			return;
+		}
+
 		const entityType = ['unit', 'item', 'projectile'];
 		const vertexPosShift = [
 			{ x: -1, y: -1 },
@@ -90,9 +108,7 @@ class MapComponent extends TaroEntity {
 		];
 		const tileWidth = taro.scaleMapDetails.tileWidth;
 		const mapData = taro.map.data;
-		if (this.wallMap) {
-			this.AStarPathfindingMap = Array(this.wallMap.length).fill(false);
-		}
+		let newAStarPathfindingMap = Array(this.wallMap.length).fill(false);
 
 		entityType.forEach((type) => {
 			taro.$$(type).forEach((entity) => {
@@ -135,7 +151,7 @@ class MapComponent extends TaroEntity {
 								i <= Math.clamp(Math.floor(bottomRightVertex.x / tileWidth), 0, mapData.width - 1);
 								i++
 							) {
-								this.AStarPathfindingMap[j * mapData.width + i] = true;
+								newAStarPathfindingMap[j * mapData.width + i] = true;
 							}
 						}
 					}
@@ -144,9 +160,17 @@ class MapComponent extends TaroEntity {
 		});
 
 		// combine with wallMap
-		for (const tile in this.AStarPathfindingMap) {
-			this.AStarPathfindingMap[tile] = this.AStarPathfindingMap[tile] || this.wallMap[tile];
+		for (const tile in newAStarPathfindingMap) {
+			newAStarPathfindingMap[tile] = newAStarPathfindingMap[tile] || this.wallMap[tile];
 		}
+
+		// compare if there is any change on A Star map
+		if (!_.isEqual(newAStarPathfindingMap, this.AStarPathfindingMap)) {
+			this.AStarPathfindingMap = newAStarPathfindingMap;
+			this.lastAStarMapUpdateTime = Date.now();
+		}
+
+		this.lastAStarMapCheckingTime = Date.now();
 	}
 
 	tileIsWall(x, y) {
