@@ -6,9 +6,28 @@ class AStarPathfindingComponent extends TaroEntity {
 		this._entity = unit._entity;
 
 		// A* algorithm variables
-		this.path = []; // AI unit will keep going to highest index until there is no more node to go
-		// everytime when path generate failure, path should set to empty array (this.path = aStarResult.path automatically done for it)
+
+		/**
+		 * AI unit will keep going to highest index until there is no more node to go
+		 * everytime when path generate failure, path should set to empty array (this.path = aStarResult.path automatically done for it)
+		 * @type {Array<{x: number, y: number}>}
+		 */
+		this.path = [];
+
+		/**
+		 * @type {{x: number, y: number}}
+		 */
 		this.previousTargetPosition = undefined;
+
+		/**
+		 * @type {number}
+		 */
+		this.lastAStarPathfindingVersion = 0;
+
+		/**
+		 * @type {{x: number, y: number}}
+		 */
+		this.lastAStarPathfindingPosition;
 	}
 
 	/**
@@ -25,9 +44,6 @@ class AStarPathfindingComponent extends TaroEntity {
 	 * if there is no obstacle between the start position and the end position, it will return the end position in .path, and return true in .ok
 	 */
 	getAStarPath(x, y) {
-		// Update pathfindable tile data
-		taro.map.updateAStarPathfindingData();
-
 		const unit = this._entity;
 
 		const map = taro.map; // cache the map data for rapid use
@@ -46,8 +62,20 @@ class AStarPathfindingComponent extends TaroEntity {
 
 		let returnValue = { path: [{ ...targetTilePosition }], ok: false };
 
+		// store target node tile position for checking later
+		this.lastAStarPathfindingPosition = {
+			x: (targetTilePosition.x + 0.5) * tileWidth,
+			y: (targetTilePosition.y + 0.5) * tileWidth
+		};
+
+		// teminate if the target position is obstacle
 		if (map.tileIsBlocked(targetTilePosition.x, targetTilePosition.y)) {
-			// teminate if the target position is obstacle
+			return returnValue;
+		}
+
+		// if there is no obstacle in between, directly set the target to the end position
+		if (!this.aStarIsSegmentBlocked(x, y, unit._translate.x, unit._translate.y)) {
+			returnValue.ok = true;
 			return returnValue;
 		}
 
@@ -65,13 +93,6 @@ class AStarPathfindingComponent extends TaroEntity {
 		 */
 		let tempPath = []; // store path to return (smaller index: closer to target, larger index: closer to start)
 		openList.push({ current: { ...unitTilePosition }, parent: { x: -1, y: -1 }, totalHeuristic: 0 }); // push start node to open List
-
-		// for dropping nodes that overlap with unit body at that new position
-		const unitTileWidthShift = Math.max(0, Math.floor((unit._stats.currentBody.width + tileWidth) / 2 / tileWidth));
-		const unitTileHeightShift = Math.max(0, Math.floor((unit._stats.currentBody.height + tileWidth) / 2 / tileWidth));
-		const averageTileShift = Math.sqrt(
-			unitTileWidthShift * unitTileWidthShift + unitTileHeightShift * unitTileHeightShift
-		);
 
 		while (openList.length > 0) {
 			let minNode = { ...openList[0] }; // initialize for iteration
@@ -235,8 +256,7 @@ class AStarPathfindingComponent extends TaroEntity {
 		this._entity.script.trigger('entityAStarPathFindingFailed', triggerParam);
 	}
 
-	/**
-	 * 
+	/** 
 	 * @param {number} targetX 
 	 * @param {number} targetY 
 	 * @param {number} fromX
@@ -245,6 +265,9 @@ class AStarPathfindingComponent extends TaroEntity {
 	 * Values are world space coordinate instead of tiled coordinate
 	 */
 	aStarIsSegmentBlocked(targetX, targetY, fromX, fromY) {
+		// Update pathfindable tile data to latest before check if segment is block
+		taro.map.updateAStarPathfindingData();
+
 		const unit = this._entity;
 		const unitWidth = unit._stats.currentBody.width;
 		const unitHeight = unit._stats.currentBody.height;
@@ -327,23 +350,24 @@ class AStarPathfindingComponent extends TaroEntity {
 	aStarPathIsBlocked() {
 		const unit = this._entity;
 		const tileWidth = taro.scaleMapDetails.tileWidth;
+		const closestNode = this.getClosestAStarNode();
 
 		// current position to closest node of path
 		const nextPathIsBlocked = this.path.length > 0 && this.aStarIsSegmentBlocked(
 			unit._translate.x,
 			unit._translate.y,
-			this.path[0].x,
-			this.path[0].y
+			(closestNode.x + 0.5) * tileWidth,
+			(closestNode.y + 0.5) * tileWidth
 		);
 		if (nextPathIsBlocked) return true;
 
 		// other segments in the path
 		for (let i = 0; i < this.path.length - 1; i++) {
 			if (this.aStarIsSegmentBlocked(
-				this.path[i].x,
-				this.path[i].y,
-				this.path[i + 1].x,
-				this.path[i + 1].y
+				(this.path[i].x + 0.5) * tileWidth,
+				(this.path[i].y + 0.5) * tileWidth,
+				(this.path[i + 1].x + 0.5) * tileWidth,
+				(this.path[i + 1].y + 0.5) * tileWidth
 			)) {
 				return true;
 			}
@@ -391,12 +415,29 @@ class AStarPathfindingComponent extends TaroEntity {
 	}
 
 	setTargetPosition(x, y) {
+		// Update pathfindable tile data to latest before pathfinding to avoid outdated path generation
+		taro.map.updateAStarPathfindingData();
+
+		const tileWidth = taro.scaleMapDetails.tileWidth;
+		const closestNode = this.getClosestAStarNode();
+
+		// avoid compute again if the target position is same as previous but the a star map is not updated
+		// since the result is very likely to be the same again.
+		if (this.aStarTargetPositionIsDuplicate(x, y) && this.aStarResultIsLatest()) {
+			if (closestNode) {
+				this._entity.ai.setTargetPosition((closestNode.x + 0.5) * tileWidth, (closestNode.y + 0.5) * tileWidth);
+			} else {
+				this._entity.ai.setTargetPosition(x, y);
+			}
+			return;
+		}
+
 		const aStarResult = this.getAStarPath(x, y);
 		this.path = aStarResult.path;
-		const closestNode = this.getClosestAStarNode();
+		this.lastAStarPathfindingVersion = taro.map.lastAStarMapUpdateTime;
+
 		if (closestNode) {
 			// assign target position to ai no matter aStar failed or not as long as something inside path
-			const tileWidth = taro.scaleMapDetails.tileWidth;
 			this._entity.ai.setTargetPosition((closestNode.x + 0.5) * tileWidth, (closestNode.y + 0.5) * tileWidth);
 		}
 		if (!aStarResult.ok) {
@@ -505,6 +546,14 @@ class AStarPathfindingComponent extends TaroEntity {
 		result.push(path[possibleSegment[previousLargestCompatibleIndex].from]);
 		result.reverse(); // flip back the result
 		return result;
+	}
+
+	aStarResultIsLatest() {
+		return this.lastAStarPathfindingVersion == taro.map.lastAStarMapUpdateTime;
+	}
+
+	aStarTargetPositionIsDuplicate(x, y) {
+		return this.lastAStarPathfindingPosition?.x == x && this.lastAStarPathfindingPosition?.y == y;
 	}
 }
 
